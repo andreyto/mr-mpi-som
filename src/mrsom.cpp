@@ -158,7 +158,6 @@ void    MR_update_weight(uint64_t itask, char *key, int keybytes, char *value,
 //float sqroot(float m);
 /* ------------------------------------------------------------------------ */
 
-
 int DIMENSION;
 int NUM_FEATURES;
 int SOM_X;
