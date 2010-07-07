@@ -565,31 +565,25 @@ void train_online(SOM *som, TMatrix &f, float R, float learning_rate)
 
     for (int n = 0; n < NUM_FEATURES; n++) {
         float *vec_normalized = normalize2(f, n);
-
         //get best node using d_k (t) = || x(t) = w_k (t) || ^2
         //and d_c (t) == min d_k (t)
         NODE *bmu_node = get_bmu_node(som, vec_normalized);
         float *p1 = get_coords(bmu_node);
-
         if (R <= 1.0f) { //adjust BMU node only
             updatew_online(bmu_node, vec_normalized, learning_rate);
         } else { //adjust weight vectors of the neighbors to BMU node
             for (int k = 0; k < NUM_SOM_NODES; k++) { //adjust weights of all K nodes if dist <= R
                 float *p2 = get_coords(som->m_nodes[k]);
                 float dist = 0.0f;
-
                 //dist = sqrt((x1-y1)^2 + (x2-y2)^2 + ...)  distance to node
                 for (int p = 0; p < DIMENSION; p++)
                     dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
                 dist = sqrt(dist);
                 //dist = sqroot(dist);
-
                 if (TRAIN_OPTION == 1 && dist > R)
                     continue;
-
                 ////Gaussian neighborhood function
                 float neighborhood_func = exp(-(1.0f * dist * dist) / (R * R));
-
                 updatew_online(som->m_nodes[k], vec_normalized, learning_rate * neighborhood_func);
             }
         }
