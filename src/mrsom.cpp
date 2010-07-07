@@ -65,17 +65,17 @@
 
 using namespace std;
 
-#define MPI_ROOT        0
-#define DIMENSION       3
-#define NUM_FEATURES    30
-#define SOM_X           50
-#define SOM_Y           50
-#define NUM_SOM_NODES   SOM_X * SOM_Y
-#define SOM_DIMEN       2
-#define DIST_METRIC     0 //0=EUCL
+//#define MPI_ROOT        0
+//#define DIMENSION       3
+//#define NUM_FEATURES    1000
+//#define SOM_X           50
+//#define SOM_Y           50
+//#define NUM_SOM_NODES   SOM_X * SOM_Y
+//#define SOM_DIMEN       2
+//#define DIST_METRIC     0 //0=EUCL
 //#define TRAIN_MODE      0 //0=BATCH, 1=ONLINE
-#define TRAIN_OPTION    0 //0=SLOW, 1=FAST
-#define NORMALIZE       0 //0=NONE
+//#define TRAIN_OPTION    0 //0=SLOW, 1=FAST
+//#define NORMALIZE       0 //0=NONE
 #define MAX_STRING_LEN  255
 #define SZFLOAT         sizeof(float)
 
@@ -90,7 +90,6 @@ typedef vector<NODE *> VEC_NODES_T;
 typedef struct SOM {
     VEC_NODES_T m_nodes;
 } SOM;
-
 
 typedef struct {
     unsigned int    m, n;  // Rows, cols
@@ -108,16 +107,16 @@ struct GIFTBOX {
     //int     num_som_nodes;
     //int     num_weights_per_node;
     TMatrix *f_vectors;
-    TMatrix *w_vectors;
-    NUMERATOR_PER_VECTOR_T *numer_vec;
-    DENOMINATOR_PER_VECTOR_T *denom_vec;
+    //TMatrix *w_vectors;
+    //NUMERATOR_PER_VECTOR_T numer_vec;
+    //DENOMINATOR_PER_VECTOR_T denom_vec;
 
     int     idx_start;
-    int     flag;
+    //int     flag;
 
     //debug
-    int     myid;
-    char    *myname;
+    //int     myid;
+    //char    *myname;
 };
 
 /* ------------------------------------------------------------------------ */
@@ -129,7 +128,7 @@ void    printMatrix(TMatrix A);
 void    train_online(SOM *som, TMatrix &f, float R, float learning_rate);
 void    train_batch(SOM *som, TMatrix &f, float R);
 void    train_batch2(SOM *som, TMatrix &f, float R);
-void    MR_train_batch(MAPREDUCE_NS::MapReduce *mr, SOM *som, TMatrix &f, TMatrix &w,
+void    MR_train_batch(MAPREDUCE_NS::MapReduce *mr, SOM *som, TMatrix &f, //TMatrix &w, 
                        int *idx_vector_scattered,
                        float R, int argc, char* argv[], int myid,
                        char *myname, int numprocs);
@@ -160,20 +159,33 @@ void    MR_update_weight(uint64_t itask, char *key, int keybytes, char *value,
 /* ------------------------------------------------------------------------ */
 
 
+int DIMENSION;
+int NUM_FEATURES;
+int SOM_X;
+int SOM_Y;
+int SOM_DIMEN;
+int NUM_SOM_NODES;
+int EPOCHS;
+int DIST_METRIC=0;  //0=EUCL
+int TRAIN_MODE=0;   //0=BATCH, 1=ONLINE
+int TRAIN_OPTION=0; //0=SLOW, 1=FAST
+int NORMALIZE=0;    //0=NONE
 
 /* ------------------------------------------------------------------------ */
 int main(int argc, char *argv[])
 /* ------------------------------------------------------------------------ */
 {
-    int length;
     SOM *som;
     double time0, time1;
-    //int num_dimensions = DIMENSION;
-    //int num_vectors = NUM_FEATURES;
-    //int num_nodes = SOM_X*SOM_Y;
-    //int som_x = SOM_X;
-    //int som_y = SOM_Y;
-    //int som_dimen = SOM_DIMEN;
+    FILE *fp;
+    
+    //init    
+    DIMENSION=3;
+    NUM_FEATURES=30;
+    SOM_X=50;
+    SOM_Y=50;
+    SOM_DIMEN=2;
+    NUM_SOM_NODES=SOM_X*SOM_Y;
 
     TMatrix f;
     f = initMatrix();
@@ -227,31 +239,59 @@ int main(int argc, char *argv[])
 
     //random features
     //for(int i = 0; i < NUM_FEATURES; i++) {
-    //for(int j = 0; j < DIMENSION; j++) {
-    ////int w = 0xFFF & rand();
-    ////w -= 0x800;
-    //f.rows[i][j] = rand() % 100 / 100.0f;
+        //for(int j = 0; j < DIMENSION; j++) {
+            ////int w = 0xFFF & rand();
+            ////w -= 0x800;
+            //f.rows[i][j] = rand() % 100 / 100.0f;
+        //}
     //}
-    //}
-
-    ////read feature data///////////////////////////////////////////////
-    FILE *fp = fopen(argv[1],"r");
-    for(int i = 0; i < NUM_FEATURES; i++) {
-        for(int j = 0; j < DIMENSION; j++) {
-            float tmp = 0.0f;
-            fscanf(fp, "%f", &tmp);
-            f.rows[i][j] = tmp;
-        }
-    }
-    fclose(fp);
-    //printMatrix(f);
 
     //train/////////////////////////////////////////////////////////////
     float R, R0;
     R0 = SOM_X / 2.0f;
-    int epochs = atoi(argv[2]);     //# of iterations
-    int TRAIN_MODE = atoi(argv[3]); //batch or online
-    float N = (float)epochs;
+    
+    if (argc == 5) { // random 
+        //syntax: mrsom EPOCHS TRAIN_MODE NUM_FEATURES DIMENSION
+        EPOCHS = atoi(argv[1]);     //# of iterations
+        TRAIN_MODE = atoi(argv[2]); //batch or online
+        NUM_FEATURES = atoi(argv[3]);
+        DIMENSION = atoi(argv[4]);
+        
+    }
+    else if (argc == 6) {
+        //syntax: mrsom FILE EPOCHS TRAIN_MODE NUM_FEATURES DIMENSION
+        
+        ///read feature data///////////////////////////////////////////\
+        printf("Reading (%d x %d) random feature vectors...\n", NUM_FEATURES, DIMENSION);
+        //fprintf(stderr, "[Node %d]: %s, Reading (%d x %d) feature vectors...\n", myid, myname, NUM_FEATURES, DIMENSION);
+        fp = fopen(argv[1],"r");
+        EPOCHS = atoi(argv[2]);     //# of iterations
+        TRAIN_MODE = atoi(argv[3]); //batch or online
+        NUM_FEATURES = atoi(argv[4]);
+        DIMENSION = atoi(argv[5]);
+        for(int i = 0; i < NUM_FEATURES; i++) {
+            for(int j = 0; j < DIMENSION; j++) {
+                float tmp = 0.0f;
+                fscanf(fp, "%f", &tmp);
+                f.rows[i][j] = tmp;
+            }
+        }
+        fclose(fp);
+        //printMatrix(f);        
+    }
+    else {
+        printf("Syntax:  mrsom EPOCHS TRAIN_MODE NUM_FEATURES DIMENSION\n");
+        printf("         or\n");
+        printf("         mrsom FILE EPOCHS TRAIN_MODE NUM_FEATURES DIMENSION\n\n");   
+        printf("         FILE           = feature vector file.\n");     
+        printf("         EPOCHS         = number of iterations.\n");     
+        printf("         TRAIN_MODE     = 0-batch, 1-online.\n");
+        printf("         NUM_FEATURES   = number of feature vectors.\n");     
+        printf("         DIMENSION      = number of dimensionality of feature vector.\n");     
+        exit(0);
+    }
+    
+    float N = (float)EPOCHS;
     int x = 0;  //0...N-1
     float nrule, nrule0 = 0.9f;     //learning rate factor
 
@@ -259,6 +299,7 @@ int main(int argc, char *argv[])
     int myid, numprocs;
     char myname[MAX_STRING_LEN];
     MPI_Status status;
+    int length;
 
     int ierr = MPI_Init(&argc, &argv);
     if (ierr != MPI_SUCCESS) {
@@ -279,29 +320,66 @@ int main(int argc, char *argv[])
     MAPREDUCE_NS::MapReduce *mr = new MAPREDUCE_NS::MapReduce(MPI_COMM_WORLD);
     //mr->verbosity = 2;
     //mr->timer = 1;
+    int chunksize = NUM_FEATURES / numprocs;
+    int idx_vector[NUM_FEATURES];
+    int idx_vector_scattered[chunksize];
+            
+    if (myid == 0) {        
+        if (argc == 5) {
+            printf("Generating (%d x %d) random feature vectors...\n", NUM_FEATURES, DIMENSION);
+            //random feature vectors
+            for(int i = 0; i < NUM_FEATURES; i++) {
+                for(int j = 0; j < DIMENSION; j++) {
+                    //int w = 0xFFF & rand();
+                    //w -= 0x800;
+                    f.rows[i][j] = rand() % 100 / 100.0f;
+                }
+            }
+        }
 
+        //to scatter feature vectors
+        for (int i = 0; i < NUM_FEATURES; i++)
+            idx_vector[i] = i;
+
+        //for (int x = 0; x < NUM_SOM_NODES; x++)
+            //for (int j = 0; j < DIMENSION; j++)
+                //w.rows[x][j] = som->m_nodes[x]->m_weights[j];
+        //printMatrix(w);
+
+        //printf("BATCH-  epoch: %d   R: %.2f \n", (EPOCHS-1), R);
+    }
+            
+            
     //iterations////////////////////////////////////////////////////////
-    while (epochs) {
+    while (EPOCHS) {
         if (TRAIN_MODE == 0) {
-            int chunksize = NUM_FEATURES / numprocs;
-            int idx_vector[NUM_FEATURES];
-            int idx_vector_scattered[chunksize];
-
             if (myid == 0) {
                 // R to broadcast
                 R = R0 * exp(-10.0f * (x * x) / (N * N));
                 x++;
+                
+                //if (argc == 5) {
+                    //printf("Generating (%d x %d) random vectors...\n", NUM_FEATURES, DIMENSION);
+                    ////random feature vectors
+                    //for(int i = 0; i < NUM_FEATURES; i++) {
+                        //for(int j = 0; j < DIMENSION; j++) {
+                            ////int w = 0xFFF & rand();
+                            ////w -= 0x800;
+                            //f.rows[i][j] = rand() % 100 / 100.0f;
+                        //}
+                    //}
+                //}
 
-                //to scatter feature vectors.
-                for (int i = 0; i < NUM_FEATURES; i++)
-                    idx_vector[i] = i;
+                ////to scatter feature vectors
+                //for (int i = 0; i < NUM_FEATURES; i++)
+                    //idx_vector[i] = i;
 
                 for (int x = 0; x < NUM_SOM_NODES; x++)
                     for (int j = 0; j < DIMENSION; j++)
                         w.rows[x][j] = som->m_nodes[x]->m_weights[j];
-                //printMatrix(w);
+                ////printMatrix(w);
 
-                printf("BATCH-  epoch: %d   R: %.2f \n", (epochs-1), R);
+                printf("BATCH-  epoch: %d   R: %.2f \n", (EPOCHS-1), R);
             }
 
             MPI_Barrier(MPI_COMM_WORLD);
@@ -310,6 +388,12 @@ int main(int argc, char *argv[])
             MPI_Bcast(&R, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
             MPI_Bcast((void *)w.data, NUM_SOM_NODES*DIMENSION, MPI_FLOAT,
                       0, MPI_COMM_WORLD);
+            
+            if (argc == 5) {
+                //random feature vectors       
+                MPI_Bcast((void *)f.data, NUM_FEATURES*DIMENSION, MPI_FLOAT,
+                          0, MPI_COMM_WORLD);
+            }
 
             //fprintf(stderr,"[Node %d]: %s, idx_vector_scattered? %d %d %d  \n", myid, myname, idx_vector_scattered[0], idx_vector_scattered[1], idx_vector_scattered[2]);
             //fprintf(stderr,"[Node %d]: %s, R = %f \n", myid, myname, R);
@@ -330,7 +414,8 @@ int main(int argc, char *argv[])
             //vector<vector<float> > (NUM_SOM_NODES,
             //vector<float>(DIMENSION, 0.0)));
 
-            MR_train_batch(mr, som, f, w, idx_vector_scattered,
+            MR_train_batch(mr, som, f, //w,
+                           idx_vector_scattered,
                            R, argc, argv, myid, myname, numprocs);
             //numerator_per_vector, denominator_per_vector);
 
@@ -359,12 +444,12 @@ int main(int argc, char *argv[])
                 nrule = nrule0 * exp(-10.0f * (x * x) / (N * N));  //learning rule shrinks over time, for online SOM
                 x++;
                 train_online(som, f, R, nrule);
-                printf("ONLINE-  epoch: %d   R: %.2f \n", (epochs-1), R);
+                printf("ONLINE-  epoch: %d   R: %.2f \n", (EPOCHS-1), R);
             }
         }
 
 
-        epochs--;
+        EPOCHS--;
     }
     //gettimeofday(&t1_end, NULL);
     //t1_time = t1_end.tv_sec - t1_start.tv_sec + (t1_end.tv_usec - t1_start.tv_usec) / 1.e6;
@@ -486,9 +571,9 @@ int main(int argc, char *argv[]) {
     //train
     float R, R0;
     R0 = SOM_X / 2.0f;
-    int epochs = atoi(argv[2]);     //# of iterations
+    int EPOCHS = atoi(argv[2]);     //# of iterations
     int TRAIN_MODE = atoi(argv[3]); //batch or online
-    float N = (float)epochs;
+    float N = (float)EPOCHS;
     int x = 0;  //0...N-1
     float nrule, nrule0 = 0.9f;     //learning rate factor
 
@@ -497,7 +582,7 @@ int main(int argc, char *argv[]) {
     //////double t1_time;
     //////gettimeofday(&t1_start, NULL);
 
-    while (epochs) {
+    while (EPOCHS) {
         if (TRAIN_MODE == 0) {
 
             //train_batch(som, R);
@@ -511,9 +596,9 @@ int main(int argc, char *argv[]) {
             nrule = nrule0 * exp(-10.0f * (x * x) / (N * N));  //learning rule shrinks over time, for online SOM
             x++;
             train_online(som, f, R, nrule);
-            printf("ONLINE-  epoch: %d   R: %.2f \n", (epochs-1), R);
+            printf("ONLINE-  epoch: %d   R: %.2f \n", (EPOCHS-1), R);
         }
-        epochs--;
+        EPOCHS--;
     }
     //////gettimeofday(&t1_end, NULL);
     //////t1_time = t1_end.tv_sec - t1_start.tv_sec + (t1_end.tv_usec - t1_start.tv_usec) / 1.e6;
@@ -733,8 +818,8 @@ void train_batch2(SOM* som, TMatrix &f, float R)
 }
 
 /* ------------------------------------------------------------------------ */
-void MR_train_batch(MAPREDUCE_NS::MapReduce *mr, SOM *som, TMatrix &f,
-                    TMatrix &w, int *idx_vector_scattered,
+void MR_train_batch(MAPREDUCE_NS::MapReduce *mr, SOM *som, TMatrix &f, //TMatrix &w,
+                    int *idx_vector_scattered,
                     float R, int argc, char* argv[], int myid,
                     char *myname, int numprocs)
 //NUMERATOR_PER_VECTOR_T &numer_vec,
@@ -749,14 +834,14 @@ void MR_train_batch(MAPREDUCE_NS::MapReduce *mr, SOM *som, TMatrix &f,
     GIFTBOX gfbox;
     gfbox.som = som;
     //gfbox.m_nodes = &som->m_nodes;
-    gfbox.myid = myid;
-    gfbox.myname = myname;
+    //gfbox.myid = myid;
+    //gfbox.myname = myname;
     //gfbox.numprocs = numprocs;
     gfbox.new_num_vectors = new_num_vectors;
     //gfbox.num_som_nodes = NUM_SOM_NODES;
     //gfbox.num_weights_per_node = DIMENSION;
     gfbox.f_vectors = &f;
-    gfbox.w_vectors = &w;
+    //gfbox.w_vectors = &w;
     //gfbox.numer_vec = numer_vec;
     //gfbox.denom_vec = denom_vec;
     //gfbox.w_vectors = w_vectors;
