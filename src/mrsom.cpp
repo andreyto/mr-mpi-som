@@ -236,15 +236,6 @@ int main(int argc, char *argv[])
         exit(0);
     }
 
-    //random features
-    //for(int i = 0; i < NUM_FEATURES; i++) {
-        //for(int j = 0; j < DIMENSION; j++) {
-            ////int w = 0xFFF & rand();
-            ////w -= 0x800;
-            //f.rows[i][j] = rand() % 100 / 100.0f;
-        //}
-    //}
-
     //train/////////////////////////////////////////////////////////////
     float R, R0;
     R0 = SOM_X / 2.0f;
@@ -261,7 +252,7 @@ int main(int argc, char *argv[])
         //syntax: mrsom FILE EPOCHS TRAIN_MODE NUM_FEATURES DIMENSION
         
         ///read feature data///////////////////////////////////////////\
-        printf("Reading (%d x %d) random feature vectors...\n", NUM_FEATURES, DIMENSION);
+        //printf("Reading (%d x %d) random feature vectors...\n", NUM_FEATURES, DIMENSION);
         //fprintf(stderr, "[Node %d]: %s, Reading (%d x %d) feature vectors...\n", myid, myname, NUM_FEATURES, DIMENSION);
         fp = fopen(argv[1],"r");
         EPOCHS = atoi(argv[2]);     //# of iterations
@@ -310,10 +301,10 @@ int main(int argc, char *argv[])
     MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
     MPI_Get_processor_name(myname, &length);
 
-    //struct timeval t1_start;
-    //struct timeval t1_end;
-    //double t1_time;
-    //gettimeofday(&t1_start, NULL);
+    ////struct timeval t1_start;
+    ////struct timeval t1_end;
+    ////double t1_time;
+    ////gettimeofday(&t1_start, NULL);
 
     //MR-MPI////////////////////////////////////////////////////////////
     MAPREDUCE_NS::MapReduce *mr = new MAPREDUCE_NS::MapReduce(MPI_COMM_WORLD);
@@ -446,8 +437,6 @@ int main(int argc, char *argv[])
                 printf("ONLINE-  epoch: %d   R: %.2f \n", (EPOCHS-1), R);
             }
         }
-
-
         EPOCHS--;
     }
     //gettimeofday(&t1_end, NULL);
@@ -455,6 +444,7 @@ int main(int argc, char *argv[])
     //fprintf(stderr,"\n**** Processing time: %g seconds **** \n",t1_time);
 
     freeMatrix(&f);
+    //freeMatrix(&w);
     MPI_Barrier(MPI_COMM_WORLD);
 
     ////for (int x = 0; x < SOM_X; x++) {
