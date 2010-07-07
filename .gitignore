@@ -1,0 +1,8 @@
+build
+build/*
+*.[oa]
+*.so
+*~
+*.pyc
+*.pyo
+*.swp
