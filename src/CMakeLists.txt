@@ -16,6 +16,7 @@ link_directories(${MRSOM_BINARY_DIR}/mrmpi)
 #SET(ARFLAGS "-rc")
 LINK_DIRECTORIES( ${LINK_DIRECTORIES} ${MRSOM_BINARY_DIR}/mrmpi )
 add_executable(mrsom mrsom.cpp)
+add_executable(som som.cpp)
 target_link_libraries(mrsom mpi)  
 target_link_libraries(mrsom mrmpi)  
 

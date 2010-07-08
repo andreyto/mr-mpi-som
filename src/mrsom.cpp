@@ -34,6 +34,8 @@
 //  v.2.0.2             
 //      07.07.2010      Update CMakeLists.txt to have find_program for MPI
 //                      and add .gitignore
+//      07.08.2010      Add other distance metrics than euclidean.
+//                      Add other normalization func
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -76,7 +78,7 @@ using namespace MAPREDUCE_NS;
 #define SZFLOAT         sizeof(float)
 
 //#define NDEBUG
-#define _DEBUG
+//#define _DEBUG
 //#ifdef _DEBUG
 //#endif
 
@@ -91,12 +93,14 @@ typedef vector<NODE *> VEC_NODES_T;
 //SOM
 typedef struct SOM {
     VEC_NODES_T nodes;
+    //float *m_add;               //normalization params for input data   (x+add)*mul
+    //float *m_mul;               //normalization params for input data
 } SOM;
 
 typedef struct {
-    unsigned int    m, n;  //ROWS, COLS
-    float          *data;  //DATA, ORDERED BY ROW, THEN BY COL
-    float         **rows;  //POINTERS TO ROWS IN DATA
+    unsigned int    m, n;       //ROWS, COLS
+    float          *data;       //DATA, ORDERED BY ROW, THEN BY COL
+    float         **rows;       //POINTERS TO ROWS IN DATA
 } DMatrix;
 
 typedef vector<vector<vector<float> > > VVVECTOR_T;
@@ -212,7 +216,8 @@ int main(int argc, char *argv[])
     for (int x = 0; x < SOM_X * SOM_Y; x++) {
         som->nodes[x] = (NODE *)malloc(sizeof(NODE));
     }
-
+    
+    srand((unsigned int)time(0));
     //FILL WEIGHTS//////////////////////////////////////////////////////
     for (int x = 0; x < NNODES; x++) {
         NODE *node = (NODE *)malloc(sizeof(NODE));
@@ -270,7 +275,6 @@ int main(int argc, char *argv[])
         printf("FATAL: not valid w matrix.\n");
         exit(0);
     }
-    
     
     //MPI///////////////////////////////////////////////////////////////
     int myid, nprocs, length;
@@ -352,8 +356,8 @@ int main(int argc, char *argv[])
             fprintf(stderr,"[Node %d]: %s, main som %0.2f %0.2f %0.2f  \n", myid, myname, som->nodes[0]->weights[0], som->nodes[0]->weights[1], som->nodes[0]->weights[2]);
             fprintf(stderr,"[Node %d]: %s, main w.rows %0.2f %0.2f %0.2f  \n", myid, myname, w.rows[0][0], w.rows[0][1], w.rows[0][2]);
 #endif
-            ////train_batch(som, f, R);
-            ////train_batch2(som, f, R);
+            //train_batch(som, f, R);
+            //train_batch2(som, f, R);
 
             //VVVECTOR_T numer;
             //numer= VVVECTOR_T (chunksize,
@@ -431,10 +435,12 @@ int main(int argc, char *argv[])
     //SAVE SOM//////////////////////////////////////////////////////////
     if (myid == 0) {
         printf("Saving SOM...\n");
-        char som_map[255] = "";
+        char som_map[MAX_STR] = "";
         //get_file_name(argv[1], som_map);
         strcat(som_map, "result.map");
         save_2D_distance_map(som, som_map);
+        printf("Converting SOM map to distance map...\n");
+        system("python ./show.py");
         printf("Done!\n");
     }
 
@@ -1215,8 +1221,8 @@ void MR_update_weight(uint64_t itask, char *key, int keybytes, char *value,
 /* ------------------------------------------------------------------------ */
 {
     GIFTBOX *gb = (GIFTBOX *) ptr;
-    //char *whitespace = " \t\n\f\r\0";
-    char *whitespace = " ";
+    char *whitespace = " \t\n\f\r\0";
+    //char *whitespace = " ";
     char *key_tokens = strtok(key, whitespace);
     int K = atoi(key_tokens);
     key_tokens = strtok(NULL, whitespace);
