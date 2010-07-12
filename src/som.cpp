@@ -68,6 +68,7 @@ typedef struct {
 void          train_online(SOM *som, DMatrix &F, float R, float Alpha);
 //void        train_batch(SOM *som, DMatrix &F, float R);
 void          train_batch2(SOM *som, DMatrix &F, float R);// VVV_FLOAT_T &numer, VVV_FLOAT_T &denom);
+float        *normalize(float *vec);
 float        *normalize2(DMatrix &F, int n);
 float        *get_coords(NODE *);
 float        *get_wvec(SOM *, int);
@@ -81,13 +82,15 @@ int           save_2D_distance_map(SOM *som, char *fname);
 NODE         *get_node(SOM *, int);
 NODE         *get_BMU(SOM *, float *);
 
+//CLASSIFYING
+NODE         *classify(SOM *som, float *vec);
+
 //MATRIX
 DMatrix       createMatrix(const unsigned int rows, const unsigned int cols);
 DMatrix       initMatrix(void);
 void          freeMatrix(DMatrix *matrix);
 void          printMatrix(DMatrix A);
 int           validMatrix(DMatrix matrix);
-
 
 //BATCH3: IMPROVED BATCH////////////////////////////////////////////////
 class BMUnode {
@@ -114,10 +117,10 @@ int SOM_Y=50;
 int SOM_D=2;            //2=2D  
 int NNODES=SOM_X*SOM_Y; //TOTAL NUM OF SOM NODES
 int NEPOCHS;            //ITERATIONS
-int DOPT=0;             //0=EUCL, 1=, 2=, 3=, 4=
+int DOPT=0;             //0=EUCL, 1=SOSD, 2=TXCB, 3=ANGL, 4=MHLN
 int TMODE=0;            //0=BATCH, 1=ONLINE
 int TOPT=0;             //0=SLOW, 1=FAST
-int NORMAL=0;           //0=NONE, 1=, 2=, 3=, 4=
+int NORMAL=0;           //0=NONE, 1=MNMX, 2=ZSCR, 3=SIGM, 4=ENR
 
 /* ------------------------------------------------------------------------ */
 int main(int argc, char *argv[])
@@ -125,35 +128,35 @@ int main(int argc, char *argv[])
 {
     SOM *som;
     //vector<NODE *> NodeGarbageCan;
-    cout << argc << endl;
+    //cout << argc << endl;
     if (argc == 5) { //RANDOM 
         //syntax: mrsom NEPOCHS TMODE NVECS NDIMEN
         NEPOCHS = atoi(argv[1]);    //# OF ITERATIONS
         TMODE = atoi(argv[2]);      //BATCH OR ONLINE
-        NVECS = atoi(argv[3]);
-        NDIMEN = atoi(argv[4]);       
+        NVECS = atoi(argv[3]);      //NUM FEATURE VECTORS
+        NDIMEN = atoi(argv[4]);     //NUM DIMENSIONALITY OF DATA 
     }
     else if (argc == 7) { //RANDOM 
         //syntax: mrsom NEPOCHS TMODE NVECS NDIMEN X Y
-        NEPOCHS = atoi(argv[1]);    //# OF ITERATIONS
-        TMODE = atoi(argv[2]);      //BATCH OR ONLINE
+        NEPOCHS = atoi(argv[1]);     
+        TMODE = atoi(argv[2]);       
         NVECS = atoi(argv[3]);
         NDIMEN = atoi(argv[4]); 
-        SOM_X = atoi(argv[5]);  
-        SOM_Y = atoi(argv[6]);  
-        NNODES=SOM_X*SOM_Y;      
+        SOM_X = atoi(argv[5]);      //WIDTH OF SOM MAP
+        SOM_Y = atoi(argv[6]);      //HEIGHT OF SOM MAP
+        NNODES=SOM_X*SOM_Y;         //NUM NODES IN SOM
     }
     else if (argc == 6) {  ///READ FEATURE DATA FROM FILE
         //syntax: mrsom FILE NEPOCHS TMODE NVECS NDIMEN
-        NEPOCHS = atoi(argv[2]);    //# OF ITERATIONS
-        TMODE = atoi(argv[3]);      //BATCH OR ONLINE
+        NEPOCHS = atoi(argv[2]);     
+        TMODE = atoi(argv[3]);       
         NVECS = atoi(argv[4]);
         NDIMEN = atoi(argv[5]);        
     }
     else if (argc == 8) {  ///READ FEATURE DATA FROM FILE
         //syntax: mrsom FILE NEPOCHS TMODE NVECS NDIMEN X Y
-        NEPOCHS = atoi(argv[2]);    //# OF ITERATIONS
-        TMODE = atoi(argv[3]);      //BATCH OR ONLINE
+        NEPOCHS = atoi(argv[2]);     
+        TMODE = atoi(argv[3]);       
         NVECS = atoi(argv[4]);
         NDIMEN = atoi(argv[5]);        
         SOM_X = atoi(argv[6]);  
@@ -226,10 +229,6 @@ int main(int argc, char *argv[])
         printf("Reading (%d x %d) feature vectors from %s...\n", NVECS, NDIMEN, argv[1]);
         FILE *fp;
         fp = fopen(argv[1],"r");
-        NEPOCHS = atoi(argv[2]);    //# OF ITERATIONS
-        TMODE = atoi(argv[3]);      //BATCH OR ONLINE
-        NVECS = atoi(argv[4]);
-        NDIMEN = atoi(argv[5]);
         for(int i = 0; i < NVECS; i++) {
             for(int j = 0; j < NDIMEN; j++) {
                 float tmp = 0.0f;
@@ -561,6 +560,63 @@ void train_batch2(SOM* som, DMatrix &F, float R)
     denom.clear();
 }
  
+ 
+ /* ------------------------------------------------------------------------ */
+NODE *classify(SOM *som, float *vec)
+/* ------------------------------------------------------------------------ */
+{       
+    NODE *pbmu_node = som->nodes[0];
+    float *normalized = normalize(vec);
+    float mindist = get_distance(normalized, 0, pbmu_node->weights);
+    float dist;
+    for (int x = 0; x < NNODES; x++) {
+        if ((dist = get_distance(normalized, 0, som->nodes[x]->weights)) < mindist) {
+            mindist = dist;
+            pbmu_node = som->nodes[x];
+        }
+    }
+    //CAN ADD A FEATURE FOR VOTING AMONG BMUS.
+    return pbmu_node;
+}
+
+/* ------------------------------------------------------------------------ */
+float *normalize(float *vec)
+/* ------------------------------------------------------------------------ */
+{
+    float *m_data = (float *)malloc(SZFLOAT*NDIMEN);
+    switch (NORMAL) {
+    default:
+    case 0: //NONE
+        for (int x = 0; x < NDIMEN; x++) {
+            m_data[x] = vec[x];
+        }
+        break;
+    case 1: //MNMX
+        //for (int x = 0; x < NDIMEN; x++)
+            //m_data[x] = (0.9f - 0.1f) * (vec[x] + m_add[x]) * m_mul[x] + 0.1f;                
+        //break;
+
+    case 2: //ZSCR
+        //for (int x = 0; x < NDIMEN; x++)
+            //m_data[x] = (vec[x] + m_add[x]) * m_mul[x];                
+        //break;
+
+    case 3: //SIGM
+        //for (int x = 0; x < NDIMEN; x++)
+            //m_data[x] = 1.0f / (1.0f + exp(-((vec[x] + m_add[x]) * m_mul[x])));                
+        //break;
+
+    case 4: //ENRG
+        float energy = 0.0f;
+        for (int x = 0; x < NDIMEN; x++)
+            energy += vec[x] * vec[x];
+        energy = sqrt(energy);
+        for (int x = 0; x < NDIMEN; x++)
+            m_data[x] = vec[x] / energy;                
+        break;
+    }
+    return m_data;
+}
 
 /* ------------------------------------------------------------------------ */
 void updatew_online(NODE *node, float *vec, float Alpha_x_Hck)
@@ -693,6 +749,28 @@ float get_distance2(vector<float> &vec, int distance_metric, vector<float> &wvec
         for (int w = 0; w < NDIMEN; w++)
             distance += (vec[w] - wvec[w]) * (vec[w] - wvec[w]);
         return sqrt(distance);
+    case 1: //SOSD: //SUM OF SQUARED DISTANCES
+        //if (m_weights_number >= 4) {
+                //distance = mse(vec, m_weights, m_weights_number);
+        //} else {
+            for (int w = 0; w < NDIMEN; w++)
+                distance += (vec[w] - wvec[w]) * (vec[w] - wvec[w]);
+        //}
+        return distance;
+    case 2: //TXCB: //TAXICAB
+        for (int w = 0; w < NDIMEN; w++)
+            distance += fabs(vec[w] - wvec[w]);
+        return distance;
+    case 3: //ANGL: //ANGLE BETWEEN VECTORS
+        for (int w = 0; w < NDIMEN; w++) {
+            distance += vec[w] * wvec[w];
+            n1 += vec[w] * vec[w];
+            n2 += wvec[w] * wvec[w];
+        }
+        return acos(distance / (sqrt(n1)*sqrt(n2)));
+    //case 4: //MHLN:   //mahalanobis
+        //distance = sqrt(m_weights * cov * vec)
+        //return distance
     }
 }
 
@@ -877,4 +955,3 @@ void printMatrix(DMatrix A)
     }
 }
   
- 

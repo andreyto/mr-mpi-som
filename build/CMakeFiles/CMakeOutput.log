@@ -1,0 +1,227 @@
+The system is: Linux - 2.6.18-128.2.1.el5 - x86_64
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler: /usr/local/bin/gcc 
+Build flags: 
+Id flags: 
+
+The output was:
+0
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.out"
+
+The C compiler identification is GNU, found in "/home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CompilerIdC/a.out"
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler: /usr/local/bin/c++ 
+Build flags: 
+Id flags: 
+
+The output was:
+0
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.out"
+
+The CXX compiler identification is GNU, found in "/home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CompilerIdCXX/a.out"
+
+Determining if the C compiler works passed with the following output:
+Change Dir: /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/gmake "cmTryCompileExec/fast"
+/usr/bin/gmake -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
+gmake[1]: Entering directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp'
+/export/cmake/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building C object CMakeFiles/cmTryCompileExec.dir/testCCompiler.c.o
+/usr/local/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/testCCompiler.c.o   -c /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/testCCompiler.c
+Linking C executable cmTryCompileExec
+/export/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
+/usr/local/bin/gcc        CMakeFiles/cmTryCompileExec.dir/testCCompiler.c.o  -o cmTryCompileExec -rdynamic 
+gmake[1]: Leaving directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp'
+
+
+Detecting C compiler ABI info compiled with the following output:
+Change Dir: /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/gmake "cmTryCompileExec/fast"
+/usr/bin/gmake -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
+gmake[1]: Entering directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp'
+/export/cmake/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building C object CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o
+/usr/local/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o   -c /export/cmake/share/cmake-2.8/Modules/CMakeCCompilerABI.c
+Linking C executable cmTryCompileExec
+/export/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
+/usr/local/bin/gcc       -v CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o  -o cmTryCompileExec -rdynamic  
+Using built-in specs.
+Target: x86_64-unknown-linux-gnu
+Configured with: ../gcc-4.1.2/configure --prefix=/usr/local/packages/gcc-4.1.2 --with-mpfr=/usr/local/packages/mpfr --with-gmp=/usr/local/packages/gmp --enable-languages=c,ada,c++,java,objc,obj-c++,fortran
+Thread model: posix
+gcc version 4.1.2
+ /local/packages/gcc-4.1.2/bin/../libexec/gcc/x86_64-unknown-linux-gnu/4.1.2/collect2 --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTryCompileExec /usr/lib/../lib64/crt1.o /usr/lib/../lib64/crti.o /local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/crtbegin.o -L/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2 -L/local/packages/gcc-4.1.2/bin/../lib/gcc -L/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2 -L/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64 -L/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/crtend.o /usr/lib/../lib64/crtn.o
+gmake[1]: Leaving directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp'
+
+
+Parsed C implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld|ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command:/usr/bin/gmake "cmTryCompileExec/fast"]
+  ignore line: [/usr/bin/gmake -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build]
+  ignore line: [gmake[1]: Entering directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp']
+  ignore line: [/export/cmake/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1]
+  ignore line: [Building C object CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o]
+  ignore line: [/usr/local/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o   -c /export/cmake/share/cmake-2.8/Modules/CMakeCCompilerABI.c]
+  ignore line: [Linking C executable cmTryCompileExec]
+  ignore line: [/export/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1]
+  ignore line: [/usr/local/bin/gcc       -v CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o  -o cmTryCompileExec -rdynamic  ]
+  ignore line: [Using built-in specs.]
+  ignore line: [Target: x86_64-unknown-linux-gnu]
+  ignore line: [Configured with: ../gcc-4.1.2/configure --prefix=/usr/local/packages/gcc-4.1.2 --with-mpfr=/usr/local/packages/mpfr --with-gmp=/usr/local/packages/gmp --enable-languages=c,ada,c++,java,objc,obj-c++,fortran]
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 4.1.2]
+  link line: [ /local/packages/gcc-4.1.2/bin/../libexec/gcc/x86_64-unknown-linux-gnu/4.1.2/collect2 --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTryCompileExec /usr/lib/../lib64/crt1.o /usr/lib/../lib64/crti.o /local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/crtbegin.o -L/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2 -L/local/packages/gcc-4.1.2/bin/../lib/gcc -L/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2 -L/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64 -L/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o -lgcc --as-needed -lgcc_s --no-as-needed -lc -lgcc --as-needed -lgcc_s --no-as-needed /local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/crtend.o /usr/lib/../lib64/crtn.o]
+    arg [/local/packages/gcc-4.1.2/bin/../libexec/gcc/x86_64-unknown-linux-gnu/4.1.2/collect2] ==> ignore
+    arg [--eh-frame-hdr] ==> ignore
+    arg [-m] ==> ignore
+    arg [elf_x86_64] ==> ignore
+    arg [-export-dynamic] ==> ignore
+    arg [-dynamic-linker] ==> ignore
+    arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTryCompileExec] ==> ignore
+    arg [/usr/lib/../lib64/crt1.o] ==> ignore
+    arg [/usr/lib/../lib64/crti.o] ==> ignore
+    arg [/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/crtbegin.o] ==> ignore
+    arg [-L/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2] ==> dir [/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2]
+    arg [-L/local/packages/gcc-4.1.2/bin/../lib/gcc] ==> dir [/local/packages/gcc-4.1.2/bin/../lib/gcc]
+    arg [-L/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2] ==> dir [/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2]
+    arg [-L/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64] ==> dir [/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64]
+    arg [-L/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64] ==> dir [/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64]
+    arg [-L/lib/../lib64] ==> dir [/lib/../lib64]
+    arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
+    arg [CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o] ==> ignore
+    arg [-lgcc] ==> lib [gcc]
+    arg [--as-needed] ==> ignore
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [--no-as-needed] ==> ignore
+    arg [-lc] ==> lib [c]
+    arg [-lgcc] ==> lib [gcc]
+    arg [--as-needed] ==> ignore
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [--no-as-needed] ==> ignore
+    arg [/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/crtend.o] ==> ignore
+    arg [/usr/lib/../lib64/crtn.o] ==> ignore
+  remove lib [gcc]
+  remove lib [gcc_s]
+  remove lib [gcc]
+  remove lib [gcc_s]
+  collapse dir [/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2] ==> [/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2]
+  collapse dir [/local/packages/gcc-4.1.2/bin/../lib/gcc] ==> [/local/packages/gcc-4.1.2/lib/gcc]
+  collapse dir [/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2] ==> [/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2]
+  collapse dir [/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64] ==> [/local/packages/gcc-4.1.2/lib64]
+  collapse dir [/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64] ==> [/usr/local/packages/gcc-4.1.2/lib64]
+  collapse dir [/lib/../lib64] ==> [/lib64]
+  collapse dir [/usr/lib/../lib64] ==> [/usr/lib64]
+  implicit libs: [c]
+  implicit dirs: [/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2;/local/packages/gcc-4.1.2/lib/gcc;/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2;/local/packages/gcc-4.1.2/lib64;/usr/local/packages/gcc-4.1.2/lib64;/lib64;/usr/lib64]
+
+
+Determining if the CXX compiler works passed with the following output:
+Change Dir: /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/gmake "cmTryCompileExec/fast"
+/usr/bin/gmake -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
+gmake[1]: Entering directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp'
+/export/cmake/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building CXX object CMakeFiles/cmTryCompileExec.dir/testCXXCompiler.cxx.o
+/usr/local/bin/c++     -o CMakeFiles/cmTryCompileExec.dir/testCXXCompiler.cxx.o -c /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/testCXXCompiler.cxx
+Linking CXX executable cmTryCompileExec
+/export/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
+/usr/local/bin/c++         CMakeFiles/cmTryCompileExec.dir/testCXXCompiler.cxx.o  -o cmTryCompileExec -rdynamic 
+gmake[1]: Leaving directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp'
+
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/gmake "cmTryCompileExec/fast"
+/usr/bin/gmake -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
+gmake[1]: Entering directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp'
+/export/cmake/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building CXX object CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o
+/usr/local/bin/c++     -o CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o -c /export/cmake/share/cmake-2.8/Modules/CMakeCXXCompilerABI.cpp
+Linking CXX executable cmTryCompileExec
+/export/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
+/usr/local/bin/c++        -v CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o  -o cmTryCompileExec -rdynamic  
+Using built-in specs.
+Target: x86_64-unknown-linux-gnu
+Configured with: ../gcc-4.1.2/configure --prefix=/usr/local/packages/gcc-4.1.2 --with-mpfr=/usr/local/packages/mpfr --with-gmp=/usr/local/packages/gmp --enable-languages=c,ada,c++,java,objc,obj-c++,fortran
+Thread model: posix
+gcc version 4.1.2
+ /local/packages/gcc-4.1.2/bin/../libexec/gcc/x86_64-unknown-linux-gnu/4.1.2/collect2 --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTryCompileExec /usr/lib/../lib64/crt1.o /usr/lib/../lib64/crti.o /local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/crtbegin.o -L/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2 -L/local/packages/gcc-4.1.2/bin/../lib/gcc -L/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2 -L/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64 -L/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/crtend.o /usr/lib/../lib64/crtn.o
+gmake[1]: Leaving directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp'
+
+
+Parsed CXX implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld|ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command:/usr/bin/gmake "cmTryCompileExec/fast"]
+  ignore line: [/usr/bin/gmake -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build]
+  ignore line: [gmake[1]: Entering directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp']
+  ignore line: [/export/cmake/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1]
+  ignore line: [Building CXX object CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o]
+  ignore line: [/usr/local/bin/c++     -o CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o -c /export/cmake/share/cmake-2.8/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [Linking CXX executable cmTryCompileExec]
+  ignore line: [/export/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1]
+  ignore line: [/usr/local/bin/c++        -v CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o  -o cmTryCompileExec -rdynamic  ]
+  ignore line: [Using built-in specs.]
+  ignore line: [Target: x86_64-unknown-linux-gnu]
+  ignore line: [Configured with: ../gcc-4.1.2/configure --prefix=/usr/local/packages/gcc-4.1.2 --with-mpfr=/usr/local/packages/mpfr --with-gmp=/usr/local/packages/gmp --enable-languages=c,ada,c++,java,objc,obj-c++,fortran]
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 4.1.2]
+  link line: [ /local/packages/gcc-4.1.2/bin/../libexec/gcc/x86_64-unknown-linux-gnu/4.1.2/collect2 --eh-frame-hdr -m elf_x86_64 -export-dynamic -dynamic-linker /lib64/ld-linux-x86-64.so.2 -o cmTryCompileExec /usr/lib/../lib64/crt1.o /usr/lib/../lib64/crti.o /local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/crtbegin.o -L/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2 -L/local/packages/gcc-4.1.2/bin/../lib/gcc -L/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2 -L/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64 -L/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64 -L/lib/../lib64 -L/usr/lib/../lib64 CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o -lstdc++ -lm -lgcc_s -lgcc -lc -lgcc_s -lgcc /local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/crtend.o /usr/lib/../lib64/crtn.o]
+    arg [/local/packages/gcc-4.1.2/bin/../libexec/gcc/x86_64-unknown-linux-gnu/4.1.2/collect2] ==> ignore
+    arg [--eh-frame-hdr] ==> ignore
+    arg [-m] ==> ignore
+    arg [elf_x86_64] ==> ignore
+    arg [-export-dynamic] ==> ignore
+    arg [-dynamic-linker] ==> ignore
+    arg [/lib64/ld-linux-x86-64.so.2] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTryCompileExec] ==> ignore
+    arg [/usr/lib/../lib64/crt1.o] ==> ignore
+    arg [/usr/lib/../lib64/crti.o] ==> ignore
+    arg [/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/crtbegin.o] ==> ignore
+    arg [-L/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2] ==> dir [/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2]
+    arg [-L/local/packages/gcc-4.1.2/bin/../lib/gcc] ==> dir [/local/packages/gcc-4.1.2/bin/../lib/gcc]
+    arg [-L/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2] ==> dir [/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2]
+    arg [-L/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64] ==> dir [/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64]
+    arg [-L/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64] ==> dir [/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64]
+    arg [-L/lib/../lib64] ==> dir [/lib/../lib64]
+    arg [-L/usr/lib/../lib64] ==> dir [/usr/lib/../lib64]
+    arg [CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+    arg [-lstdc++] ==> lib [stdc++]
+    arg [-lm] ==> lib [m]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [-lc] ==> lib [c]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/crtend.o] ==> ignore
+    arg [/usr/lib/../lib64/crtn.o] ==> ignore
+  remove lib [gcc_s]
+  remove lib [gcc]
+  remove lib [gcc_s]
+  remove lib [gcc]
+  collapse dir [/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2] ==> [/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2]
+  collapse dir [/local/packages/gcc-4.1.2/bin/../lib/gcc] ==> [/local/packages/gcc-4.1.2/lib/gcc]
+  collapse dir [/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2] ==> [/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2]
+  collapse dir [/local/packages/gcc-4.1.2/bin/../lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64] ==> [/local/packages/gcc-4.1.2/lib64]
+  collapse dir [/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2/../../../../lib64] ==> [/usr/local/packages/gcc-4.1.2/lib64]
+  collapse dir [/lib/../lib64] ==> [/lib64]
+  collapse dir [/usr/lib/../lib64] ==> [/usr/lib64]
+  implicit libs: [stdc++;m;c]
+  implicit dirs: [/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2;/local/packages/gcc-4.1.2/lib/gcc;/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2;/local/packages/gcc-4.1.2/lib64;/usr/local/packages/gcc-4.1.2/lib64;/lib64;/usr/lib64]
+
+

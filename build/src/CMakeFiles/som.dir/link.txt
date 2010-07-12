@@ -1,0 +1,1 @@
+/export/openmpi/bin/mpic++      CMakeFiles/som.dir/som.cpp.o  -o som -rdynamic -L/home/ssul/work/mrsom/MRSOM/build/mrmpi 

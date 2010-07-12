@@ -1,0 +1,2 @@
+/usr/bin/ar cr libmrmpi.a  CMakeFiles/mrmpi.dir/mapreduce.cpp.o CMakeFiles/mrmpi.dir/cmapreduce.cpp.o CMakeFiles/mrmpi.dir/keyvalue.cpp.o CMakeFiles/mrmpi.dir/keymultivalue.cpp.o CMakeFiles/mrmpi.dir/spool.cpp.o CMakeFiles/mrmpi.dir/irregular.cpp.o CMakeFiles/mrmpi.dir/hash.cpp.o CMakeFiles/mrmpi.dir/memory.cpp.o CMakeFiles/mrmpi.dir/error.cpp.o
+/usr/bin/ranlib libmrmpi.a
