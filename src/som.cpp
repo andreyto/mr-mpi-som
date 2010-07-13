@@ -225,7 +225,7 @@ int main(int argc, char *argv[])
         printf("FATAL: not valid F matrix.\n");
         exit(0);
     }
-
+        
     //READ FEATURE DATA FROM FILE///////////////////////////////////////
     if (argc == 6 || argc == 8) {  ///READ FEATURE DATA FROM FILE
         printf("Reading (%d x %d) feature vectors from %s...\n", NVECS, NDIMEN, argv[1]);
@@ -241,15 +241,6 @@ int main(int argc, char *argv[])
         fclose(fp);
         //printMatrix(F);
     } 
-    else if (argc == 5 || argc == 7) {
-        printf("Generating (%d x %d) random feature vectors...\n", NVECS, NDIMEN);
-        //RANDOM FEATURE VECTORS
-        for(int i = 0; i < NVECS; i++) {
-            for(int j = 0; j < NDIMEN; j++) {
-                F.rows[i][j] = rand() % 100 / 100.0f;
-            }
-        }
-    }
         
     float N = (float)NEPOCHS;       //ITERATIONS
     float nrule, nrule0 = 0.9f;     //LEARNING RATE FACTOR
