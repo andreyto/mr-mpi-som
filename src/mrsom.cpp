@@ -37,6 +37,11 @@
 //      07.08.2010      Add other distance metrics than euclidean.
 //                      Add other normalization func
 //
+//  v.3.0.0
+//      07.13.2010      Check R > 1.0 in MR_train_batch!!!!!!!!!!!!!!!!!
+//                      This solves the problem of resulting abnormal map 
+//                      when epochs > x.
+//
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -85,16 +90,14 @@ using namespace MAPREDUCE_NS;
 
 //SOM NODE
 typedef struct node {
-    vector<float> weights;
-    vector<float> coords;  //2D: (x,y)
+    vector<float>   weights;
+    vector<float>   coords;     //2D: (x,y)
 } NODE;
 typedef vector<NODE *> V_NODEP_T;
 
 //SOM
 typedef struct SOM {
     V_NODEP_T nodes;
-    //float *m_add;               //normalization params for input data   (x+add)*mul
-    //float *m_mul;               //normalization params for input data
 } SOM;
 
 typedef struct {
@@ -106,21 +109,21 @@ typedef struct {
 typedef vector<vector<vector<float> > > VVV_FLOAT_T;
 
 struct GIFTBOX {
-    SOM         *som;               
-    float       R;              //RADIUS
-    int         new_nvecs;      //NUM SCATTERED VECTORS
-    DMatrix     *f_vectors;     //FEATURE VECTORS
-    int         idx_start;      //START INDEX FOR SCATTERED VECTORS
-    VVV_FLOAT_T *numer;
-    VVV_FLOAT_T *denom;
+    SOM            *som;               
+    float           R;          //RADIUS
+    int             new_nvecs;  //NUM SCATTERED VECTORS
+    DMatrix        *f_vectors;  //FEATURE VECTORS
+    int             idx_start;  //START INDEX FOR SCATTERED VECTORS
+    //VVV_FLOAT_T    *numer;
+    //VVV_FLOAT_T    *denom;
 };
 
 /* ------------------------------------------------------------------------ */
 void    train_online(SOM *som, DMatrix &F, float R, float Alpha);
 //void    train_batch(SOM *som, DMatrix &F, float R); 
-void    train_batch2(SOM *som, DMatrix &F, float R
-                     //VVV_FLOAT_T &numer_vec, VVV_FLOAT_T &denom_vec
-                     );
+//void    train_batch2(SOM *som, DMatrix &F, float R
+                     ////VVV_FLOAT_T &numer_vec, VVV_FLOAT_T &denom_vec
+                     //);
 void    MR_train_batch(MapReduce *mr, SOM *som, DMatrix &F, 
                        int *scattered,
                        float R, int argc, char* argv[], int myid,
@@ -128,7 +131,7 @@ void    MR_train_batch(MapReduce *mr, SOM *som, DMatrix &F,
                        //VVV_FLOAT_T &numer_vec, VVV_FLOAT_T &denom_vec
                        );
 float   *normalize2(DMatrix &F, int n);
-float   *get_coords(NODE *);
+float   *get_coords(NODE *node);
 float   *get_wvec(SOM *, int);
 float   get_distance(float *, int, vector<float> &);
 float   get_distance2(vector<float> &vec, int distance_metric, vector<float> &wvec);
@@ -158,17 +161,17 @@ void    MR_update_weight(uint64_t itask, char *key, int keybytes, char *value,
 /* ------------------------------------------------------------------------ */
  
 //GLOBALS
-int NDIMEN;             //NUM OF DIMENSIONALITY
-int NVECS;              //NUM OF FEATURE VECTORS
-int SOM_X=50;
-int SOM_Y=50;
-int SOM_D=2;            //2=2D  
-int NNODES=SOM_X*SOM_Y; //TOTAL NUM OF SOM NODES
-int NEPOCHS;            //ITERATIONS
-int DOPT=0;             //0=EUCL, 1=SOSD, 2=TXCB, 3=ANGL, 4=MHLN
-int TMODE=0;            //0=BATCH, 1=ONLINE
-int TOPT=0;             //0=SLOW, 1=FAST
-int NORMAL=0;           //0=NONE, 1=MNMX, 2=ZSCR, 3=SIGM, 4=ENRG
+int     NDIMEN;                 //NUM OF DIMENSIONALITY
+int     NVECS;                  //NUM OF FEATURE VECTORS
+int     SOM_X=50;
+int     SOM_Y=50;
+int     SOM_D=2;                //2=2D  
+int     NNODES=SOM_X*SOM_Y;     //TOTAL NUM OF SOM NODES
+int     NEPOCHS;                //ITERATIONS
+int     DOPT=0;                 //0=EUCL, 1=SOSD, 2=TXCB, 3=ANGL, 4=MHLN
+int     TMODE=0;                //0=BATCH, 1=ONLINE
+int     TOPT=0;                 //0=SLOW, 1=FAST
+int     NORMAL=0;               //0=NONE, 1=MNMX, 2=ZSCR, 3=SIGM, 4=ENRG
 
 /* ------------------------------------------------------------------------ */
 int main(int argc, char *argv[])
@@ -243,7 +246,6 @@ int main(int argc, char *argv[])
     }
 
     //READ FEATURE DATA FROM FILE///////////////////////////////////////
-    //printf("Reading (%d x %d) feature vectors from %s...\n", NVECS, NDIMEN, argv[1]);
     FILE *fp;
     fp = fopen(argv[1],"r");
     for(int i = 0; i < NVECS; i++) {
@@ -310,20 +312,12 @@ int main(int argc, char *argv[])
     R0 = SOM_X / 2.0f;              //INIT RADIUS FOR UPDATING NEIGHBORS
     int x = 0;                      //0...N-1
     
-    //VVV_FLOAT_T numer;
-    //numer= VVV_FLOAT_T (chunksize,
-    //vector<vector<float> > (NNODES,
-    //vector<float>(NDIMEN, 0.0)));
-
-    //VVV_FLOAT_T denom;
-    //denom = VVV_FLOAT_T (chunksize,
-    //vector<vector<float> > (NNODES,
-    //vector<float>(NDIMEN, 0.0)));
-    
     /* 
-     * Should add a routine to check when to stop the update in batch 
-     * mode. Otherwise, the resulting map will be getting deteriorated
-     * in terms of the quality.
+     * SHOULD ADD A ROUTINE TO CHECK WHEN TO STOP THE UPDATE IN BATCH 
+     * MODE. OTHERWISE, THE RESULTING MAP WILL BE GETTING DETERIORATED
+     * IN TERMS OF THE QUALITY.
+     * 
+     * UPDATE: THERE IS NO STOPPING CRITERIA IN SOM. 07.13.2010
      */ 
     //ITERATIONS////////////////////////////////////////////////////////
     while (NEPOCHS) {
@@ -351,16 +345,12 @@ int main(int argc, char *argv[])
             //fprintf(stderr,"[Node %d]: %s, main som weights %0.2f %0.2f %0.2f  \n", myid, myname, som->nodes[0]->weights[0], som->nodes[0]->weights[1], som->nodes[0]->weights[2]);
             //fprintf(stderr,"[Node %d]: %s, main W.rows %0.2f %0.2f %0.2f  \n", myid, myname, W.rows[0][0], W.rows[0][1], W.rows[0][2]);
 //#endif
-            //train_batch(som, F, R);
             //train_batch2(som, F, R, numer, denom);
-            
             MR_train_batch(mr, som, F, 
                            scattered, R, argc, argv, myid, myname, nprocs);
                            //numer, denom);
 
-            //numer.clear();
-            //denom.clear();
-        } else if (TMODE == 1) { //ONLINE
+        } else if (TMODE == 1) { //ONLINE, THIS IS SERIAL VERSION.
             if (myid == 0) {
                 R = R0 * exp(-10.0f * (x * x) / (N * N));
                 nrule = nrule0 * exp(-10.0f * (x * x) / (N * N));  //LEARNING RULE SHRINKS OVER TIME, FOR ONLINE SOM
@@ -383,7 +373,6 @@ int main(int argc, char *argv[])
     if (myid == 0) {
         printf("Saving SOM...\n");
         char som_map[MAX_STR] = "";
-        //get_file_name(argv[1], som_map);
         strcat(som_map, "result.map");
         save_2D_distance_map(som, som_map);
         printf("Converting SOM map to distance map...\n");
@@ -425,70 +414,6 @@ void train_online(SOM *som, DMatrix &f, float R, float Alpha)
             }
         }
     }
-}
-
-/* ------------------------------------------------------------------------ */
-void train_batch2(SOM* som, DMatrix &f, float R)
-                  //VVV_FLOAT_T &numer, VVV_FLOAT_T &denom)
-/* ------------------------------------------------------------------------ */
-{
-    VVV_FLOAT_T numer = VVV_FLOAT_T (NVECS, vector<vector<float> > (NNODES,
-                                   vector<float>(NDIMEN, 0.0)));
-    VVV_FLOAT_T denom = VVV_FLOAT_T (NVECS, vector<vector<float> > (NNODES,
-                                     vector<float>(NDIMEN, 0.0)));
-
-    for (int n = 0; n < NVECS; n++) {
-        //printf("orig       %f %f %f \n", FEATURE[n][0],FEATURE[n][1],FEATURE[n][2]);
-        float *normalized = normalize2(f, n);
-        //printf("normalized %f %f %f \n", normalized[0],normalized[1],normalized[2]);
-        NODE *bmu_node = get_BMU(som, normalized);
-        //cout << bmu_node->coords[0] << " " << bmu_node->coords[1] << endl;
-        const float *p1 = get_coords(bmu_node);
-        //printf("coord 1 %f %f \n", p1[0], p1[1]);
-        for (int k = 0; k < NNODES; k++) {
-            const float *p2 = get_coords(som->nodes[k]);
-            //printf("coord 2 %f %f \n", p2[0], p2[1]);
-            float dist = 0.0f;
-            for (int p = 0; p < NDIMEN; p++)
-                dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
-            dist = sqrt(dist);
-            float neighbor_fuct = exp(-(1.0f * dist * dist) / (R * R));
-            for (int w = 0; w < NDIMEN; w++) {
-                numer[n][k][w] += 1.0f * neighbor_fuct * normalized[w];
-                denom[n][k][w] += neighbor_fuct;
-            }
-        }
-    }
-    //UPDATE W-DIMENSINAL WEIGHTS FOR EACH NODE
-    float *new_weights = (float *)malloc(NDIMEN * SZFLOAT);
-    for (int i = 0; i < NDIMEN; i++)
-        new_weights[i] = 0.0f;
-    for (int k = 0; k < NNODES; k++) {
-        for (int w = 0; w < NDIMEN; w++) {
-            float temp_numer = 0.0f;
-            float temp_demon = 0.0f;
-            for (int n = 0; n < NVECS; n++) {
-                temp_numer += numer[n][k][w];
-                temp_demon += denom[n][k][w];
-                //printf("temp_numer, temp_demon = %f %f\n", temp_numer, temp_demon);
-            }
-            if (temp_demon != 0)
-                new_weights[w] = temp_numer / temp_demon;
-            else if (temp_numer != 0)
-                new_weights[w] = temp_numer;
-            else {
-                //printf("temp_numer temp_demon = %0.2f %0.2f\n", temp_numer, temp_demon);
-                new_weights[w] = 0.0f;
-            }
-        }
-        //printf("%f %f %f\n", som->nodes[k]->weights[0], som->nodes[k]->weights[1], som->nodes[k]->weights[2]);
-        //printf("%f %f %f\n", new_weights[0], new_weights[1], new_weights[2]);
-        updatew_batch(som->nodes[k], new_weights);
-        //printf("%f %f %f\n", som->nodes[k]->weights[0], som->nodes[k]->weights[1], som->nodes[k]->weights[2]);
-    }
-    free(new_weights);
-    numer.clear();
-    denom.clear();
 }
 
 /* ------------------------------------------------------------------------ */
@@ -539,7 +464,7 @@ void MR_train_batch(MapReduce *mr, SOM *som, DMatrix &f, //DMatrix &w,
     
     int num_keywords2 = mr->map(mr, &MR_update_weight, &gfbox);
     //fprintf(stderr,"[Node %d]: %s, mapper2 ends! -- num_keywords = %d! -------\n", myid, myname, num_keywords2);
-    mr->print(-1, 1, 5, 3);
+    //mr->print(-1, 1, 5, 3);
     //double tstop = MPI_Wtime();
 }
 
@@ -556,7 +481,7 @@ void updatew_batch(NODE *node, float *new_w)
 /* ------------------------------------------------------------------------ */
 {
     for (int w = 0; w < NDIMEN; w++) {
-        if (new_w[w] > 0) //????
+        //if (new_w[w] > 0) //????
             node->weights[w] = new_w[w];
     }
 }
@@ -607,7 +532,7 @@ NODE *get_BMU(SOM *som, float *fvec)
     NODE *pbmu_node = som->nodes[0];
     float mindist = get_distance(fvec, 0, pbmu_node->weights);
     float dist;
-    for (int x = 0; x < NNODES; x++) {
+    for (int x = 1; x < NNODES; x++) {
         if ((dist = get_distance(fvec, 0, som->nodes[x]->weights)) < mindist) {
             mindist = dist;
             pbmu_node = som->nodes[x];
@@ -790,134 +715,145 @@ NODE *get_node(SOM *som, int n)
 /* ------------------------------------------------------------------------ */
 void MR_compute_weight(int itask, KeyValue *kv, void *ptr)
 /* ------------------------------------------------------------------------ */
-{
+{    
     GIFTBOX *gb = (GIFTBOX *) ptr;
-    DMatrix f = *(gb->f_vectors);
-    
-    //VVV_FLOAT_T *numer = gb->numer_vec;
-    //VVV_FLOAT_T *denom = gb->denom_vec;
-    
-    VVV_FLOAT_T numer;
-    numer= VVV_FLOAT_T (gb->new_nvecs, vector<vector<float> > (NNODES,
-                       vector<float>(NDIMEN, 0.0)));
-    VVV_FLOAT_T denom;
-    denom = VVV_FLOAT_T (gb->new_nvecs, vector<vector<float> > (NNODES,
-                        vector<float>(NDIMEN, 0.0)));
-                        
-    for (int n = 0; n < gb->new_nvecs; n++) {
-        float *normalized = normalize2(f, gb->idx_start+n); //n-th feature vector in the scatered list.
+    if (gb->R > 1.0f) {
+        DMatrix f = *(gb->f_vectors);
+        VVV_FLOAT_T numer;
+        numer= VVV_FLOAT_T (gb->new_nvecs, vector<vector<float> > (NNODES,
+                           vector<float>(NDIMEN, 0.0)));
+        VVV_FLOAT_T denom;
+        denom = VVV_FLOAT_T (gb->new_nvecs, vector<vector<float> > (NNODES,
+                            vector<float>(NDIMEN, 0.0)));
+                            
+        for (int n = 0; n < gb->new_nvecs; n++) {
+            float *normalized = normalize2(f, gb->idx_start+n); //n-th feature vector in the scatered list.
 //bottleneck////////////////////////////////////////////////////////////
-        //GET THE BEST MATCHING UNIT
-        NODE *bmu_node = get_BMU(gb->som, normalized);
+            //GET THE BEST MATCHING UNIT
+            NODE *bmu_node = get_BMU(gb->som, normalized);
 //bottleneck////////////////////////////////////////////////////////////
-        //GET THE COORDS FOR THE BMU
-        const float *p1 = get_coords(bmu_node);
-        for (int k = 0; k < NNODES; k++) {            
-            NODE *tp = gb->som->nodes[k];
-            const float *p2 = get_coords(tp);
-            float dist = 0.0f;
-            for (int p = 0; p < NDIMEN; p++)
-                dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
-            dist = sqrt(dist);
-            float neighbor_fuct=0.0f;
-            neighbor_fuct = exp(-(1.0f * dist * dist) / (gb->R * gb->R));
+            //GET THE COORDS FOR THE BMU
+            const float *p1 = get_coords(bmu_node);
+            for (int k = 0; k < NNODES; k++) {            
+                NODE *tp = gb->som->nodes[k];
+                const float *p2 = get_coords(tp);
+                float dist = 0.0f;
+                for (int p = 0; p < NDIMEN; p++)
+                    dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
+                dist = sqrt(dist);
+                float neighbor_fuct=0.0f;
+                neighbor_fuct = exp(-(1.0f * dist * dist) / (gb->R * gb->R));
+                for (int w = 0; w < NDIMEN; w++) {
+                    //(*numer)[n][k][w] += 1.0f * neighbor_fuct * normalized[w];
+                    //(*denom)[n][k][w] += neighbor_fuct; 
+                    numer[n][k][w] += 1.0f * neighbor_fuct * normalized[w];
+                    denom[n][k][w] += neighbor_fuct; 
+                }
+            }
+        }
+        //for (int n = 0; n < gb->new_nvecs; n++)
+        //for (int k = 0; k < gb->num_som_nodes; k++)
+        //printf("%f %f %f\n", numer[n][k][0], numer[n][k][1], numer[n][k][2]);
+        //printf("\n");
+        //for (int n = 0; n < gb->new_nvecs; n++)
+        //for (int k = 0; k < gb->num_som_nodes; k++)
+        //printf("%f %f %f\n", numer[n][k][0], numer[n][k][1], numer[n][k][2]);
+        
+        //UPDATE W-DIMENSINAL WEIGHTS FOR EACH NODE
+        //float *sum_numer = (float *)malloc(SZFLOAT * gb->num_weights_per_node);
+        //float *sum_demon = (float *)malloc(SZFLOAT * gb->num_weights_per_node);
+        float sum_numer[NDIMEN];
+        float sum_demon[NDIMEN];
+        for (int k = 0; k < NNODES; k++) {
             for (int w = 0; w < NDIMEN; w++) {
-                //(*numer)[n][k][w] += 1.0f * neighbor_fuct * normalized[w];
-                //(*denom)[n][k][w] += neighbor_fuct; 
-                numer[n][k][w] += 1.0f * neighbor_fuct * normalized[w];
-                denom[n][k][w] += neighbor_fuct; 
+                float temp_numer = 0.0f;
+                float temp_demon = 0.0f;
+                for (int n = 0; n < gb->new_nvecs; n++) {
+                    temp_numer += numer[n][k][w];
+                    temp_demon += denom[n][k][w];
+                }
+                sum_numer[w] = temp_numer; //LOCAL SUM VECTOR FOR K-TH NODE
+                sum_demon[w] = temp_demon; //LOCAL SUM VECTOR FOR K-TH NODE
+            }
+            for (int w = 0; w < NDIMEN; w++) {
+                //char weightnum[MAX_STR];
+                //sprintf(weightnum, "N %d %d", k, w);
+                ////cout << weightnum << " " << sum_numer[w] << endl;
+
+                ////nodes[k]->updatew_batch(new_weights);
+                //char bkey[strlen(weightnum)+1], bvalue[SZFLOAT], bvalue2[SZFLOAT];
+                ////float f_key, f_value;
+                //memcpy(bkey, &weightnum, strlen(weightnum)+1);
+                //memcpy(bvalue, &sum_numer[w], SZFLOAT);
+                //kv->add(bkey, strlen(weightnum)+1, bvalue, SZFLOAT);
+
+                //sprintf(weightnum, "D %d %d", k, w);
+                ////cout << weightnum << " " << sum_demon[w] << endl;
+                //memcpy(bkey, &weightnum, strlen(weightnum)+1);
+                //memcpy(bvalue2, &sum_demon[w], SZFLOAT);
+                //kv->add(bkey, strlen(weightnum)+1, bvalue2, SZFLOAT);
+
+                char weightnum[MAX_STR];
+                sprintf(weightnum, "%d %d", k, w);
+                /////////////////////////////////////
+                //SHOULD BE CAREFUL ON KEY BYTE ALIGN!
+                /////////////////////////////////////
+                char bkey[strlen(weightnum)+1];
+                char bvalue[SZFLOAT];
+                char bvalue2[SZFLOAT];
+                char bconcat[SZFLOAT*2];
+                //char byte_value_cancat2[sizeof(int)*2];
+                memcpy(bkey, &weightnum, strlen(weightnum)+1);
+                memcpy(bvalue, &sum_numer[w], SZFLOAT);
+                memcpy(bvalue2, &sum_demon[w], SZFLOAT);
+                for (int i = 0; i < (int)SZFLOAT; i++) {
+                    bconcat[i] = bvalue[i];
+                    bconcat[i+SZFLOAT] = bvalue2[i];
+                }//total 4*2 = 8bytes for two floats.
+
+                ////DEBUG
+                //printf("orig floats = %g, %g\n", sum_numer[w], sum_demon[w]);
+                //char *c1 = (char *)malloc(SZFLOAT);
+                //char *c2 = (char *)malloc(SZFLOAT);
+                //for (int i = 0; i < (int)SZFLOAT; i++) {
+                //c1[i] = bconcat[i];
+                //c2[i] = bconcat[i+SZFLOAT];
+                //}
+                //printf("parsed floats = %g, %g\n", *(float *)c1, *(float *)c2);
+
+                kv->add(bkey, strlen(weightnum)+1, bconcat, SZFLOAT*2);
+
+                //try encoded key ==> fail!
+                //char byte_value3[sizeof(int)];
+                //char byte_value4[sizeof(int)];
+                //memcpy(byte_value3, &k, sizeof(int));
+                //memcpy(byte_value4, &w, sizeof(int));
+                //for (int i = 0; i < (int)sizeof(int); i++) {
+                //byte_value_cancat2[i] = byte_value3[i];
+                //byte_value_cancat2[i+sizeof(int)] = byte_value4[i];
+                //}
+                //kv->add(byte_value_cancat2, sizeof(int)*2, bconcat, SZFLOAT*2);
             }
         }
+        //free(sum_numer);
+        //free(sum_demon);
+        numer.clear();
+        denom.clear();
+        //fprintf(stderr,"[Node %d]: %s end mapper **** \n", gb->myid, gb->myname);
     }
-    //for (int n = 0; n < gb->new_nvecs; n++)
-    //for (int k = 0; k < gb->num_som_nodes; k++)
-    //printf("%f %f %f\n", numer[n][k][0], numer[n][k][1], numer[n][k][2]);
-    //printf("\n");
-    //for (int n = 0; n < gb->new_nvecs; n++)
-    //for (int k = 0; k < gb->num_som_nodes; k++)
-    //printf("%f %f %f\n", numer[n][k][0], numer[n][k][1], numer[n][k][2]);
-    
-    //UPDATE W-DIMENSINAL WEIGHTS FOR EACH NODE
-    //float *sum_numer = (float *)malloc(SZFLOAT * gb->num_weights_per_node);
-    //float *sum_demon = (float *)malloc(SZFLOAT * gb->num_weights_per_node);
-    float sum_numer[NDIMEN];
-    float sum_demon[NDIMEN];
-    for (int k = 0; k < NNODES; k++) {
-        for (int w = 0; w < NDIMEN; w++) {
-            float temp_numer = 0.0f;
-            float temp_demon = 0.0f;
-            for (int n = 0; n < gb->new_nvecs; n++) {
-                temp_numer += numer[n][k][w];
-                temp_demon += denom[n][k][w];
-            }
-            sum_numer[w] = temp_numer; //LOCAL SUM VECTOR FOR K-TH NODE
-            sum_demon[w] = temp_demon; //LOCAL SUM VECTOR FOR K-TH NODE
-        }
-        for (int w = 0; w < NDIMEN; w++) {
-            //char weightnum[MAX_STR];
-            //sprintf(weightnum, "N %d %d", k, w);
-            ////cout << weightnum << " " << sum_numer[w] << endl;
-
-            ////nodes[k]->updatew_batch(new_weights);
-            //char bkey[strlen(weightnum)+1], bvalue[SZFLOAT], bvalue2[SZFLOAT];
-            ////float f_key, f_value;
-            //memcpy(bkey, &weightnum, strlen(weightnum)+1);
-            //memcpy(bvalue, &sum_numer[w], SZFLOAT);
-            //kv->add(bkey, strlen(weightnum)+1, bvalue, SZFLOAT);
-
-            //sprintf(weightnum, "D %d %d", k, w);
-            ////cout << weightnum << " " << sum_demon[w] << endl;
-            //memcpy(bkey, &weightnum, strlen(weightnum)+1);
-            //memcpy(bvalue2, &sum_demon[w], SZFLOAT);
-            //kv->add(bkey, strlen(weightnum)+1, bvalue2, SZFLOAT);
-
-            char weightnum[MAX_STR];
-            sprintf(weightnum, "%d %d", k, w);
-            /////////////////////////////////////
-            //SHOULD BE CAREFUL ON KEY BYTE ALIGN!
-            /////////////////////////////////////
-            char bkey[strlen(weightnum)+1];
-            char bvalue[SZFLOAT];
-            char bvalue2[SZFLOAT];
-            char bconcat[SZFLOAT*2];
-            //char byte_value_cancat2[sizeof(int)*2];
-            memcpy(bkey, &weightnum, strlen(weightnum)+1);
-            memcpy(bvalue, &sum_numer[w], SZFLOAT);
-            memcpy(bvalue2, &sum_demon[w], SZFLOAT);
-            for (int i = 0; i < (int)SZFLOAT; i++) {
-                bconcat[i] = bvalue[i];
-                bconcat[i+SZFLOAT] = bvalue2[i];
-            }//total 4*2 = 8bytes for two floats.
-
-            ////DEBUG
-            //printf("orig floats = %g, %g\n", sum_numer[w], sum_demon[w]);
-            //char *c1 = (char *)malloc(SZFLOAT);
-            //char *c2 = (char *)malloc(SZFLOAT);
-            //for (int i = 0; i < (int)SZFLOAT; i++) {
-            //c1[i] = bconcat[i];
-            //c2[i] = bconcat[i+SZFLOAT];
-            //}
-            //printf("parsed floats = %g, %g\n", *(float *)c1, *(float *)c2);
-
-            kv->add(bkey, strlen(weightnum)+1, bconcat, SZFLOAT*2);
-
-            //try encoded key ==> fail!
-            //char byte_value3[sizeof(int)];
-            //char byte_value4[sizeof(int)];
-            //memcpy(byte_value3, &k, sizeof(int));
-            //memcpy(byte_value4, &w, sizeof(int));
-            //for (int i = 0; i < (int)sizeof(int); i++) {
-            //byte_value_cancat2[i] = byte_value3[i];
-            //byte_value_cancat2[i+sizeof(int)] = byte_value4[i];
-            //}
-            //kv->add(byte_value_cancat2, sizeof(int)*2, bconcat, SZFLOAT*2);
-        }
-    }
-    //free(sum_numer);
-    //free(sum_demon);
-    numer.clear();
-    denom.clear();
-    //fprintf(stderr,"[Node %d]: %s end mapper **** \n", gb->myid, gb->myname);
+    //else {
+        /* IN BATCH MODE, THERE IS NO LEARNING RATE FACTOR. THUS NOTHING
+         * IS UPDATED WHEN R <= 1.0.
+         * OR
+         * COMPUTE neighbor_fuct * PREVIOUS_WEIGHT AND SET THE WEIGHT AS 
+         * NEW WEGITH, BECAUSE 1/neighbor_fuct ACTS LIKE LEARNING RATE
+         * FACTOR IN BATCH MODE?
+         * LET'S TRY THE LATTER CASE.
+         * 
+         * I HAVE TRIED THE LATTER BUT NOT WORKING. 07.13.2010 
+         * SEE SOM.CPP FOR DETAILS.
+         */     
+    //}
 }
 
 
@@ -978,35 +914,16 @@ void MR_update_weight(uint64_t itask, char *key, int keybytes, char *value,
     key_tokens = strtok(NULL, whitespace);
     int W = atoi(key_tokens);
     float new_weight = *(float *)value;
-    NODE *tp = gb->som->nodes[K];
-    updatew_batch_index(tp, new_weight, W); //UPDATE WEIGHT OF NODE K 
+    updatew_batch_index(gb->som->nodes[K], new_weight, W); //UPDATE WEIGHT OF NODE K 
 }
 
 /* ------------------------------------------------------------------------ */
 void updatew_batch_index(NODE *node, float new_weight, int w)
 /* ------------------------------------------------------------------------ */
 {
-    if (new_weight > 0)
+    //if (new_weight > 0)
         node->weights[w] = new_weight;
 }
-
-///* ------------------------------------------------------------------------ */
-//float sqroot(float m)
-///* ------------------------------------------------------------------------ */
-//{
-//float i = 0;
-//float x1, x2;
-//while ( (i*i) <= m ) i+=0.1;
-//x1=i;
-//for (int j = 0; j < 10; j++) {
-//x2=m;
-//x2/=x1;
-//x2+=x1;
-//x2/=2;
-//x1=x2;
-//}
-//return x2;
-//}
 
 /* ------------------------------------------------------------------------ */
 DMatrix createMatrix(const unsigned int rows, const unsigned int cols)
@@ -1172,3 +1089,86 @@ void printMatrix(DMatrix A)
     free(denom);
     free(new_weights);
 }*/
+
+/* ------------------------------------------------------------------------ */
+//void train_batch2(SOM* som, DMatrix &f, float R)
+                  //VVV_FLOAT_T &numer, VVV_FLOAT_T &denom)
+/* ------------------------------------------------------------------------ */ /*
+{
+    VVV_FLOAT_T numer = VVV_FLOAT_T (NVECS, vector<vector<float> > (NNODES,
+                                   vector<float>(NDIMEN, 0.0)));
+    VVV_FLOAT_T denom = VVV_FLOAT_T (NVECS, vector<vector<float> > (NNODES,
+                                     vector<float>(NDIMEN, 0.0)));
+
+    for (int n = 0; n < NVECS; n++) {
+        //printf("orig       %f %f %f \n", FEATURE[n][0],FEATURE[n][1],FEATURE[n][2]);
+        float *normalized = normalize2(f, n);
+        //printf("normalized %f %f %f \n", normalized[0],normalized[1],normalized[2]);
+        NODE *bmu_node = get_BMU(som, normalized);
+        //cout << bmu_node->coords[0] << " " << bmu_node->coords[1] << endl;
+        const float *p1 = get_coords(bmu_node);
+        //printf("coord 1 %f %f \n", p1[0], p1[1]);
+        for (int k = 0; k < NNODES; k++) {
+            const float *p2 = get_coords(som->nodes[k]);
+            //printf("coord 2 %f %f \n", p2[0], p2[1]);
+            float dist = 0.0f;
+            for (int p = 0; p < NDIMEN; p++)
+                dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
+            dist = sqrt(dist);
+            float neighbor_fuct = exp(-(1.0f * dist * dist) / (R * R));
+            for (int w = 0; w < NDIMEN; w++) {
+                numer[n][k][w] += 1.0f * neighbor_fuct * normalized[w];
+                denom[n][k][w] += neighbor_fuct;
+            }
+        }
+    }
+    //UPDATE W-DIMENSINAL WEIGHTS FOR EACH NODE
+    float *new_weights = (float *)malloc(NDIMEN * SZFLOAT);
+    for (int i = 0; i < NDIMEN; i++)
+        new_weights[i] = 0.0f;
+    for (int k = 0; k < NNODES; k++) {
+        for (int w = 0; w < NDIMEN; w++) {
+            float temp_numer = 0.0f;
+            float temp_demon = 0.0f;
+            for (int n = 0; n < NVECS; n++) {
+                temp_numer += numer[n][k][w];
+                temp_demon += denom[n][k][w];
+                //printf("temp_numer, temp_demon = %f %f\n", temp_numer, temp_demon);
+            }
+            if (temp_demon != 0)
+                new_weights[w] = temp_numer / temp_demon;
+            else if (temp_numer != 0)
+                new_weights[w] = temp_numer;
+            else {
+                //printf("temp_numer temp_demon = %0.2f %0.2f\n", temp_numer, temp_demon);
+                new_weights[w] = 0.0f;
+            }
+        }
+        //printf("%f %f %f\n", som->nodes[k]->weights[0], som->nodes[k]->weights[1], som->nodes[k]->weights[2]);
+        //printf("%f %f %f\n", new_weights[0], new_weights[1], new_weights[2]);
+        updatew_batch(som->nodes[k], new_weights);
+        //printf("%f %f %f\n", som->nodes[k]->weights[0], som->nodes[k]->weights[1], som->nodes[k]->weights[2]);
+    }
+    free(new_weights);
+    numer.clear();
+    denom.clear();
+}*/
+
+
+///* ------------------------------------------------------------------------ */
+//float sqroot(float m)
+///* ------------------------------------------------------------------------ */
+//{
+//float i = 0;
+//float x1, x2;
+//while ( (i*i) <= m ) i+=0.1;
+//x1=i;
+//for (int j = 0; j < 10; j++) {
+//x2=m;
+//x2/=x1;
+//x2+=x1;
+//x2/=2;
+//x1=x2;
+//}
+//return x2;
+//}
