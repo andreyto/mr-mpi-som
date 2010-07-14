@@ -42,7 +42,7 @@
 //                      This solves the problem of resulting abnormal map 
 //                      when epochs > x.
 //                      DEBUG: check if (temp_demon != 0) in MR_accumul_weight.
-//                      Add vector shuffling.
+//                      Add input vector shuffling.
 //
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -957,7 +957,7 @@ void MR_update_weight(uint64_t itask, char *key, int keybytes, char *value,
 void updatew_batch_index(NODE *node, float new_weight, int w)
 /* ------------------------------------------------------------------------ */
 {
-    //if (new_weight > 0)
+    if (new_weight > 0)
         node->weights[w] = new_weight;
 }
 

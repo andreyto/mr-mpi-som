@@ -37,7 +37,7 @@ using namespace std;
  
 #define MAX_STR         255
 #define SZFLOAT         sizeof(float)
-
+#define DATA_T          float
 //#define NDEBUG
 //#define _DEBUG
 //#ifdef _DEBUG
@@ -45,12 +45,12 @@ using namespace std;
 
 //SOM NODE
 typedef struct node {
-    vector<float> weights;
-    vector<float> coords;  //2D: (x,y)
+    vector<DATA_T> weights;
+    vector<DATA_T> coords;  //2D: (x,y)
 } NODE;
 typedef vector<NODE *>                  V_NODEP_T;
-typedef vector<float>                   V_FLOAT_T;
-typedef vector<vector<vector<float> > > VVV_FLOAT_T;
+typedef vector<DATA_T>                   V_FLOAT_T;
+typedef vector<vector<vector<DATA_T> > > VVV_FLOAT_T;
 
 //SOM
 typedef struct SOM {
@@ -68,6 +68,7 @@ typedef struct {
 void          train_online(SOM *som, DMatrix &F, float R, float Alpha);
 //void        train_batch(SOM *som, DMatrix &F, float R);
 void          train_batch2(SOM *som, DMatrix &F, float R);// VVV_FLOAT_T &numer, VVV_FLOAT_T &denom);
+void          train_batch4(SOM *som, DMatrix &F, DMatrix &W, float R);
 float        *normalize(float *vec);
 float        *normalize2(DMatrix &F, int n);
 float        *get_coords(NODE *);
@@ -295,6 +296,10 @@ int main(int argc, char *argv[])
             train_batch3(som, F, W, vn, S, D, R);  
             printf("BATCH3-  epoch: %d   R: %.2f \n", (NEPOCHS-1), R);
         }
+        else if (TMODE == 3) { //NEW BATCH2
+            train_batch4(som, F, W, R);  
+            printf("BATCH4-  epoch: %d   R: %.2f \n", (NEPOCHS-1), R);
+        }
         NEPOCHS--;
     }
     gettimeofday(&t1_end, NULL);
@@ -379,7 +384,7 @@ void train_batch3(SOM* som, DMatrix &F, DMatrix &W, V_FLOAT_T &vn,
                   DMatrix &S, DMatrix &D, float R) 
 /* ------------------------------------------------------------------------ */
 {   
-    if (R > 1.0f) { 
+    //if (R > 1.0f) { 
         int i, k, j, i1, i2, bmu;
         float h, r, htot;  
         int d = NDIMEN;
@@ -447,7 +452,7 @@ void train_batch3(SOM* som, DMatrix &F, DMatrix &W, V_FLOAT_T &vn,
 
         tmp_BMUTable->clear();
         delete tmp_BMUTable;
-    }
+    //}
 }
 
 /* ------------------------------------------------------------------------ */
@@ -460,9 +465,9 @@ void train_online(SOM *som, DMatrix &F, float R, float Alpha)
         //AND d_c(t) == min d_k(t)
         NODE *bmu_node = get_BMU(som, normalized);
         const float *p1 = get_coords(bmu_node);
-        if (R <= 1.0f) { //ADJUST BMU NODE ONLY
-            updatew_online(bmu_node, normalized, Alpha);
-        } else { //ADJUST WEIGHT VECTORS OF THE NEIGHBORS TO BMU NODE
+        //if (R <= 1.0f) { //ADJUST BMU NODE ONLY
+            //updatew_online(bmu_node, normalized, Alpha);
+        //} else { //ADJUST WEIGHT VECTORS OF THE NEIGHBORS TO BMU NODE
             for (int k = 0; k < NNODES; k++) { //ADJUST WEIGHTS OF ALL K NODES IF DOPT <= R
                 const float *p2 = get_coords(som->nodes[k]);
                 float dist = 0.0f;
@@ -474,7 +479,9 @@ void train_online(SOM *som, DMatrix &F, float R, float Alpha)
                 //GAUSSIAN NEIGHBORHOOD FUNCTION
                 float neighbor_fuct = exp(-(1.0f * dist * dist) / (R * R));
                 updatew_online(som->nodes[k], normalized, Alpha * neighbor_fuct);
-            }
+                //for (int w = 0; w < NDIMEN; w++)
+                    //node->weights[w] += Alpha_x_Hck * (vec[w] - node->weights[w]);
+            //}
         }
     }
 }
@@ -485,7 +492,7 @@ void train_batch2(SOM* som, DMatrix &F, float R)
                   //VVV_FLOAT_T &numer, VVV_FLOAT_T &denom)
 /* ------------------------------------------------------------------------ */
 {
-    if (R > 1.0f) {
+    //if (R > 1.0f) {
         VVV_FLOAT_T numer = VVV_FLOAT_T(NVECS, vector<vector<float> > (NNODES,
                                        vector<float>(NDIMEN, 0.0)));
         VVV_FLOAT_T denom = VVV_FLOAT_T(NVECS, vector<vector<float> > (NNODES,
@@ -511,9 +518,11 @@ void train_batch2(SOM* som, DMatrix &F, float R)
         
         //UPDATE W-DIMENSINAL WEIGHTS FOR EACH NODE
         float *new_weights = (float *)malloc(NDIMEN * SZFLOAT);
-        for (int i = 0; i < NDIMEN; i++)
-            new_weights[i] = 0.0f;
+        //for (int i = 0; i < NDIMEN; i++)
+            //new_weights[i] = 0.0f;
         for (int k = 0; k < NNODES; k++) {
+            for (int i = 0; i < NDIMEN; i++)
+                new_weights[i] = 0.0f;
             for (int w = 0; w < NDIMEN; w++) {
                 float temp_numer = 0.0f;
                 float temp_demon = 0.0f;
@@ -529,8 +538,8 @@ void train_batch2(SOM* som, DMatrix &F, float R)
         free(new_weights);
         numer.clear();
         denom.clear();
-    }
-    else {
+    //}
+    //else {
         /* IN BATCH MODE, THERE IS NO LEARNING RATE FACTOR. THUS NOTHING
          * IS UPDATED WHEN R <= 1.0.
          * OR
@@ -587,9 +596,67 @@ void train_batch2(SOM* som, DMatrix &F, float R)
         new_weights2.clear();
         denom.clear(); 
         */
-    }
+    //}
 }
  
+/* ------------------------------------------------------------------------ */
+void train_batch4(SOM *som, DMatrix &F, DMatrix &W, float R)
+/* ------------------------------------------------------------------------ */
+{    
+    //for (int k = 0; k < NNODES; k++) {
+        //for (int w = 0; w < NDIMEN; w++) {
+            //W.rows[k][w] = som->nodes[k]->weights[w];
+            //assert(W.rows[k][w] == som->nodes[k]->weights[w]);
+        //}
+    //}
+    
+    DMatrix delta_W; //WEIGHT VECTORS
+    delta_W = initMatrix();    
+    delta_W = createMatrix(NNODES, NDIMEN);
+    if (!validMatrix(delta_W)) {
+        printf("FATAL: not valid delta_W matrix.\n");
+        exit(0);
+    }
+    
+    //VVV_FLOAT_T new_W = VVV_FLOAT_T(NVECS, vector<vector<float> > (NNODES,
+                                    //vector<float>(NDIMEN, 0.0)));
+                                       
+    for (int n = 0; n < NVECS; n++) {
+        float *normalized = normalize2(F, n);
+        //GET BEST NODE USING d_k(t) = || x(t) = w_k(t) || ^2
+        //AND d_c(t) == min d_k(t)
+        NODE *bmu_node = get_BMU(som, normalized);
+        const float *p1 = get_coords(bmu_node);
+        for (int k = 0; k < NNODES; k++) { //ADJUST WEIGHTS OF ALL K NODES IF DOPT <= R
+            const float *p2 = get_coords(som->nodes[k]);
+            float dist = 0.0f;
+            for (int p = 0; p < NDIMEN; p++)
+                dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
+            dist = sqrt(dist);
+            //GAUSSIAN NEIGHBORHOOD FUNCTION
+            float neighbor_fuct = exp(-(1.0f * dist * dist) / (R * R));
+            for (int w = 0; w < NDIMEN; w++) {
+                //new_W[n][k][w] += 1.0f * neighbor_fuct * (F.rows[n][w] - W.rows[k][w]);
+                delta_W.rows[k][w] = som->nodes[k]->weights[w];
+                som->nodes[k]->weights[w] = som->nodes[k]->weights[w] + neighbor_fuct * (normalized[w] - som->nodes[k]->weights[w]);\
+                delta_W.rows[k][w] = delta_W.rows[k][w] + neighbor_fuct * (normalized[w] - som->nodes[k]->weights[w]);
+                //assert(delta_W.rows[k][w] == som->nodes[k]->weights[w]);
+                //som->nodes[k]->weights[w] = W.rows[k][w];
+                
+                //new_W[k][w] = W.rows[k][w];
+                //W.rows[k][w] += 1.0f * neighbor_fuct * (F.rows[n][w] - W.rows[k][w]);
+            }
+         }
+    }
+    
+    //UPDATE WEIGHTS
+    //for (int k = 0; k < NNODES; k++) 
+        //for (int w = 0; w < NDIMEN; w++) 
+            //som->nodes[k]->weights[w] = som->nodes[k]->weights[w] + delta_W.rows[k][w];        
+    //for (int n = 0; n < NVECS; n++) 
+        //for (int k = 0; k < NNODES; k++) 
+    freeMatrix(&delta_W);
+}
  
 /* ------------------------------------------------------------------------ */
 NODE *classify(SOM *som, float *vec)
@@ -732,6 +799,23 @@ NODE *get_BMU(SOM *som, float *fvec)
     //CAN ADD A FEATURE FOR VOTING AMONG BMUS.
     return pbmu_node;
 }
+
+///* ------------------------------------------------------------------------ */
+//NODE *get_BMU2(DMatrix &w, float *fvec)
+///* ------------------------------------------------------------------------ */
+//{
+    ////NODE *pbmu_node = som->nodes[0];
+    //float mindist = get_distance(fvec, 0, w.rows[0]);
+    //float dist;
+    //for (int x = 1; x < NNODES; x++) {
+        //if ((dist = get_distance(fvec, 0, w.rows[x])) < mindist) {
+            //mindist = dist;
+            //pbmu_node = som->nodes[x];
+        //}
+    //}
+    ////CAN ADD A FEATURE FOR VOTING AMONG BMUS.
+    //return pbmu_node;
+//}
 
 /* ------------------------------------------------------------------------ */
 float get_distance(float *vec, int distance_metric, vector<float> &wvec)
