@@ -75,6 +75,7 @@ float        *get_coords(NODE *);
 float        *get_wvec(SOM *, int);
 float         get_distance(float *, int, vector<float> &);
 float         get_distance2(vector<float> &vec, int distance_metric, vector<float> &wvec);
+float         get_distance3(float *vec, int distance_metric, float *wvec);
 void          updatew_online(NODE *node, float *vec, float Alpha_x_Hck);
 void          updatew_batch(NODE *, float *);
 void          updatew_batch2(NODE *node, V_FLOAT_T &new_w);
@@ -83,6 +84,7 @@ void          get_file_name(char *path, char *name);
 int           save_2D_distance_map(SOM *som, char *fname);
 NODE         *get_node(SOM *, int);
 NODE         *get_BMU(SOM *, float *);
+NODE         *get_BMU2(SOM *som, DMatrix &w, float *fvec);
 
 //CLASSIFYING
 NODE         *classify(SOM *som, float *vec);
@@ -104,7 +106,7 @@ public:
 };
 typedef vector<BMUnode>             V_BMUNODE_T;
 typedef vector<vector<BMUnode> >    VV_BMUNODE_T;
-VV_BMUNODE_T *create_BMUTable(SOM *som, DMatrix &F);
+VV_BMUNODE_T *create_BMUTable(DMatrix &F, DMatrix &W);
 void          train_batch3(SOM* som, DMatrix &F, DMatrix &W, 
                            V_FLOAT_T &vn, DMatrix &S, DMatrix &D, float R);
 float         nodes_distance(NODE *n1, NODE *n2);
@@ -116,7 +118,7 @@ int NDIMEN;             //NUM OF DIMENSIONALITY
 int NVECS;              //NUM OF FEATURE VECTORS
 int SOM_X=50;
 int SOM_Y=50;
-int SOM_D=2;            //2=2D  
+int SOM_DIMEN=2;            //2=2D  
 int NNODES=SOM_X*SOM_Y; //TOTAL NUM OF SOM NODES
 int NEPOCHS;            //ITERATIONS
 int DOPT=0;             //0=EUCL, 1=SOSD, 2=TXCB, 3=ANGL, 4=MHLN
@@ -201,7 +203,7 @@ int main(int argc, char *argv[])
         NODE *node = (NODE *)malloc(sizeof(NODE));
         //NodeGarbageCan.push_back(node);
         node->weights.resize(NDIMEN);
-        node->coords.resize(SOM_D, 0.0);
+        node->coords.resize(SOM_DIMEN, 0.0);
         for (int i = 0; i < NDIMEN; i++) {
             int w1 = 0xFFF & rand();
             w1 -= 0x800;
@@ -337,7 +339,7 @@ float nodes_distance(NODE *n1, NODE *n2)
 }
 
 /* ------------------------------------------------------------------------ */
-VV_BMUNODE_T *create_BMUTable(SOM *som, DMatrix &F, DMatrix &W)
+VV_BMUNODE_T *create_BMUTable(DMatrix &F, DMatrix &W)
 /* ------------------------------------------------------------------------ */
 {
     int i, j, k, j_min, j_min2;  
@@ -393,13 +395,13 @@ void train_batch3(SOM* som, DMatrix &F, DMatrix &W, V_FLOAT_T &vn,
         
         //READ WEIGHTS INTO W
         for (int i = 0; i < m; i++) 
-            for (int k = 0; k < NDIMEN; k++) 
+            for (int k = 0; k < d; k++) 
                 W.rows[i][k] = som->nodes[i]->weights[k]; 
         //printf("W1 %0.2f %0.2f %0.2f\n", W.rows[0][0], W.rows[0][1], W.rows[0][2]);
         
         VV_BMUNODE_T *tmp_BMUTable = new VV_BMUNODE_T;
-        tmp_BMUTable = create_BMUTable(som, F, W);
-        assert(tmp_BMUTable->size() == NVECS);
+        tmp_BMUTable = create_BMUTable(F, W);
+        //assert(tmp_BMUTable->size() == NVECS);
         //printf("tmp_BMUTable->size() = %d\n", tmp_BMUTable->size());
         //for (i = 0; i < tmp_BMUTable->size(); i++)
             //for (j = 0; j < tmp_BMUTable[i].size(); j++)
@@ -465,13 +467,13 @@ void train_online(SOM *som, DMatrix &F, float R, float Alpha)
         //AND d_c(t) == min d_k(t)
         NODE *bmu_node = get_BMU(som, normalized);
         const float *p1 = get_coords(bmu_node);
-        //if (R <= 1.0f) { //ADJUST BMU NODE ONLY
-            //updatew_online(bmu_node, normalized, Alpha);
-        //} else { //ADJUST WEIGHT VECTORS OF THE NEIGHBORS TO BMU NODE
+        if (R <= 1.0f) { //ADJUST BMU NODE ONLY
+            updatew_online(bmu_node, normalized, Alpha);
+        } else { //ADJUST WEIGHT VECTORS OF THE NEIGHBORS TO BMU NODE
             for (int k = 0; k < NNODES; k++) { //ADJUST WEIGHTS OF ALL K NODES IF DOPT <= R
                 const float *p2 = get_coords(som->nodes[k]);
                 float dist = 0.0f;
-                for (int p = 0; p < NDIMEN; p++)
+                for (int p = 0; p < SOM_DIMEN; p++)
                     dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
                 dist = sqrt(dist);
                 if (TOPT == 1 && dist > R)
@@ -481,7 +483,7 @@ void train_online(SOM *som, DMatrix &F, float R, float Alpha)
                 updatew_online(som->nodes[k], normalized, Alpha * neighbor_fuct);
                 //for (int w = 0; w < NDIMEN; w++)
                     //node->weights[w] += Alpha_x_Hck * (vec[w] - node->weights[w]);
-            //}
+            }
         }
     }
 }
@@ -505,7 +507,7 @@ void train_batch2(SOM* som, DMatrix &F, float R)
             for (int k = 0; k < NNODES; k++) {
                 const float *p2 = get_coords(som->nodes[k]);
                 float dist = 0.0f;
-                for (int p = 0; p < NDIMEN; p++)
+                for (int p = 0; p < SOM_DIMEN; p++)
                     dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
                 dist = sqrt(dist);
                 float neighbor_fuct = exp(-(1.0f * dist * dist) / (R * R));
@@ -518,8 +520,6 @@ void train_batch2(SOM* som, DMatrix &F, float R)
         
         //UPDATE W-DIMENSINAL WEIGHTS FOR EACH NODE
         float *new_weights = (float *)malloc(NDIMEN * SZFLOAT);
-        //for (int i = 0; i < NDIMEN; i++)
-            //new_weights[i] = 0.0f;
         for (int k = 0; k < NNODES; k++) {
             for (int i = 0; i < NDIMEN; i++)
                 new_weights[i] = 0.0f;
@@ -531,7 +531,7 @@ void train_batch2(SOM* som, DMatrix &F, float R)
                     temp_demon += denom[n][k][w];
                 }
                 if (temp_demon != 0)
-                    new_weights[w] = temp_numer / temp_demon;
+                    new_weights[w] = 1.0f * temp_numer / temp_demon;
             }
             updatew_batch(som->nodes[k], new_weights);
         }
@@ -605,57 +605,65 @@ void train_batch4(SOM *som, DMatrix &F, DMatrix &W, float R)
 {    
     //for (int k = 0; k < NNODES; k++) {
         //for (int w = 0; w < NDIMEN; w++) {
-            //W.rows[k][w] = som->nodes[k]->weights[w];
-            //assert(W.rows[k][w] == som->nodes[k]->weights[w]);
+            ////W.rows[k][w] = som->nodes[k]->weights[w];
+            //W.rows[k][w] = 0.0f;
+            ////assert(W.rows[k][w] == som->nodes[k]->weights[w]);
         //}
     //}
     
-    DMatrix delta_W; //WEIGHT VECTORS
-    delta_W = initMatrix();    
-    delta_W = createMatrix(NNODES, NDIMEN);
-    if (!validMatrix(delta_W)) {
-        printf("FATAL: not valid delta_W matrix.\n");
-        exit(0);
-    }
+    //DMatrix delta_W; //WEIGHT VECTORS
+    //delta_W = initMatrix();    
+    //delta_W = createMatrix(NNODES, NDIMEN);
+    //if (!validMatrix(delta_W)) {
+        //printf("FATAL: not valid delta_W matrix.\n");
+        //exit(0);
+    //}
     
-    //VVV_FLOAT_T new_W = VVV_FLOAT_T(NVECS, vector<vector<float> > (NNODES,
+    //VVV_FLOAT_T delta_W = VVV_FLOAT_T(NVECS, vector<vector<float> > (NNODES,
                                     //vector<float>(NDIMEN, 0.0)));
                                        
     for (int n = 0; n < NVECS; n++) {
         float *normalized = normalize2(F, n);
         //GET BEST NODE USING d_k(t) = || x(t) = w_k(t) || ^2
         //AND d_c(t) == min d_k(t)
-        NODE *bmu_node = get_BMU(som, normalized);
+        //NODE *bmu_node = get_BMU2(som, W, normalized);        
+        NODE *bmu_node = get_BMU(som, normalized);        
         const float *p1 = get_coords(bmu_node);
+        
+        //NODE *bmu_node2 = get_BMU(som, normalized);        
+        //const float *p3 = get_coords(bmu_node2);
+        
+        //printf("%f %f %f %f\n", p1[0], p1[1], p3[0], p3[1]);
+        
         for (int k = 0; k < NNODES; k++) { //ADJUST WEIGHTS OF ALL K NODES IF DOPT <= R
             const float *p2 = get_coords(som->nodes[k]);
             float dist = 0.0f;
-            for (int p = 0; p < NDIMEN; p++)
+            for (int p = 0; p < SOM_DIMEN; p++)
                 dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
             dist = sqrt(dist);
             //GAUSSIAN NEIGHBORHOOD FUNCTION
             float neighbor_fuct = exp(-(1.0f * dist * dist) / (R * R));
             for (int w = 0; w < NDIMEN; w++) {
-                //new_W[n][k][w] += 1.0f * neighbor_fuct * (F.rows[n][w] - W.rows[k][w]);
-                delta_W.rows[k][w] = som->nodes[k]->weights[w];
-                som->nodes[k]->weights[w] = som->nodes[k]->weights[w] + neighbor_fuct * (normalized[w] - som->nodes[k]->weights[w]);\
-                delta_W.rows[k][w] = delta_W.rows[k][w] + neighbor_fuct * (normalized[w] - som->nodes[k]->weights[w]);
-                //assert(delta_W.rows[k][w] == som->nodes[k]->weights[w]);
-                //som->nodes[k]->weights[w] = W.rows[k][w];
-                
-                //new_W[k][w] = W.rows[k][w];
-                //W.rows[k][w] += 1.0f * neighbor_fuct * (F.rows[n][w] - W.rows[k][w]);
+                som->nodes[k]->weights[w] += neighbor_fuct * (normalized[w] - som->nodes[k]->weights[w]);
+                //W.rows[k][w] += neighbor_fuct * (normalized[w] - W.rows[k][w]);
+                //delta_W[n][k][w] += neighbor_fuct * (normalized[w] - som->nodes[k]->weights[w]);            
             }
-         }
+        }
     }
+    
+    //for (int k = 0; k < NNODES; k++)
+        //for (int w = 0; w < NDIMEN; w++) 
+            //for (int n = 0; n < NVECS; n++) 
+                //W.rows[k][w] += delta_W[n][k][w];
     
     //UPDATE WEIGHTS
     //for (int k = 0; k < NNODES; k++) 
         //for (int w = 0; w < NDIMEN; w++) 
-            //som->nodes[k]->weights[w] = som->nodes[k]->weights[w] + delta_W.rows[k][w];        
-    //for (int n = 0; n < NVECS; n++) 
-        //for (int k = 0; k < NNODES; k++) 
-    freeMatrix(&delta_W);
+            //////som->nodes[k]->weights[w] = som->nodes[k]->weights[w] + delta_W.rows[k][w];        
+            //som->nodes[k]->weights[w] += W.rows[k][w];        
+    ////for (int n = 0; n < NVECS; n++) 
+        ////for (int k = 0; k < NNODES; k++) 
+    //freeMatrix(&delta_W);
 }
  
 /* ------------------------------------------------------------------------ */
@@ -800,22 +808,22 @@ NODE *get_BMU(SOM *som, float *fvec)
     return pbmu_node;
 }
 
-///* ------------------------------------------------------------------------ */
-//NODE *get_BMU2(DMatrix &w, float *fvec)
-///* ------------------------------------------------------------------------ */
-//{
-    ////NODE *pbmu_node = som->nodes[0];
-    //float mindist = get_distance(fvec, 0, w.rows[0]);
-    //float dist;
-    //for (int x = 1; x < NNODES; x++) {
-        //if ((dist = get_distance(fvec, 0, w.rows[x])) < mindist) {
-            //mindist = dist;
-            //pbmu_node = som->nodes[x];
-        //}
-    //}
-    ////CAN ADD A FEATURE FOR VOTING AMONG BMUS.
-    //return pbmu_node;
-//}
+/* ------------------------------------------------------------------------ */
+NODE *get_BMU2(SOM * som, DMatrix &w, float *fvec)
+/* ------------------------------------------------------------------------ */
+{
+    NODE *pbmu_node = som->nodes[0];
+    float mindist = get_distance3(fvec, 0, w.rows[0]);
+    float dist;
+    for (int x = 1; x < NNODES; x++) {
+        if ((dist = get_distance3(fvec, 0, w.rows[x])) < mindist) {
+            mindist = dist;
+            pbmu_node = som->nodes[x];
+        }
+    }
+    //CAN ADD A FEATURE FOR VOTING AMONG BMUS.
+    return pbmu_node;
+}
 
 /* ------------------------------------------------------------------------ */
 float get_distance(float *vec, int distance_metric, vector<float> &wvec)
@@ -897,6 +905,43 @@ float get_distance2(vector<float> &vec, int distance_metric, vector<float> &wvec
 }
 
 /* ------------------------------------------------------------------------ */
+float get_distance3(float *vec, int distance_metric, float *wvec)
+/* ------------------------------------------------------------------------ */
+{
+    float distance = 0.0f;
+    float n1 = 0.0f, n2 = 0.0f;
+    switch (distance_metric) {
+    default:
+    case 0: //EUCLIDIAN
+        for (int w = 0; w < NDIMEN; w++)
+            distance += (vec[w] - wvec[w]) * (vec[w] - wvec[w]);
+        return sqrt(distance);
+    case 1: //SOSD: //SUM OF SQUARED DISTANCES
+        //if (m_weights_number >= 4) {
+                //distance = mse(vec, m_weights, m_weights_number);
+        //} else {
+            for (int w = 0; w < NDIMEN; w++)
+                distance += (vec[w] - wvec[w]) * (vec[w] - wvec[w]);
+        //}
+        return distance;
+    case 2: //TXCB: //TAXICAB
+        for (int w = 0; w < NDIMEN; w++)
+            distance += fabs(vec[w] - wvec[w]);
+        return distance;
+    case 3: //ANGL: //ANGLE BETWEEN VECTORS
+        for (int w = 0; w < NDIMEN; w++) {
+            distance += vec[w] * wvec[w];
+            n1 += vec[w] * vec[w];
+            n2 += wvec[w] * wvec[w];
+        }
+        return acos(distance / (sqrt(n1)*sqrt(n2)));
+    //case 4: //MHLN:   //mahalanobis
+        //distance = sqrt(m_weights * cov * vec)
+        //return distance
+    }
+}
+
+/* ------------------------------------------------------------------------ */
 float *get_wvec(SOM *som, int n)
 /* ------------------------------------------------------------------------ */
 {
@@ -911,7 +956,7 @@ float *get_coords(NODE *node)
 /* ------------------------------------------------------------------------ */
 {
     float *coords = (float *)malloc(SZFLOAT);
-    for (int i = 0; i < SOM_D; i++)
+    for (int i = 0; i < SOM_DIMEN; i++)
         coords[i] = node->coords[i];
     return coords;
 }
