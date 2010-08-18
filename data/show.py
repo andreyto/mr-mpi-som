@@ -1,6 +1,7 @@
-import sys, glob
-from scipy import *
+#import sys, glob
+#from scipy import *
 from pylab import *
+from numpy import *
 
 #plotfile = 'plot.png'
 
@@ -25,8 +26,8 @@ from pylab import *
 #gplt.grid("off")
 #gplt.output(plotfile,'png medium transparent picsize 600 400')  
 
-from numpy import *
-from scipy.io import read_array
+
+#from scipy.io import read_array
 
 #R_matrix = read_array('rgb_map',columns=((1,-1)))
 R_matrix = loadtxt('result.map')

@@ -1,7 +1,7 @@
 The system is: Linux - 2.6.18-128.2.1.el5 - x86_64
 Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
 Compiler: /usr/local/bin/gcc 
-Build flags: 
+Build flags: -I/home/ssul/work/packages/x86_64-rhel5/include;-I/home/ssul/work/packages/include;;-I/usr/local/include
 Id flags: 
 
 The output was:
@@ -14,7 +14,7 @@ The C compiler identification is GNU, found in "/home/ssul/work/mrsom/MRSOM/buil
 
 Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
 Compiler: /usr/local/bin/c++ 
-Build flags: 
+Build flags: -I/home/ssul/work/packages/x86_64-rhel5/include;-I/home/ssul/work/packages/include;
 Id flags: 
 
 The output was:
@@ -31,12 +31,12 @@ Change Dir: /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp
 Run Build Command:/usr/bin/gmake "cmTryCompileExec/fast"
 /usr/bin/gmake -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
 gmake[1]: Entering directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp'
-/export/cmake/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1
+/home/ssul/work/packages/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/testCCompiler.c.o
-/usr/local/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/testCCompiler.c.o   -c /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/testCCompiler.c
+/usr/local/bin/gcc   -I/home/ssul/work/packages/x86_64-rhel5/include -I/home/ssul/work/packages/include  -I/usr/local/include      -o CMakeFiles/cmTryCompileExec.dir/testCCompiler.c.o   -c /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/testCCompiler.c
 Linking C executable cmTryCompileExec
-/export/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
-/usr/local/bin/gcc        CMakeFiles/cmTryCompileExec.dir/testCCompiler.c.o  -o cmTryCompileExec -rdynamic 
+/home/ssul/work/packages/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
+/usr/local/bin/gcc   -I/home/ssul/work/packages/x86_64-rhel5/include -I/home/ssul/work/packages/include  -I/usr/local/include     -L/home/ssul/work/packages/x86_64-rhel5/lib64 -Wl,-R/home/ssul/work/packages/x86_64-rhel5/lib64 -L/home/ssul/work/packages/x86_64-rhel5/lib -Wl,-R/home/ssul/work/packages/x86_64-rhel5/lib  -L/usr/local/lib64 -Wl,-R/usr/local/lib64 -L/usr/local/lib -Wl,-R/usr/local/lib CMakeFiles/cmTryCompileExec.dir/testCCompiler.c.o  -o cmTryCompileExec -rdynamic 
 gmake[1]: Leaving directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp'
 
 
@@ -46,12 +46,12 @@ Change Dir: /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp
 Run Build Command:/usr/bin/gmake "cmTryCompileExec/fast"
 /usr/bin/gmake -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
 gmake[1]: Entering directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp'
-/export/cmake/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1
+/home/ssul/work/packages/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building C object CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o
-/usr/local/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o   -c /export/cmake/share/cmake-2.8/Modules/CMakeCCompilerABI.c
+/usr/local/bin/gcc   -I/home/ssul/work/packages/x86_64-rhel5/include -I/home/ssul/work/packages/include  -I/usr/local/include      -o CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o   -c /home/ssul/work/packages/share/cmake-2.8/Modules/CMakeCCompilerABI.c
 Linking C executable cmTryCompileExec
-/export/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
-/usr/local/bin/gcc       -v CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o  -o cmTryCompileExec -rdynamic  
+/home/ssul/work/packages/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
+/usr/local/bin/gcc   -I/home/ssul/work/packages/x86_64-rhel5/include -I/home/ssul/work/packages/include  -I/usr/local/include     -v CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o  -o cmTryCompileExec -rdynamic  
 Using built-in specs.
 Target: x86_64-unknown-linux-gnu
 Configured with: ../gcc-4.1.2/configure --prefix=/usr/local/packages/gcc-4.1.2 --with-mpfr=/usr/local/packages/mpfr --with-gmp=/usr/local/packages/gmp --enable-languages=c,ada,c++,java,objc,obj-c++,fortran
@@ -68,12 +68,12 @@ Parsed C implicit link information from above output:
   ignore line: [Run Build Command:/usr/bin/gmake "cmTryCompileExec/fast"]
   ignore line: [/usr/bin/gmake -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build]
   ignore line: [gmake[1]: Entering directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp']
-  ignore line: [/export/cmake/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1]
+  ignore line: [/home/ssul/work/packages/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1]
   ignore line: [Building C object CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o]
-  ignore line: [/usr/local/bin/gcc    -o CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o   -c /export/cmake/share/cmake-2.8/Modules/CMakeCCompilerABI.c]
+  ignore line: [/usr/local/bin/gcc   -I/home/ssul/work/packages/x86_64-rhel5/include -I/home/ssul/work/packages/include  -I/usr/local/include      -o CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o   -c /home/ssul/work/packages/share/cmake-2.8/Modules/CMakeCCompilerABI.c]
   ignore line: [Linking C executable cmTryCompileExec]
-  ignore line: [/export/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1]
-  ignore line: [/usr/local/bin/gcc       -v CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o  -o cmTryCompileExec -rdynamic  ]
+  ignore line: [/home/ssul/work/packages/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1]
+  ignore line: [/usr/local/bin/gcc   -I/home/ssul/work/packages/x86_64-rhel5/include -I/home/ssul/work/packages/include  -I/usr/local/include     -v CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o  -o cmTryCompileExec -rdynamic  ]
   ignore line: [Using built-in specs.]
   ignore line: [Target: x86_64-unknown-linux-gnu]
   ignore line: [Configured with: ../gcc-4.1.2/configure --prefix=/usr/local/packages/gcc-4.1.2 --with-mpfr=/usr/local/packages/mpfr --with-gmp=/usr/local/packages/gmp --enable-languages=c,ada,c++,java,objc,obj-c++,fortran]
@@ -132,12 +132,12 @@ Change Dir: /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp
 Run Build Command:/usr/bin/gmake "cmTryCompileExec/fast"
 /usr/bin/gmake -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
 gmake[1]: Entering directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp'
-/export/cmake/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1
+/home/ssul/work/packages/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building CXX object CMakeFiles/cmTryCompileExec.dir/testCXXCompiler.cxx.o
-/usr/local/bin/c++     -o CMakeFiles/cmTryCompileExec.dir/testCXXCompiler.cxx.o -c /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/testCXXCompiler.cxx
+/usr/local/bin/c++    -I/home/ssul/work/packages/x86_64-rhel5/include -I/home/ssul/work/packages/include       -o CMakeFiles/cmTryCompileExec.dir/testCXXCompiler.cxx.o -c /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/testCXXCompiler.cxx
 Linking CXX executable cmTryCompileExec
-/export/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
-/usr/local/bin/c++         CMakeFiles/cmTryCompileExec.dir/testCXXCompiler.cxx.o  -o cmTryCompileExec -rdynamic 
+/home/ssul/work/packages/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
+/usr/local/bin/c++    -I/home/ssul/work/packages/x86_64-rhel5/include -I/home/ssul/work/packages/include      -L/home/ssul/work/packages/x86_64-rhel5/lib64 -Wl,-R/home/ssul/work/packages/x86_64-rhel5/lib64 -L/home/ssul/work/packages/x86_64-rhel5/lib -Wl,-R/home/ssul/work/packages/x86_64-rhel5/lib  -L/usr/local/lib64 -Wl,-R/usr/local/lib64 -L/usr/local/lib -Wl,-R/usr/local/lib CMakeFiles/cmTryCompileExec.dir/testCXXCompiler.cxx.o  -o cmTryCompileExec -rdynamic 
 gmake[1]: Leaving directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp'
 
 
@@ -147,12 +147,12 @@ Change Dir: /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp
 Run Build Command:/usr/bin/gmake "cmTryCompileExec/fast"
 /usr/bin/gmake -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
 gmake[1]: Entering directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp'
-/export/cmake/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1
+/home/ssul/work/packages/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1
 Building CXX object CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o
-/usr/local/bin/c++     -o CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o -c /export/cmake/share/cmake-2.8/Modules/CMakeCXXCompilerABI.cpp
+/usr/local/bin/c++    -I/home/ssul/work/packages/x86_64-rhel5/include -I/home/ssul/work/packages/include       -o CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o -c /home/ssul/work/packages/share/cmake-2.8/Modules/CMakeCXXCompilerABI.cpp
 Linking CXX executable cmTryCompileExec
-/export/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
-/usr/local/bin/c++        -v CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o  -o cmTryCompileExec -rdynamic  
+/home/ssul/work/packages/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
+/usr/local/bin/c++    -I/home/ssul/work/packages/x86_64-rhel5/include -I/home/ssul/work/packages/include      -v CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o  -o cmTryCompileExec -rdynamic  
 Using built-in specs.
 Target: x86_64-unknown-linux-gnu
 Configured with: ../gcc-4.1.2/configure --prefix=/usr/local/packages/gcc-4.1.2 --with-mpfr=/usr/local/packages/mpfr --with-gmp=/usr/local/packages/gmp --enable-languages=c,ada,c++,java,objc,obj-c++,fortran
@@ -169,12 +169,12 @@ Parsed CXX implicit link information from above output:
   ignore line: [Run Build Command:/usr/bin/gmake "cmTryCompileExec/fast"]
   ignore line: [/usr/bin/gmake -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build]
   ignore line: [gmake[1]: Entering directory `/local/projects5/MGTAXA/ssul/mrsom/MRSOM/build/CMakeFiles/CMakeTmp']
-  ignore line: [/export/cmake/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1]
+  ignore line: [/home/ssul/work/packages/bin/cmake -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles/CMakeTmp/CMakeFiles 1]
   ignore line: [Building CXX object CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o]
-  ignore line: [/usr/local/bin/c++     -o CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o -c /export/cmake/share/cmake-2.8/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [/usr/local/bin/c++    -I/home/ssul/work/packages/x86_64-rhel5/include -I/home/ssul/work/packages/include       -o CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o -c /home/ssul/work/packages/share/cmake-2.8/Modules/CMakeCXXCompilerABI.cpp]
   ignore line: [Linking CXX executable cmTryCompileExec]
-  ignore line: [/export/cmake/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1]
-  ignore line: [/usr/local/bin/c++        -v CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o  -o cmTryCompileExec -rdynamic  ]
+  ignore line: [/home/ssul/work/packages/bin/cmake -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1]
+  ignore line: [/usr/local/bin/c++    -I/home/ssul/work/packages/x86_64-rhel5/include -I/home/ssul/work/packages/include      -v CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o  -o cmTryCompileExec -rdynamic  ]
   ignore line: [Using built-in specs.]
   ignore line: [Target: x86_64-unknown-linux-gnu]
   ignore line: [Configured with: ../gcc-4.1.2/configure --prefix=/usr/local/packages/gcc-4.1.2 --with-mpfr=/usr/local/packages/mpfr --with-gmp=/usr/local/packages/gmp --enable-languages=c,ada,c++,java,objc,obj-c++,fortran]

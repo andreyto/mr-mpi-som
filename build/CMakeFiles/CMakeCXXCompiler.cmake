@@ -2,10 +2,8 @@ SET(CMAKE_CXX_COMPILER "/usr/local/bin/c++")
 SET(CMAKE_CXX_COMPILER_ARG1 "")
 SET(CMAKE_CXX_COMPILER_ID "GNU")
 SET(CMAKE_CXX_PLATFORM_ID "Linux")
-
 SET(CMAKE_AR "/usr/bin/ar")
 SET(CMAKE_RANLIB "/usr/bin/ranlib")
-SET(CMAKE_LINKER "/usr/bin/ld")
 SET(CMAKE_COMPILER_IS_GNUCXX 1)
 SET(CMAKE_CXX_COMPILER_LOADED 1)
 SET(CMAKE_COMPILER_IS_MINGW )
@@ -39,7 +37,6 @@ IF(CMAKE_CXX_COMPILER_ABI)
 ENDIF(CMAKE_CXX_COMPILER_ABI)
 
 SET(CMAKE_CXX_HAS_ISYSROOT "")
-
 
 SET(CMAKE_CXX_IMPLICIT_LINK_LIBRARIES "stdc++;m;c")
 SET(CMAKE_CXX_IMPLICIT_LINK_DIRECTORIES "/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2;/local/packages/gcc-4.1.2/lib/gcc;/usr/local/packages/gcc-4.1.2/lib/gcc/x86_64-unknown-linux-gnu/4.1.2;/local/packages/gcc-4.1.2/lib64;/usr/local/packages/gcc-4.1.2/lib64;/lib64;/usr/lib64")

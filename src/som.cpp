@@ -48,9 +48,9 @@ typedef struct node {
     vector<DATA_T> weights;
     vector<DATA_T> coords;  //2D: (x,y)
 } NODE;
-typedef vector<NODE *>                  V_NODEP_T;
-typedef vector<DATA_T>                   V_FLOAT_T;
-typedef vector<vector<vector<DATA_T> > > VVV_FLOAT_T;
+typedef vector<NODE *>                      V_NODEP_T;
+typedef vector<DATA_T>                      V_FLOAT_T;
+typedef vector<vector<vector<DATA_T> > >    VVV_FLOAT_T;
 
 //SOM
 typedef struct SOM {
@@ -180,12 +180,14 @@ int main(int argc, char *argv[])
         printf("         [X Y]   = optional, SOM map size. Default = [50 50]\n");
         exit(0);
     }
+    
     //MAKE SOM//////////////////////////////////////////////////////////
     som = (SOM *)malloc(sizeof(SOM));
     som->nodes = V_NODEP_T(NNODES);
     for (int x = 0; x < NNODES; x++) {
         som->nodes[x] = (NODE *)malloc(sizeof(NODE));
     }
+    
     //CREATE WEIGHT MATRIX////////////////////////////////////////////////
     DMatrix W; //WEIGHT VECTORS
     W = initMatrix();
@@ -194,6 +196,7 @@ int main(int argc, char *argv[])
         printf("FATAL: not valid W matrix.\n");
         exit(0);
     }
+    
     //FILL WEIGHTS//////////////////////////////////////////////////////
     srand((unsigned int)time(0));
     //srand(1);
@@ -209,6 +212,7 @@ int main(int argc, char *argv[])
         }
         som->nodes[x] = node;
     }
+    
     //FILE COORDS (2D RECT)/////////////////////////////////////////////
     for (int x = 0; x < SOM_X; x++) {
         for (int y = 0; y < SOM_Y; y++) {
@@ -216,6 +220,7 @@ int main(int argc, char *argv[])
             som->nodes[(x*SOM_Y)+y]->coords[1] = x * 1.0f;
         }
     }
+    
     //CREATE DATA MATRIX////////////////////////////////////////////////
     DMatrix F; //FEATURE VECTOR
     F = initMatrix();
@@ -224,6 +229,7 @@ int main(int argc, char *argv[])
         printf("FATAL: not valid F matrix.\n");
         exit(0);
     }
+    
     //READ FEATURE DATA FROM FILE///////////////////////////////////////
     if (argc == 6 || argc == 8) {  ///READ FEATURE DATA FROM FILE
         printf("Reading (%d x %d) feature vectors from %s...\n", NVECS, NDIMEN, argv[1]);
@@ -652,7 +658,8 @@ void train_batch5(SOM *som, DMatrix &F, DMatrix &W, float R)
         float *normalized = normalize2(F, n);
         NODE *bmu_node = get_BMU(som, normalized);
         const float *p1 = get_coords(bmu_node);
-        for (int k = 0; k < NNODES; k++) temp[k] = 0.0f;
+        for (int k = 0; k < NNODES; k++) 
+            temp[k] = 0.0f;
         //for (int k = 0; k < NNODES; k++) { //ADJUST WEIGHTS OF ALL K NODES IF DOPT <= R
         //const float *p2 = get_coords(som->nodes[k]);
         //float dist = 0.0f;

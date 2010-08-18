@@ -38,13 +38,13 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /export/cmake/bin/cmake
+CMAKE_COMMAND = /home/ssul/work/packages/bin/cmake
 
 # The command to remove a file.
-RM = /export/cmake/bin/cmake -E remove -f
+RM = /home/ssul/work/packages/bin/cmake -E remove -f
 
 # The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /export/cmake/bin/ccmake
+CMAKE_EDIT_COMMAND = /home/ssul/work/packages/bin/ccmake
 
 # The top-level source directory on which CMake was run.
 CMAKE_SOURCE_DIR = /home/ssul/work/mrsom/MRSOM

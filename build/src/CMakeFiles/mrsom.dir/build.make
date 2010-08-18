@@ -26,13 +26,13 @@ cmake_force:
 SHELL = /bin/sh
 
 # The CMake executable.
-CMAKE_COMMAND = /export/cmake/bin/cmake
+CMAKE_COMMAND = /home/ssul/work/packages/bin/cmake
 
 # The command to remove a file.
-RM = /export/cmake/bin/cmake -E remove -f
+RM = /home/ssul/work/packages/bin/cmake -E remove -f
 
 # The program to use to edit the cache.
-CMAKE_EDIT_COMMAND = /export/cmake/bin/ccmake
+CMAKE_EDIT_COMMAND = /home/ssul/work/packages/bin/ccmake
 
 # The top-level source directory on which CMake was run.
 CMAKE_SOURCE_DIR = /home/ssul/work/mrsom/MRSOM
@@ -53,15 +53,15 @@ src/CMakeFiles/mrsom.dir/mrsom.cpp.o: src/CMakeFiles/mrsom.dir/flags.make
 src/CMakeFiles/mrsom.dir/mrsom.cpp.o: ../src/mrsom.cpp
 	$(CMAKE_COMMAND) -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles $(CMAKE_PROGRESS_1)
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Building CXX object src/CMakeFiles/mrsom.dir/mrsom.cpp.o"
-	cd /home/ssul/work/mrsom/MRSOM/build/src && /export/openmpi/bin/mpic++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/mrsom.dir/mrsom.cpp.o -c /home/ssul/work/mrsom/MRSOM/src/mrsom.cpp
+	cd /home/ssul/work/mrsom/MRSOM/build/src && /home/ssul/work/packages2/x86_64-rhel5/bin/mpic++   $(CXX_DEFINES) $(CXX_FLAGS) -o CMakeFiles/mrsom.dir/mrsom.cpp.o -c /home/ssul/work/mrsom/MRSOM/src/mrsom.cpp
 
 src/CMakeFiles/mrsom.dir/mrsom.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/mrsom.dir/mrsom.cpp.i"
-	cd /home/ssul/work/mrsom/MRSOM/build/src && /export/openmpi/bin/mpic++  $(CXX_DEFINES) $(CXX_FLAGS) -E /home/ssul/work/mrsom/MRSOM/src/mrsom.cpp > CMakeFiles/mrsom.dir/mrsom.cpp.i
+	cd /home/ssul/work/mrsom/MRSOM/build/src && /home/ssul/work/packages2/x86_64-rhel5/bin/mpic++  $(CXX_DEFINES) $(CXX_FLAGS) -E /home/ssul/work/mrsom/MRSOM/src/mrsom.cpp > CMakeFiles/mrsom.dir/mrsom.cpp.i
 
 src/CMakeFiles/mrsom.dir/mrsom.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/mrsom.dir/mrsom.cpp.s"
-	cd /home/ssul/work/mrsom/MRSOM/build/src && /export/openmpi/bin/mpic++  $(CXX_DEFINES) $(CXX_FLAGS) -S /home/ssul/work/mrsom/MRSOM/src/mrsom.cpp -o CMakeFiles/mrsom.dir/mrsom.cpp.s
+	cd /home/ssul/work/mrsom/MRSOM/build/src && /home/ssul/work/packages2/x86_64-rhel5/bin/mpic++  $(CXX_DEFINES) $(CXX_FLAGS) -S /home/ssul/work/mrsom/MRSOM/src/mrsom.cpp -o CMakeFiles/mrsom.dir/mrsom.cpp.s
 
 src/CMakeFiles/mrsom.dir/mrsom.cpp.o.requires:
 .PHONY : src/CMakeFiles/mrsom.dir/mrsom.cpp.o.requires
