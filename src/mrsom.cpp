@@ -239,7 +239,7 @@ int main(int argc, char *argv[])
     //// CREATE DATA MATRIX////////////////////////////////////////////////
     DMatrix F; //FEATURE VECTOR
     F = initMatrix();
-    F = createMatrix(NVECS, NDIMEN);
+    F = createMatrix(NVECS, NDIMEN); 
     if (!validMatrix(F)) {
         printf("FATAL: not valid F matrix.\n");
         exit(0);
@@ -328,6 +328,7 @@ int main(int argc, char *argv[])
      *
      * UPDATE: THERE IS NO STOPPING CRITERIA IN SOM. 07.13.2010
      */
+     
     //ITERATIONS////////////////////////////////////////////////////////
     while (NEPOCHS) {
         if (TMODE == 0) { //// BATCH
@@ -356,7 +357,7 @@ int main(int argc, char *argv[])
             //train_batch2(som, F, R, numer, denom);
             MR_train_batch(mr, som, F, W, loc,
                            scattered, R, argc, argv, myid, myname, nprocs);
-            //numer, denom);
+                           //numer, denom);
         }
         else if (TMODE == 1) { //// ONLINE, THIS IS SERIAL VERSION.
             if (myid == 0) {

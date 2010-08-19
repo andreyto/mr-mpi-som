@@ -30,6 +30,10 @@ class Matrix(object):
         
 if __name__ == "__main__":
     
+    if len(sys.argv) != 4:   
+        print "Usage: python gen_rand_matrix.py outFile cols rows"
+        sys.exit(1)
+        
     x = int(sys.argv[2]);
     y = int(sys.argv[3]);
     filename = sys.argv[1];    
@@ -42,7 +46,7 @@ if __name__ == "__main__":
     FILE = open(filename,"w")
     for i in range(m0.rows):
         for j in range(m0.cols):
-            FILE.write(m0.getitem(i, j) + " ")
+            FILE.write(m0.getitem(i, j) + ",")
         FILE.write("\n")
     FILE.close()
 
