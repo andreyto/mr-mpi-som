@@ -3,21 +3,23 @@ import numpy
 import sys
 from random import *
 from math import *
+from numpy.random import shuffle
+
     
 def work(myid, numprocs, data, inFileName, nodes, width, height, \
-             radius_decaying, rad_div_val, learning_rate_decaying, delta_nodes):
+             radius_decaying, rad_div_val, learning_rate_decaying, delta_nodes, train_vector):
 
     ## NOTE: DO NOT NEED TO READ ALL FV. IMPROVE THIS!
-    f = open(inFileName, "r")
-    train_vector = []
-    count = 0
-    dt = numpy.dtype(float) 
-    try:
-        for line in f:
-            values = line.rstrip().split(' ')
-            train_vector.append(numpy.array(values, dt))
-    finally:
-        f.close()
+    #f = open(inFileName, "r")
+    #train_vector = []
+    #count = 0
+    #dt = numpy.dtype(float) 
+    #try:
+        #for line in f:
+            #values = line.rstrip().split(' ')
+            #train_vector.append(numpy.array(values, dt))
+    #finally:
+        #f.close()
     
     interval = len(train_vector)
     myinterval = interval/numprocs    
@@ -133,7 +135,19 @@ radius_decaying = 0
 rad_div_val = 0
 learning_rate_decaying = 0
 delta_nodes = numpy.array([[[0 for i in range(FV_size)] for x in range(width)] for y in range(height)])
-            
+
+## NOTE: DO NOT NEED TO READ ALL FV. IMPROVE THIS!
+f = open(inFileName, "r")
+train_vector = []
+count = 0
+dt = numpy.dtype(float) 
+try:
+    for line in f:
+        values = line.rstrip().split(' ')
+        train_vector.append(numpy.array(values, dt))
+finally:
+    f.close()
+                    
 for i in range(1, iterations+1):
     delta_nodes.fill(0)
 
@@ -142,7 +156,7 @@ for i in range(1, iterations+1):
         rad_div_val = 2 * radius_decaying * i
         learning_rate_decaying = learning_rate*exp(-1.0*i/time_constant)
         #sys.stdout.write("\rTraining Iteration: " + str(i) + "/" + str(iterations))
-        print "################################# Training Iteration:", i
+        print "########################################### Training Iteration:", i
         print "### Radius_decaying: ", radius_decaying
     
     ## BROADCAST UPDATED INFO    
@@ -152,10 +166,12 @@ for i in range(1, iterations+1):
     #print "### Rank " + str(MPI_myid) + " radius_decaying: " + str(radius_decaying)
     #print "Rank " + str(MPI_myid) + " " + inFileName
     pypar.barrier()
-            
+                
+    
     ## TRAINING IN PAPRALLEL FOR GETTING NEW WIEGHT VECTORS FOR SOME NODES
     work(MPI_myid, MPI_numproc, data, inFileName, nodes, width, height, \
-             radius_decaying, rad_div_val, learning_rate_decaying, delta_nodes)   
+             radius_decaying, rad_div_val, learning_rate_decaying, delta_nodes, train_vector)   
+    shuffle(train_vector)
     print "Proc %d finished working" % MPI_myid
     
     ## GATHERING SUB RESULTS    
