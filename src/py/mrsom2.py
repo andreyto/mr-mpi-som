@@ -6,7 +6,7 @@ from math import *
 from numpy.random import shuffle
 
     
-def work(myid, numprocs, data, inFileName, nodes, width, height, \
+def work(myid, numprocs, inFileName, nodes, width, height, \
              radius_decaying, rad_div_val, learning_rate_decaying, delta_nodes, train_vector):
 
     ## NOTE: DO NOT NEED TO READ ALL FV. IMPROVE THIS!
@@ -37,7 +37,7 @@ def work(myid, numprocs, data, inFileName, nodes, width, height, \
         for loc in find_neighborhood(height, width, best, radius_decaying):
             influence = exp( (-1.0 * (loc[2]**2)) / rad_div_val)
             inf_lrd = influence * learning_rate_decaying
-            delta_nodes[loc[0],loc[1]] += inf_lrd * (mydata[j]-nodes[loc[0],loc[1]])
+            delta_nodes[loc[0],loc[1]] += inf_lrd * (mydata[j] - nodes[loc[0],loc[1]])
         
     print "### Rank =", myid, "processed the data from", mylower, "to", myupper#, mydata, delta_nodes
     return  
@@ -96,22 +96,71 @@ def FV_distance(FV_1, FV_2):
     return (sum((FV_1 - FV_2)**2))**0.5    
     
 
-## INIT 
-if len(sys.argv) != 4:
-    print "Usage: dataFile numIter dim"
-    sys.exit(1)
+def eucl_dist(x,y):   
+    return numpy.sqrt(numpy.sum((x-y)**2))
+
+def floatFormat(value):
+    return "%.3f" % value
     
+def save_2D_dist_map(fname, nodes, width, height):
+    D = 2
+    minDist = 1.5
+    f = open(fname, "w")
+    n = 0
+    for r in range(height):
+        for c in range(width):
+            #print r, c, nodes[r,c]
+            dist = 0.0
+            nodesNum = 0
+            #w1 = []
+            for r2 in range(height):
+                for c2 in range(width):
+                    #w1 = nodes[r2, c2]
+                    #w2 = []
+                    for r3 in range(height):
+                        for c3 in range(width):
+                            if r2 == r3 and c2 == c3:
+                                continue
+                            #tmp = 0.0
+                            #w2 = nodes[r3, c3]
+                            #for x in range(D):
+                                #tmp += pow(*(get_coords(pnode) + x) - *(get_coords(node) + x), 2.0f);                             
+                            #tmp = sqrt(tmp);
+                            co1 = numpy.array((r2, c2))
+                            co2 = numpy.array((r3, c3))
+                            tmp = eucl_dist(co1, co2) # coord dist
+                            #print r2, c2, r3, c3, tmp     
+                            if tmp <= minDist:
+                                nodesNum += 1
+                                dist += eucl_dist(nodes[r2, c2], nodes[r3, c3]) # weight dist
+                    
+            dist /= nodesNum
+            f.write(str(floatFormat(dist)))
+        f.write("\n")
+    f.close()
+    return    
+
 print "Initialization..."
 width = 50
 height = 50
-FV_size = int(sys.argv[3])
-lrate = 0.05
-iterations = int(sys.argv[2])
 radius = (height+width)/3
 learning_rate = 0.05
-lower = 100
-upper = 121
-data = Numeric.array(range(lower,upper))
+iterations = 0
+FV_size = 0
+
+## INIT 
+if len(sys.argv) == 6:
+    iterations = int(sys.argv[2])
+    FV_size = int(sys.argv[3])
+    width = int(sys.argv[4])
+    height = int(sys.argv[5])
+elif len(sys.argv) == 4:
+    iterations = int(sys.argv[2])
+    FV_size = int(sys.argv[3])
+else:
+    print "Usage: mpirun -np nProc python mrsom2.py dataFile numIter featureDim [somX] [somY]"
+    sys.exit(1)
+    
 
 ## GET PARALLEL PARAMETERS
 MPI_myid = pypar.rank()
@@ -169,7 +218,7 @@ for i in range(1, iterations+1):
                 
     
     ## TRAINING IN PAPRALLEL FOR GETTING NEW WIEGHT VECTORS FOR SOME NODES
-    work(MPI_myid, MPI_numproc, data, inFileName, nodes, width, height, \
+    work(MPI_myid, MPI_numproc, inFileName, nodes, width, height, \
              radius_decaying, rad_div_val, learning_rate_decaying, delta_nodes, train_vector)   
     shuffle(train_vector)
     print "Proc %d finished working" % MPI_myid
@@ -188,13 +237,6 @@ for i in range(1, iterations+1):
             #pypar.send(x, 0)
             pypar.send(delta_nodes, 0)
             print "Proc %d after seding the result" % MPI_myid    
-    #
-    # Compute overall average and report
-    #    
-  
-    #if MPI_myid == 0:  
-        #avg = x/len(data)     
-        #print "Global average is %.4f" % avg      
     
     nodes = broadcast(nodes, 0, MPI_myid, MPI_numproc)     
     pypar.barrier()
@@ -214,8 +256,12 @@ if MPI_myid == 0:
     except:
         print "Error saving the image, do you have PIL (Python Imaging Library) installed?"
     
+    print "Saving 2D map in 2D.map..."
+    fname = "2D.map"
+    #save_2D_dist_map(fname, nodes, width, height)
+    #print len(nodes), len(nodes[0]), len(nodes[0,0])
+    #print nodes[0]
     
-
 pypar.finalize()    
 
 

@@ -713,8 +713,11 @@ int save_2D_distance_map(SOM *som, char *fname)
                     if (node == pnode)
                         continue;
                     float tmp = 0.0;
-                    for (int x = 0; x < D; x++)
+                    for (int x = 0; x < D; x++) {
+                        //cout << "1 " << *(get_coords(pnode)) << endl;
+                        cout << x << " " << *(get_coords(pnode) + x) << endl;
                         tmp += pow(*(get_coords(pnode) + x) - *(get_coords(node) + x), 2.0f);
+                    }
                     tmp = sqrt(tmp);
                     if (tmp <= min_dist) {
                         nodes_number++;
