@@ -5,7 +5,7 @@ import sys
 
 argc = len(sys.argv)
 if argc != 4:
-    print "Usage: "
+    print "Usage: outFile numRows numCols"
     sys.exit(1)
 
 outFileName = sys.argv[1]

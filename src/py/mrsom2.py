@@ -1,4 +1,5 @@
-import pypar, Numeric
+import pypar
+import Numeric
 import numpy
 import sys
 from random import *
@@ -39,7 +40,7 @@ def work(myid, numprocs, inFileName, nodes, width, height, \
             inf_lrd = influence * learning_rate_decaying
             delta_nodes[loc[0],loc[1]] += inf_lrd * (mydata[j] - nodes[loc[0],loc[1]])
         
-    print "### Rank =", myid, "processed the data from", mylower, "to", myupper#, mydata, delta_nodes
+    #print "### Rank =", myid, "processed the data from", mylower, "to", myupper#, mydata, delta_nodes
     return  
   
   
@@ -166,7 +167,7 @@ else:
 MPI_myid = pypar.rank()
 MPI_numproc = pypar.size()
 MPI_node = pypar.get_processor_name()
-print "I am proc %d of %d on node %s" %(MPI_myid, MPI_numproc, MPI_node)
+#print "I am proc %d of %d on node %s" %(MPI_myid, MPI_numproc, MPI_node)
 
 ## SOM NODES INIT AND BROADCASTING
 if MPI_myid == 0:
@@ -221,22 +222,22 @@ for i in range(1, iterations+1):
     work(MPI_myid, MPI_numproc, inFileName, nodes, width, height, \
              radius_decaying, rad_div_val, learning_rate_decaying, delta_nodes, train_vector)   
     shuffle(train_vector)
-    print "Proc %d finished working" % MPI_myid
+    #print "Proc %d finished working" % MPI_myid
     
     ## GATHERING SUB RESULTS    
     if MPI_numproc > 1:
         if MPI_myid == 0:
             nodes += delta_nodes ## ADD ROOT'S RESULT
-            print "P%d updated its result" % (0)
+            #print "P%d updated its result" % (0)
             for id in range(1, MPI_numproc):
-                print "P%d receving the result from P%d" % (0, id)
+                #print "P%d receving the result from P%d" % (0, id)
                 #x = x + pypar.receive(id)  #Add up (would be more complex in general)
                 nodes = nodes + pypar.receive(id)  
         else:
             #print "P%d sending  to P%d" % (MPI_myid, 0)  
             #pypar.send(x, 0)
             pypar.send(delta_nodes, 0)
-            print "Proc %d after seding the result" % MPI_myid    
+            #print "Proc %d after seding the result" % MPI_myid    
     
     nodes = broadcast(nodes, 0, MPI_myid, MPI_numproc)     
     pypar.barrier()
@@ -256,8 +257,8 @@ if MPI_myid == 0:
     except:
         print "Error saving the image, do you have PIL (Python Imaging Library) installed?"
     
-    print "Saving 2D map in 2D.map..."
-    fname = "2D.map"
+    #print "Saving 2D map in 2D.map..."
+    #fname = "2D.map"
     #save_2D_dist_map(fname, nodes, width, height)
     #print len(nodes), len(nodes[0]), len(nodes[0,0])
     #print nodes[0]
