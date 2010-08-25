@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import pypar
-import Numeric
+#import Numeric
 import numpy
 import sys
 
@@ -13,6 +13,9 @@ import struct
 #fmt = 'L' ## unsigned long
 fmt = 'Q' ## unsigned long long
 fmtSize = struct.calcsize(fmt)
+
+import os
+MRSOM_ROOT = os.environ.get("MRSOM_ROOT")
         
 def work(myid, numProcs, inFileName, nodes, width, height, \
              radiusDecaying, radDivVal, learningRateDecaying, deltaNodes, myData):
@@ -109,48 +112,36 @@ def eucl_dist(x,y):
 def floatFormat(value):
     return "%.3f" % value
     
-def save_2D_dist_map(fname, nodes, width, height):
-    D = 2
-    minDist = 1.5
-    f = open(fname, "w")
-    n = 0
-    for r in range(height):
-        for c in range(width):
-            #print r, c, nodes[r,c]
-            dist = 0.0
-            nodesNum = 0
-            #w1 = []
-            for r2 in range(height):
-                for c2 in range(width):
-                    #w1 = nodes[r2, c2]
-                    #w2 = []
-                    for r3 in range(height):
-                        for c3 in range(width):
-                            if r2 == r3 and c2 == c3:
-                                continue
-                            #tmp = 0.0
-                            #w2 = nodes[r3, c3]
-                            #for x in range(D):
-                                #tmp += pow(*(get_coords(pnode) + x) - *(get_coords(node) + x), 2.0f);
-                            #tmp = sqrt(tmp);
-                            co1 = numpy.array((r2, c2))
-                            co2 = numpy.array((r3, c3))
-                            tmp = eucl_dist(co1, co2) # coord dist
-                            #print r2, c2, r3, c3, tmp
-                            if tmp <= minDist:
-                                nodesNum += 1
-                                dist += eucl_dist(nodes[r2, c2], nodes[r3, c3]) # weight dist
+#def save_umat(fname, nodes, width, height):
+    #D = 2
+    #minDist = 1.5
+    #f = open(fname, "w")
+    #n = 0
+    #for r in range(height):
+        #for c in range(width):
+            ##print r, c, nodes[r,c]
+            #dist = 0.0
+            #nodesNum = 0
+            #for r2 in range(height):
+                #for c2 in range(width):
+                    #for r3 in range(height):
+                        #for c3 in range(width):
+                            #if r2 == r3 and c2 == c3:
+                                #continue
+                            #tmp = eucl_dist(numpy.array((r2, c2)), numpy.array((r3, c3))) # coord dist
+                            ##print r2, c2, r3, c3, tmp
+                            #if tmp <= minDist:
+                                #nodesNum += 1
+                                #dist += eucl_dist(nodes[r2, c2], nodes[r3, c3]) # weight dist
                     
-            dist /= nodesNum
-            f.write(str(floatFormat(dist)))
-        f.write("\n")
-    f.close()
-    return
+            #dist /= nodesNum
+            #f.write(str(floatFormat(dist)))
+        #f.write("\n")
+    #f.close()
+    #return
 
-def F(n, fn):
-    '''
-    Return the byte offset of line n from index file fn.
-    '''
+## Return the byte offset of line n from index file fn.
+def F(n, fn):    
     f = open(fn)
     try:
         f.seek(n * fmtSize)
@@ -160,11 +151,8 @@ def F(n, fn):
 
     return struct.unpack(fmt, data)[0]
 
-
+## Return line n from data file using index file.
 def getline(n, dataFile, indexFile):
-    '''
-    Return line n from data file using index file.
-    '''
     n = F(n, indexFile)
     f = open(dataFile)
     try:
@@ -179,6 +167,8 @@ def f(n):
     #return struct.pack('L', n)
     return struct.pack('Q', n) # unsigned long long
     
+#if __name__ == "__main__":
+ 
 print "Initialization..."
 width = 50
 height = 50
@@ -224,14 +214,14 @@ timeConstant = iterations / log(radius)
 radiusDecaying = 0
 radDivVal = 0
 learningRateDecaying = 0
-## init weights
+## INIT WEIGHTS
 deltaNodes = numpy.array([[[0 for i in range(FVDim)] for x in range(width)] for y in range(height)])
 
 ## NOTE: DO NOT NEED TO READ ALL FV. IMPROVE THIS!
 ## IMPROVE
-## 1. Make index file for the inFile
-## 2. Decide from-to index to divide the inFile
-## 3. Read a chunk of the inFile 
+# 1. Make index file for the inFile
+## 2. DECIDE FROM-TO INDEX TO DIVIDE THE INFILE
+## 3. READ A CHUNK OF THE INFILE 
 
 ## MAKE INDEX FILE
 indexFileName = inFileName+".idx"
@@ -277,10 +267,12 @@ for l in n:
     values = line.rstrip().split(' ')
     #print values
     trainVector.append(numpy.array(values, dt))
-print "### Rank " + str(MPI_myid) + " has " + str(len(trainVector)) + \
-      " rows of data (%d - %d)" % (myLower+1, myUpper)
+print "### Rank %d reads %d rows (%d - %d) from %s." \
+      % (MPI_myid, len(trainVector), myLower+1, myUpper, inFileName)
+pypar.barrier()
 
 
+## FILE READ (original)
 #f = open(inFileName, "r")
 #trainVector = []
 #count = 0
@@ -338,26 +330,53 @@ for i in range(1, iterations+1):
     nodes = broadcast(nodes, 0, MPI_myid, MPI_numproc)
     pypar.barrier()
 
-## DEBUG (ONLY WORKS FOR FVDim=3 RGB DATA)
+
 if MPI_myid == 0:
     print "Saving..."
+    
+    ## SAVE WEIGHTS IN A FILE
+    mapFileName = inFileName+".map"
+    mapFile = open(mapFileName, "w")
+    mapFile.write("%d %s %d %d\n" % (FVDim, "rect", width, height))
+    for r in range(height):
+        for c in range(width):
+            #mapFile.write(nodes[r,c].tostring().)
+            print >>mapFile, str(nodes[r,c]).replace('[',' ').replace(']', ' ').strip()
+    mapFile.close()
+    
+    ## USING UMAT COMMAND IN SOM_PAK 3.1 TO SAVE CODEMAP IN EPS
+    import subprocess
+    cmd = MRSOM_ROOT + "/tools/umat -cin " + mapFileName + " > " + mapFileName + ".eps"
+    proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,)
+    #stdout_value = proc.communicate()[0]
+    #s = stdout_value.split()
+    #for i in range(len(s)):
+        #print str(i) + " " + str(s[i])
+    
+    ## DEBUG (ONLY WORKS FOR FVDim=3 RGB DATA)
     try:
         from PIL import Image
-        print "Saving Image: sompy_test_colors.png..."
+        print "Saving (debug)..."
+        debugImageFile = inFileName + ".png"
         img = Image.new("RGB", (width, height))
         for r in range(height):
             for c in range(width):
                 #print int(color_som.nodes[r,c,0]), int(color_som.nodes[r,c,1]), int(color_som.nodes[r,c,2])
                 img.putpixel((c,r), (int(nodes[r,c,0]), int(nodes[r,c,1]), int(nodes[r,c,2])))
         img = img.resize((width*10, height*10),Image.NEAREST)
-        img.save("sompy_test_colors.png")
+        img.save(debugImageFile)
     except:
         print "Error saving the image, do you have PIL (Python Imaging Library) installed?"
     
-    #print "Saving 2D map in 2D.map..."
-    #fname = "2D.map"
-    #save_2D_dist_map(fname, nodes, width, height)
+    #print "Saving U-Mat..."
+    #fname = inFileName+".map"
+    #save_umat(fname, nodes, width, height)
     #print len(nodes), len(nodes[0]), len(nodes[0,0])
     #print nodes[0]
+    print "Done!"
     
 pypar.finalize() 
+
+## EOF
+
+

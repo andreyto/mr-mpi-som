@@ -1,0 +1,143 @@
+%
+% PS header for umat - SOM to PS converter
+% Version 1.0 Tue Feb 28 1995
+% Author: Jussi Hynninen <hynde@nucleus.hut.fi>
+100 dict begin
+
+% predefine variables
+/yoff 0 def /xoff 0 def /xstep 0 def /ystep 0 def /y 0 def /radius 0 def
+/doborder false def
+% default font
+/fontname /Helvetica def
+% font size relative to radius
+/fontsize 1.0 def
+
+% default black and white tresholds
+/bt 0.0 def /wt 1.0 def
+
+% labelpallon sade suhteessa hexan sateeseen
+/ballrad 0.2 def
+
+% newline function. Moves the y coordinate to the next line
+/NL 
+{ /yoff yoff ystep sub def % next row
+  /y y 1 add def % add y by one
+  } bind def
+
+% start of line (for hexagonal lattice) - moves the current position in 
+% x direction to the correct place of the line
+/XSH
+{ xoff 
+  y 4 mod
+  dup 3 eq {pop 1} if
+  xstep 2 div mul
+  add
+  yoff moveto % move to start of line
+} bind def
+
+% start of line (for rectangular lattice) - moves the current position in 
+% x direction to the correct place of the line
+/XSR { xoff yoff moveto } bind def
+
+% set label color. If block is light -> label is black and same for dark block
+/sbc { .5 gt {0} {1} ifelse setgray } bind def
+
+% set gray level
+/G { 
+  100 div dup bt le {pop 0}
+  { dup wt ge {pop 1} {bt sub wt bt sub div} ifelse
+  } ifelse
+} bind def
+
+% unlabelled node
+/LN { 
+  gsave
+  G sbc
+  currentpoint radius ballrad mul 0 360 arc fill 
+  grestore
+  xstep 2 mul 0 rmoveto
+} bind def
+
+%select font
+/selfont {
+  fontname findfont radius fontsize mul scalefont setfont
+} bind def
+
+% print single label
+
+/LAB { 
+  gsave
+  G sbc
+  dup %duplicate string  
+  stringwidth
+  pop fontsize radius mul -0.25 mul exch
+  -2 div exch
+  rmoveto
+  show
+  grestore
+  xstep 2 mul 0 rmoveto
+} bind def
+
+% print multiple labels on one unit
+/ML {
+  gsave
+  G sbc
+  /numlabs exch def %number of labels
+  numlabs
+  2 div 
+  0.25 sub
+  radius fontsize mul mul neg
+  0 exch rmoveto
+  1 1 numlabs {
+    pop
+    gsave
+    dup %duplicate string  
+    stringwidth
+    pop 
+    -2 div 0
+    rmoveto
+    show
+    grestore
+    0 fontsize radius mul rmoveto
+  } for 
+  grestore
+  xstep 2 mul 0 rmoveto
+} bind def
+
+% print hexagon
+/H { 
+  gsave
+  G dup setgray %duplicate gray level
+  currentpoint translate
+  newpath 0 radius moveto
+  5 {60 rotate 0 radius lineto} repeat
+  closepath
+  doborder { gsave fill grestore sbc stroke}
+           { fill pop } ifelse
+  grestore  
+  xstep 0 rmoveto
+} bind def
+
+% print rectangle
+/R {
+  gsave
+  G dup setgray %duplicate gray level
+  currentpoint translate
+  newpath
+  xstep 0.5 mul dup moveto
+  xstep neg 0 rlineto
+  0 xstep neg rlineto
+  xstep 0 rlineto
+  closepath
+  doborder { gsave fill grestore sbc stroke}
+           { fill pop } ifelse
+  grestore  
+  xstep 0 rmoveto
+} bind def
+
+1 setlinewidth
+
+% End of umat PS header
+% Start image
+
+
