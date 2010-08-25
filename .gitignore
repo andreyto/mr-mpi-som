@@ -1,9 +1,3 @@
-obsolete
-obsolete/*
-build
-build/*
-orig
-orig/*
 *.[oa]
 *.so
 *~
@@ -13,3 +7,11 @@ orig/*
 *.o
 *.out 
 *.gz
+*.png
+obsolete
+obsolete/*
+build
+build/*
+orig
+orig/*
+ 

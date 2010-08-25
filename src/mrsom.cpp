@@ -63,7 +63,7 @@
 //      MA 02110-1301, USA.
 
 
-// MPI and MapReduce-MPI
+/// MPI and MapReduce-MPI
 #include "mpi.h"
 #include "./mrmpi/mapreduce.h"
 #include "./mrmpi/keyvalue.h"
@@ -88,32 +88,32 @@ using namespace MAPREDUCE_NS;
 //#ifdef _DEBUG
 //#endif
 
-//// SOM NODE
+/// SOM NODE
 typedef struct node {
     vector<float>   weights;
-    vector<float>   coords;     //// 2D: (x,y)
+    vector<float>   coords;     /// 2D: (x,y)
 } NODE;
 typedef vector<NODE *> V_NODEP_T;
 
-//// SOM
+/// SOM
 typedef struct SOM {
     V_NODEP_T nodes;
 } SOM;
 
 typedef struct {
-    int             m, n;       //// ROWS, COLS
-    float          *data;       //// DATA, ORDERED BY ROW, THEN BY COL
-    float         **rows;       //// POINTERS TO ROWS IN DATA
+    int             m, n;       /// ROWS, COLS
+    float          *data;       /// DATA, ORDERED BY ROW, THEN BY COL
+    float         **rows;       /// POINTERS TO ROWS IN DATA
 } DMatrix;
 
 typedef vector<vector<vector<float> > > VVV_FLOAT_T;
 
 struct GIFTBOX {
     SOM            *som;
-    float           R;          //// RADIUS
-    int             new_nvecs;  //// NUM SCATTERED VECTORS
-    DMatrix        *f_vectors;  //// FEATURE VECTORS
-    int             idx_start;  //// START INDEX FOR SCATTERED VECTORS
+    float           R;          /// RADIUS
+    int             new_nvecs;  /// NUM SCATTERED VECTORS
+    DMatrix        *f_vectors;  /// FEATURE VECTORS
+    int             idx_start;  /// START INDEX FOR SCATTERED VECTORS
     int            *loc;
     //VVV_FLOAT_T    *numer;
     //VVV_FLOAT_T    *denom;
@@ -144,14 +144,14 @@ int     save_2D_distance_map(SOM *som, char *fname);
 NODE    *get_node(SOM *, int);
 NODE    *get_BMU(SOM *, float *);
 
-//// MATRIX
+/// MATRIX
 DMatrix createMatrix(const unsigned int rows, const unsigned int cols);
 DMatrix initMatrix(void);
 void    freeMatrix(DMatrix *matrix);
 void    printMatrix(DMatrix A);
 int     validMatrix(DMatrix matrix);
 
-//// MAPPER AND REDUCER
+/// MAPPER AND REDUCER
 void    MR_compute_weight(int itask, KeyValue *kv, void *ptr);
 void    MR_accumul_weight(char *key, int keybytes, char *multivalue,
                           int nvalues, int *valuebytes, KeyValue *kv,
@@ -161,33 +161,33 @@ void    MR_update_weight(uint64_t itask, char *key, int keybytes, char *value,
 
 /* ------------------------------------------------------------------------ */
 
-//// GLOBALS
-int     NDIMEN;                 //// NUM OF DIMENSIONALITY
-int     NVECS;                  //// NUM OF FEATURE VECTORS
+/// GLOBALS
+int     NDIMEN;                 /// NUM OF DIMENSIONALITY
+int     NVECS;                  /// NUM OF FEATURE VECTORS
 int     SOM_X = 50;
 int     SOM_Y = 50;
-int     SOM_D = 2;              //// 2=2D
-int     NNODES = SOM_X * SOM_Y; //// TOTAL NUM OF SOM NODES
-int     NEPOCHS;                //// ITERATIONS
-int     DOPT = 0;               //// 0=EUCL, 1=SOSD, 2=TXCB, 3=ANGL, 4=MHLN
-int     TMODE = 0;              //// 0=BATCH, 1=ONLINE
-int     TOPT = 0;               //// 0=SLOW, 1=FAST
-int     NORMAL = 0;             //// 0=NONE, 1=MNMX, 2=ZSCR, 3=SIGM, 4=ENRG
+int     SOM_D = 2;              /// 2=2D
+int     NNODES = SOM_X * SOM_Y; /// TOTAL NUM OF SOM NODES
+int     NEPOCHS;                /// ITERATIONS
+int     DOPT = 0;               /// 0=EUCL, 1=SOSD, 2=TXCB, 3=ANGL, 4=MHLN
+int     TMODE = 0;              /// 0=BATCH, 1=ONLINE
+int     TOPT = 0;               /// 0=SLOW, 1=FAST
+int     NORMAL = 0;             /// 0=NONE, 1=MNMX, 2=ZSCR, 3=SIGM, 4=ENRG
 
 /* ------------------------------------------------------------------------ */
 int main(int argc, char *argv[])
 /* ------------------------------------------------------------------------ */
 {
     SOM *som;
-    if (argc == 6) {  //// READ FEATURE DATA FROM FILE
-        //// syntax: mrsom FILE NEPOCHS TMODE NVECS NDIMEN
+    if (argc == 6) {  /// READ FEATURE DATA FROM FILE
+        /// syntax: mrsom FILE NEPOCHS TMODE NVECS NDIMEN
         NEPOCHS = atoi(argv[2]);
         TMODE = atoi(argv[3]);
         NVECS = atoi(argv[4]);
         NDIMEN = atoi(argv[5]);
     }
-    else if (argc == 8) {  ////READ FEATURE DATA FROM FILE
-        ////syntax: mrsom FILE NEPOCHS TMODE NVECS NDIMEN X Y
+    else if (argc == 8) {  /// READ FEATURE DATA FROM FILE
+        /// syntax: mrsom FILE NEPOCHS TMODE NVECS NDIMEN X Y
         NEPOCHS = atoi(argv[2]);
         TMODE = atoi(argv[3]);
         NVECS = atoi(argv[4]);
@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
         exit(0);
     }
     
-    //// MAKE SOM//////////////////////////////////////////////////////////
+    /// MAKE SOM//////////////////////////////////////////////////////////
     som = (SOM *)malloc(sizeof(SOM));
     som->nodes = V_NODEP_T(NNODES);
     for (int x = 0; x < SOM_X * SOM_Y; x++) {
@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
         som->nodes[x] = node;
     }
     
-    //// FILE COORDS (2D RECT)/////////////////////////////////////////////
+    /// FILE COORDS (2D RECT)/////////////////////////////////////////////
     for (int x = 0; x < SOM_X; x++) {
         for (int y = 0; y < SOM_Y; y++) {
             som->nodes[(x*SOM_Y)+y]->coords[0] = y * 1.0f;
@@ -236,7 +236,7 @@ int main(int argc, char *argv[])
         }
     }
     
-    //// CREATE DATA MATRIX////////////////////////////////////////////////
+    /// CREATE DATA MATRIX////////////////////////////////////////////////
     DMatrix F; //FEATURE VECTOR
     F = initMatrix();
     F = createMatrix(NVECS, NDIMEN); 
@@ -245,7 +245,7 @@ int main(int argc, char *argv[])
         exit(0);
     }
     
-    //// READ FEATURE DATA FROM FILE///////////////////////////////////////
+    /// READ FEATURE DATA FROM FILE///////////////////////////////////////
     FILE *fp;
     fp = fopen(argv[1], "r");
     for (int i = 0; i < NVECS; i++) {
@@ -258,7 +258,7 @@ int main(int argc, char *argv[])
     fclose(fp);
     //printMatrix(F);
     
-    //// CREATE WEIGHT MATRIX//////////////////////////////////////////////
+    /// CREATE WEIGHT MATRIX//////////////////////////////////////////////
     DMatrix W;
     W = initMatrix();
     W = createMatrix(NNODES, NDIMEN);
@@ -267,10 +267,10 @@ int main(int argc, char *argv[])
         exit(0);
     }
     
-    //// MPI///////////////////////////////////////////////////////////////
+    /// MPI///////////////////////////////////////////////////////////////
     int myid, nprocs, length;
     char myname[MAX_STR];
-    //// MPI_Status status;
+    /// MPI_Status status;
     int ierr = MPI_Init(&argc, &argv);
     if (ierr != MPI_SUCCESS) {
         fprintf(stderr, "MPI initsialization failed !\n");
@@ -285,7 +285,7 @@ int main(int argc, char *argv[])
     //double t1_time;
     //gettimeofday(&t1_start, NULL);
     
-    //// MR-MPI////////////////////////////////////////////////////////////
+    /// MR-MPI////////////////////////////////////////////////////////////
     MapReduce *mr = new MapReduce(MPI_COMM_WORLD);
     //mr->verbosity = 2;
     //mr->timer = 1;
@@ -293,20 +293,20 @@ int main(int argc, char *argv[])
     int idx[NVECS], scattered[chunksize];
     int loc[NVECS];
     
-    //// PREPARE RANDOM VECTORS IF RANDOM GEN IS CHOSEN
-    //// AND PREPARE AN INDEX VECTOR TO SCATTER AMONG TASKS
+    /// PREPARE RANDOM VECTORS IF RANDOM GEN IS CHOSEN
+    /// AND PREPARE AN INDEX VECTOR TO SCATTER AMONG TASKS
     if (myid == 0) {
         printf("INFO: %d x %d SOM, num epochs = %d, num features = %d, dimensionality = %d\n", SOM_X, SOM_Y, NEPOCHS, NVECS, NDIMEN);
         printf("Reading (%d x %d) feature vectors from %s...\n", NVECS, NDIMEN, argv[1]);
         vector<int> temp(NVECS, 0);
         
-        //// TO SCATTER FEATURE VECTORS
+        /// TO SCATTER FEATURE VECTORS
         for (int i = 0; i < NVECS; i++) {
             idx[i] = i;
             temp[i] = i;
         }
         
-        //// SHUFFLE A INT VECTOR FOR SHUFFLING THE ORDER OF INPUT VECTORS/////
+        /// SHUFFLE A INT VECTOR FOR SHUFFLING THE ORDER OF INPUT VECTORS/////
         random_shuffle(temp.begin(), temp.end());
         for (int i = 0; i < NVECS; i++)
             loc[i] = temp[i];
@@ -316,11 +316,12 @@ int main(int argc, char *argv[])
     MPI_Scatter(idx, chunksize, MPI_INT, scattered, chunksize, MPI_INT,
                 0, MPI_COMM_WORLD);
     MPI_Bcast(loc, NVECS, MPI_INT, 0, MPI_COMM_WORLD);
-    float N = (float)NEPOCHS;       //// ITERATIONS
-    float nrule, nrule0 = 0.9f;     //// LEARNING RATE FACTOR
+    float N = (float)NEPOCHS;       /// ITERATIONS
+    float nrule, nrule0 = 0.9f;     /// LEARNING RATE FACTOR
     float R, R0;
-    R0 = SOM_X / 2.0f;              //// INIT RADIUS FOR UPDATING NEIGHBORS
-    int x = 0;                      //// 0...N-1
+    R0 = SOM_X / 2.0f;              /// INIT RADIUS FOR UPDATING NEIGHBORS
+    int x = 0;                      /// 0...N-1
+    
     /*
      * SHOULD ADD A ROUTINE TO CHECK WHEN TO STOP THE UPDATE IN BATCH
      * MODE. OTHERWISE, THE RESULTING MAP WILL BE GETTING DETERIORATED
@@ -331,12 +332,12 @@ int main(int argc, char *argv[])
      
     //ITERATIONS////////////////////////////////////////////////////////
     while (NEPOCHS) {
-        if (TMODE == 0) { //// BATCH
+        if (TMODE == 0) { /// BATCH
             if (myid == 0) {
-                //// R TO BROADCAST
+                /// R TO BROADCAST
                 R = R0 * exp(-10.0f * (x * x) / (N * N));
                 x++;
-                //// PREPARE WEIGHT VECTORS TO BROADCAST
+                /// PREPARE WEIGHT VECTORS TO BROADCAST
                 for (int x = 0; x < NNODES; x++)
                     for (int j = 0; j < NDIMEN; j++)
                         W.rows[x][j] = som->nodes[x]->weights[j];
@@ -344,7 +345,7 @@ int main(int argc, char *argv[])
             }
             MPI_Barrier(MPI_COMM_WORLD);
             MPI_Bcast(&R, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
-            //// BROADCAST WEIGHT VECTORS FOR THE NEXT EPOCH
+            /// BROADCAST WEIGHT VECTORS FOR THE NEXT EPOCH
             MPI_Bcast((void *)W.data, NNODES * NDIMEN, MPI_FLOAT, 0,
                       MPI_COMM_WORLD);
             //#ifdef _DEBUG
@@ -359,10 +360,10 @@ int main(int argc, char *argv[])
                            scattered, R, argc, argv, myid, myname, nprocs);
                            //numer, denom);
         }
-        else if (TMODE == 1) { //// ONLINE, THIS IS SERIAL VERSION.
+        else if (TMODE == 1) { /// ONLINE, THIS IS SERIAL VERSION.
             if (myid == 0) {
                 R = R0 * exp(-10.0f * (x * x) / (N * N));
-                //// LEARNING RULE SHRINKS OVER TIME, FOR ONLINE SOM
+                /// LEARNING RULE SHRINKS OVER TIME, FOR ONLINE SOM
                 nrule = nrule0 * exp(-10.0f * (x * x) / (N * N));  
                 x++;
                 train_online(som, F, R, nrule, loc); //SERIAL
@@ -382,7 +383,7 @@ int main(int argc, char *argv[])
     freeMatrix(&W);
     MPI_Barrier(MPI_COMM_WORLD);
     
-    //// SAVE SOM//////////////////////////////////////////////////////////
+    /// SAVE SOM//////////////////////////////////////////////////////////
     if (myid == 0) {
         printf("Saving SOM...\n");
         char som_map[MAX_STR] = "";
@@ -404,24 +405,24 @@ void train_online(SOM *som, DMatrix &f, float R, float Alpha, int *loc)
     for (int n = 0; n < NVECS; n++) {
         float *normalized = normalize2(f, loc[n]);
         
-        //// GET BEST NODE USING d_k (t) = || x(t) = w_k (t) || ^2
-        //// AND d_c (t) == min d_k (t)
+        /// GET BEST NODE USING d_k (t) = || x(t) = w_k (t) || ^2
+        /// AND d_c (t) == min d_k (t)
         NODE *bmu_node = get_BMU(som, normalized);
         const float *p1 = get_coords(bmu_node);
-        if (R <= 1.0f) { //// ADJUST BMU NODE ONLY
+        if (R <= 1.0f) { /// ADJUST BMU NODE ONLY
             updatew_online(bmu_node, normalized, Alpha);
         }
-        else {   //// ADJUST WEIGHT VECTORS OF THE NEIGHBORS TO BMU NODE
+        else {   /// ADJUST WEIGHT VECTORS OF THE NEIGHBORS TO BMU NODE
             for (int k = 0; k < NNODES; k++) { //ADJUST WEIGHTS OF ALL K NODES IF DOPT <= R
                 const float *p2 = get_coords(som->nodes[k]);
                 float dist = 0.0f;
-                //// dist = sqrt((x1-y1)^2 + (x2-y2)^2 + ...)  DISTANCE TO NODE
+                /// dist = sqrt((x1-y1)^2 + (x2-y2)^2 + ...)  DISTANCE TO NODE
                 for (int p = 0; p < NDIMEN; p++)
                     dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
                 dist = sqrt(dist);
                 if (TOPT == 1 && dist > R)
                     continue;
-                //// GAUSSIAN NEIGHBORHOOD FUNCTION
+                /// GAUSSIAN NEIGHBORHOOD FUNCTION
                 float neighbor_fuct = exp(-(1.0f * dist * dist) / (R * R));
                 updatew_online(som->nodes[k], normalized, Alpha * neighbor_fuct);
             }
@@ -439,7 +440,7 @@ void MR_train_batch(MapReduce *mr, SOM *som, DMatrix &f, DMatrix &w,
 /* ------------------------------------------------------------------------ */
 {
     if (R > 1.0f) {
-        int new_nvecs = NVECS / nprocs; //// CHUNNK SIZE
+        int new_nvecs = NVECS / nprocs; /// CHUNNK SIZE
         GIFTBOX gfbox;
         gfbox.som = som;
         gfbox.new_nvecs = new_nvecs;
@@ -566,7 +567,7 @@ NODE *get_BMU(SOM *som, float *fvec)
             pbmu_node = som->nodes[x];
         }
     }
-    //// CAN ADD A FEATURE FOR VOTING AMONG BMUS.
+    /// CAN ADD A FEATURE FOR VOTING AMONG BMUS.
     return pbmu_node;
 }
 
@@ -578,7 +579,7 @@ float get_distance(float *vec, int distance_metric, vector<float> &wvec)
     float n1 = 0.0f, n2 = 0.0f;
     switch (distance_metric) {
     default:
-    case 0: //// EUCLIDIAN
+    case 0: /// EUCLIDIAN
         //if (NDIMEN >= 4) {
         //distance = mse(vec, distance_metric, wvec);
         //} else {
@@ -586,7 +587,7 @@ float get_distance(float *vec, int distance_metric, vector<float> &wvec)
             distance += (vec[w] - wvec[w]) * (vec[w] - wvec[w]);
         //}
         return sqrt(distance);
-    case 1: //// SOSD: //SUM OF SQUARED DISTANCES
+    case 1: /// SOSD: //SUM OF SQUARED DISTANCES
         //if (m_weights_number >= 4) {
         //distance = mse(vec, m_weights, m_weights_number);
         //} else {
@@ -594,18 +595,18 @@ float get_distance(float *vec, int distance_metric, vector<float> &wvec)
             distance += (vec[w] - wvec[w]) * (vec[w] - wvec[w]);
         //}
         return distance;
-    case 2: //// TXCB: //TAXICAB
+    case 2: /// TXCB: //TAXICAB
         for (int w = 0; w < NDIMEN; w++)
             distance += fabs(vec[w] - wvec[w]);
         return distance;
-    case 3: //// ANGL: //ANGLE BETWEEN VECTORS
+    case 3: /// ANGL: //ANGLE BETWEEN VECTORS
         for (int w = 0; w < NDIMEN; w++) {
             distance += vec[w] * wvec[w];
             n1 += vec[w] * vec[w];
             n2 += wvec[w] * wvec[w];
         }
         return acos(distance / (sqrt(n1) * sqrt(n2)));
-        //case 4: //// MHLN:   //mahalanobis
+        //case 4: /// MHLN:   //mahalanobis
         //distance = sqrt(m_weights * cov * vec)
         //return distance
     }
@@ -619,11 +620,11 @@ float get_distance2(vector<float> &vec, int distance_metric, vector<float> &wvec
     float n1 = 0.0f, n2 = 0.0f;
     switch (distance_metric) {
     default:
-    case 0: //// EUCLIDIAN
+    case 0: /// EUCLIDIAN
         for (int w = 0; w < NDIMEN; w++)
             distance += (vec[w] - wvec[w]) * (vec[w] - wvec[w]);
         return sqrt(distance);
-    case 1: //// SOSD: //SUM OF SQUARED DISTANCES
+    case 1: /// SOSD: //SUM OF SQUARED DISTANCES
         //if (m_weights_number >= 4) {
         //distance = mse(vec, m_weights, m_weights_number);
         //} else {
@@ -631,18 +632,18 @@ float get_distance2(vector<float> &vec, int distance_metric, vector<float> &wvec
             distance += (vec[w] - wvec[w]) * (vec[w] - wvec[w]);
         //}
         return distance;
-    case 2: //// TXCB: //TAXICAB
+    case 2: /// TXCB: //TAXICAB
         for (int w = 0; w < NDIMEN; w++)
             distance += fabs(vec[w] - wvec[w]);
         return distance;
-    case 3: //// ANGL: //ANGLE BETWEEN VECTORS
+    case 3: /// ANGL: //ANGLE BETWEEN VECTORS
         for (int w = 0; w < NDIMEN; w++) {
             distance += vec[w] * wvec[w];
             n1 += vec[w] * vec[w];
             n2 += wvec[w] * wvec[w];
         }
         return acos(distance / (sqrt(n1) * sqrt(n2)));
-        //case 4: //// MHLN:   //mahalanobis
+        //case 4: /// MHLN:   //mahalanobis
         //distance = sqrt(m_weights * cov * vec)
         //return distance
     }
@@ -761,11 +762,11 @@ void MR_compute_weight(int itask, KeyValue *kv, void *ptr)
         //printf("%d %d %d %d \n", gb->idx_start, n, gb->idx_start+n, gb->loc[gb->idx_start+n]);
         
         //bottleneck///////////////////////////////////////////////////////
-        //// GET THE BEST MATCHING UNIT
+        /// GET THE BEST MATCHING UNIT
         NODE *bmu_node = get_BMU(gb->som, normalized);
-        //// BOTTLENECK////////////////////////////////////////////////////
+        /// BOTTLENECK////////////////////////////////////////////////////
         
-        //// GET THE COORDS FOR THE BMU
+        /// GET THE COORDS FOR THE BMU
         const float *p1 = get_coords(bmu_node);
         for (int k = 0; k < NNODES; k++) {
             NODE *tp = gb->som->nodes[k];
@@ -791,7 +792,7 @@ void MR_compute_weight(int itask, KeyValue *kv, void *ptr)
     //for (int n = 0; n < gb->new_nvecs; n++)
     //for (int k = 0; k < gb->num_som_nodes; k++)
     //printf("%f %f %f\n", numer[n][k][0], numer[n][k][1], numer[n][k][2]);
-    //// UPDATE W-DIMENSINAL WEIGHTS FOR EACH NODE
+    /// UPDATE W-DIMENSINAL WEIGHTS FOR EACH NODE
     //float *sum_numer = (float *)malloc(SZFLOAT * gb->num_weights_per_node);
     //float *sum_demon = (float *)malloc(SZFLOAT * gb->num_weights_per_node);
     float sum_numer[NDIMEN];
@@ -804,8 +805,8 @@ void MR_compute_weight(int itask, KeyValue *kv, void *ptr)
                 temp_numer += numer[n][k][w];
                 temp_demon += denom[n][k][w];
             }
-            sum_numer[w] = temp_numer; //// LOCAL SUM VECTOR FOR K-TH NODE
-            sum_demon[w] = temp_demon; //// LOCAL SUM VECTOR FOR K-TH NODE
+            sum_numer[w] = temp_numer; /// LOCAL SUM VECTOR FOR K-TH NODE
+            sum_demon[w] = temp_demon; /// LOCAL SUM VECTOR FOR K-TH NODE
         }
         for (int w = 0; w < NDIMEN; w++) {
             //char weightnum[MAX_STR];
@@ -825,7 +826,7 @@ void MR_compute_weight(int itask, KeyValue *kv, void *ptr)
             char weightnum[MAX_STR];
             sprintf(weightnum, "%d %d", k, w);
             ///////////////////////////////////////////
-            //// SHOULD BE CAREFUL ON KEY BYTE ALIGN!
+            /// SHOULD BE CAREFUL ON KEY BYTE ALIGN!
             ///////////////////////////////////////////
             char bkey[strlen(weightnum)+1];
             char bvalue[SZFLOAT];
@@ -840,7 +841,7 @@ void MR_compute_weight(int itask, KeyValue *kv, void *ptr)
                 bconcat[i+SZFLOAT] = bvalue2[i];
             }//total 4*2 = 8bytes for two floats.
             
-            //// DEBUG
+            /// DEBUG
             //printf("orig floats = %g, %g\n", sum_numer[w], sum_demon[w]);
             //char *c1 = (char *)malloc(SZFLOAT);
             //char *c2 = (char *)malloc(SZFLOAT);
@@ -879,7 +880,7 @@ void MR_accumul_weight(char *key, int keybytes, char *multivalue,
 /* ------------------------------------------------------------------------ */
 {
     GIFTBOX *gb = (GIFTBOX *) ptr;
-    //// A SZFLOAT*2-BYTE STRUCTURE FOR TWO FLOATS => TWO FLOAT VALUES
+    /// A SZFLOAT*2-BYTE STRUCTURE FOR TWO FLOATS => TWO FLOAT VALUES
     vector<float> vec_numer(nvalues, 0.0);
     vector<float> vec_denom(nvalues, 0.0);
     for (int j = 0; j < nvalues; j++) {
@@ -898,7 +899,7 @@ void MR_accumul_weight(char *key, int keybytes, char *multivalue,
     //printf("summed %s, %f, %f, %f, %f\n", key, vec_numer[0],vec_numer[0],vec_denom[0],vec_denom[0]);
     //fprintf(stderr,"[Node %d]: %s reduce %s, %f, %f \n", gb->myid, gb->myname, key, vec_numer[0],vec_numer[0],vec_denom[0],vec_denom[0]);
     
-    //// New weights for node K and dimension D
+    /// New weights for node K and dimension D
     //cout << accumulate(vec_numer.begin(), vec_numer.end(), 0.0f) << " ";
     //cout << accumulate(vec_denom.begin(), vec_denom.end(), 0.0f) << endl;
     float temp_numer = accumulate(vec_numer.begin(), vec_numer.end(), 0.0f);
@@ -937,7 +938,7 @@ void MR_update_weight(uint64_t itask, char *key, int keybytes, char *value,
     key_tokens = strtok(NULL, whitespace);
     int W = atoi(key_tokens);
     float new_weight = *(float *)value;
-    updatew_batch_index(gb->som->nodes[K], new_weight, W); //// UPDATE WEIGHT OF NODE K
+    updatew_batch_index(gb->som->nodes[K], new_weight, W); /// UPDATE WEIGHT OF NODE K
 }
 
 /* ------------------------------------------------------------------------ */
