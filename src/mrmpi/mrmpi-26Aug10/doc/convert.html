@@ -1,0 +1,38 @@
+<HTML>
+<CENTER><A HREF = "http://www.cs.sandia.gov/~sjplimp/mapreduce.html">MapReduce-MPI WWW Site</A> - <A HREF = "Manual.html">MapReduce-MPI Documentation</A> 
+</CENTER>
+
+
+
+
+<HR>
+
+<H3>MapReduce convert() method 
+</H3>
+<PRE>uint64_t MapReduce::convert() 
+</PRE>
+<P>This calls the convert() method of a MapReduce object, which converts
+a KeyValue object into a KeyMultiValue object.  It does this by
+finding duplicate keys (stored only by this processor) and
+concatenating their values into a list of values which it associates
+with the key in the KeyMultiValue object.  The method returns the
+total number of key/value pairs in the KeyMultiValue object, which
+will be the number of unique keys in the KeyValue object.
+</P>
+<P>This operation creates a hash table to find duplicate keys
+efficiently.  More details are given in the <A HREF = "technical.html">Technical
+Details</A> section.
+</P>
+<P>This method is an on-processor operation, requiring no communication.
+When run in parallel, each processor converts only the key/value pairs
+it owns into key/multi-value pairs.  Thus, this operation is typically
+performed only after the <A HREF = "aggregate.html">aggregate()</A> method has
+collected all duplicate keys to the same processor.  The
+<A HREF = "collate.html">collate()</A> method performs an
+<A HREF = "aggregate.html">aggregate()</A> followed by a convert().
+</P>
+<HR>
+
+<P><B>Related methods</B>: <A HREF = "collate.html">collate()</A>
+</P>
+</HTML>

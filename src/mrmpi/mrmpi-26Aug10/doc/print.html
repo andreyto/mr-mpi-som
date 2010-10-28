@@ -1,0 +1,54 @@
+<HTML>
+<CENTER><A HREF = "http://www.cs.sandia.gov/~sjplimp/mapreduce.html">MapReduce-MPI WWW Site</A> - <A HREF = "Manual.html">MapReduce-MPI Documentation</A> 
+</CENTER>
+
+
+
+
+<HR>
+
+<H3>MapReduce print() method 
+</H3>
+<PRE>void MapReduce::print(int proc, int nstride, int kflag, int vflag) 
+</PRE>
+<P>This calls the print() method of a MapReduce object, which prints out
+the KeyValue or KeyMultiValue pairs to the screen.  This can be useful
+for debugging purposes.
+</P>
+<P>If <I>proc</I> < 0, then all processors print their information, one
+processor at a time.  If <I>proc</I> >= 0, then only the specified <I>proc</I>
+prints its information.
+</P>
+<P>Each processor prints every Nth of its pairs, where N = <I>nstride</I>.
+Thus if <I>nstride</I> = 1, all pairs are printed.
+</P>
+<P>The <I>kflag</I> and <I>vflag</I> setting control the format of the printed
+output.  Only a limited set of choices is available.  If these choices
+do not match the format of your keys and values, you will need to pass
+your data to map() or reduce() function you write yourself to print
+them.  These can be invoked by the <A HREF = "map.html">map()</A> or
+<A HREF = "reduce.html">reduce()</A> methods.
+</P>
+<P>These are the recognized <I>kflag</I> and <I>vflag</I> settings:
+</P>
+<UL><LI>flag = 0 for NULL
+<LI>flag = 1 for 32-bit positive integer (int)
+<LI>flag = 2 for 64-bit unsigned integer (uint64_t)
+<LI>flag = 3 for 32-bit floating point value (float)
+<LI>flag = 4 for 64-bit floating point value (double)
+<LI>flag = 5 for a NULL-terminated string
+<LI>flag = 6 for a pair of 32-bit positive integers (int int)
+<LI>flag = 7 for a pair of 64-bit unsigned integers (uint64_t uint64_t) 
+</UL>
+<P>For example, using <I>kflag</I> = 1 and <I>vflag</I> = 7, would be appropriate
+for keys that are 32-bit integers, and values that are a pair of
+64-bit integers.
+</P>
+<P>For KeyMultiValue pairs, the <I>vflag</I> setting is used to format each
+output value in the multi-value.
+</P>
+<HR>
+
+<P><B>Related methods</B>: <A HREF = "collate.html">collate()</A>
+</P>
+</HTML>

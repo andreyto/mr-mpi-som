@@ -1,0 +1,38 @@
+<HTML>
+<CENTER><A HREF = "http://www.cs.sandia.gov/~sjplimp/mapreduce.html">MapReduce-MPI WWW Site</A> - <A HREF = "Manual.html">MapReduce-MPI Documentation</A> 
+</CENTER>
+
+
+
+
+<HR>
+
+<H3>KeyValue add() method 
+</H3>
+<PRE>void KeyValue::add(char *key, int keybytes, char *value, int valuebytes)
+void KeyValue::add(int n, char *keys, int keybytes, char *values, int valuebytes)
+void KeyValue::add(int n, char *keys, int *keybytes, char *values, int *valuebytes) 
+</PRE>
+<P>The methods are called by the mymap(), mycompress(), and myreduce()
+functions in your program to register key/value pairs with the
+KeyValue object stored by the MapReduce object whose map(),
+compress(), or reduce() method was invoked.  The first version
+registers a single key/value pair.  The second version registers N
+key/value pairs, where the keys are all the same length and the values
+are all the same length.  The third version registers a set of N
+key/value pairs where the length of each key and of each value is
+specified.
+</P>
+<P>As explained <A HREF = "program.html">here</A>, from the perspective of the MR-MPI
+library, keys and values are variable-length byte strings.  To
+register such strings, you must specify their length in bytes.  This
+is done via the keybytes and valuebytes arguments, either as a single
+length or as a vectors of lengths.  Note that if your key or value is
+a text string, it should typically include a trailing "0" to terminate
+the string.
+</P>
+<P>See the <A HREF = "settings.html">Settings</A> and <A HREF = "technical.html">Technical
+Details</A> sections for details on the byte-alignment of
+keys and values you register with these add methods.
+</P>
+</HTML>

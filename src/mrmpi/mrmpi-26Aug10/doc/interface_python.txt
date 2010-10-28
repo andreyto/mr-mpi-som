@@ -1,0 +1,438 @@
+"MapReduce-MPI WWW Site"_mws - "MapReduce-MPI Documentation"_md :c
+
+:link(mws,http://www.cs.sandia.gov/~sjplimp/mapreduce.html)
+:link(md,Manual.html)
+
+:line
+
+Python interface to the MapReduce-MPI Library :h3
+
+A Python wrapper for the MR-MPI library is included in the
+distribution.  The advantage of using Python is how concise the
+language is, enabling rapid development and debugging of MapReduce
+programs.  The disadvantage is speed, since Python is slower than a
+compiled language.  Using the MR-MPI library from Python incurs two
+additional overheads, discussed in the "Technical
+Details"_technical.html section.
+
+Before using the MR-MPI library in a Python script, the Python on your
+machine must be "extended" to include an interface to the MR-MPI
+library.  If your Python script will invoke MPI operations, you will
+also need to extend your Python with an interface to MPI itself.
+
+Thus you should first decide how you intend to use the MR-MPI library
+from Python.  There are 3 options:
+
+(1) Use the library on a single processor running Python.
+
+(2) Use the library in parallel, where each processor runs Python, but
+your application script does not use MPI.
+
+(3) Use the library in parallel, where each processor runs Python, and
+your application also makes MPI calls through a Python/MPI interface.
+
+Note that for (2) and (3) you will not be able to interact with Python
+interactively by typing commands and getting a response.  This is
+because when you have multiple instances of Python running (e.g. on a
+parallel machine) they cannot all read what you type.
+
+Working in mode (1) does not require your machine to have MPI
+installed.  You should extend your Python with a serial version of the
+MR-MPI library and its dummy MPI library.  See instructions below on
+how to do this.
+
+Working in mode (2) requires your machine to have an MPI library
+installed, but your Python does not need to be extended with MPI
+itself.  The MPI library must be a shared library (e.g. a *.so file on
+Linux) which is not typically created when MPI is built/installed.
+See instruction below on how to do this.  You should extend your
+Python with the parallel MR-MPI library which will use the shared MPI
+system library.  See instructions below on how to do this.
+
+Working in mode (3) requires your machine to have MPI installed (as a
+shared library as in (2)).  You must also extend your Python with the
+parallel MR-MPI library (same as in (2)) and with MPI itself, via one
+of several available Python/MPI packages.  See instructions below on
+how to do the latter task.
+
+The following sub-sections cover the rest of the Python setup
+discussion:
+
+"Extending Python with a serial version of the MR-MPI library"_#serial
+"Creating a shared MPI library"_#shared
+"Extending Python with a parallel version of the MR-MPI library"_#parallel
+"Extending Python with MPI itself"_#mpi
+"Testing the MR-MPI library from Python"_#test :ul
+
+This sub-section describes the Python syntax used to invoke the MR-MPI
+library:
+
+"Using the MR-MPI library from Python"_#use :ul
+
+:line
+:line
+
+[Extending Python with a serial version of the MR-MPI library] :link(serial)
+
+From the python directory, type
+
+python setup_serial.py build :pre
+
+and then one of these commands:
+
+sudo python setup_serial.py install
+python setup_serial.py install --home=~/foo :pre
+
+The "build" command should compile all the needed MR-MPI C++ files,
+including the dummy MPI library.  The first "install" command will put
+the needed files in your Python's site-packages sub-directory, so that
+Python can load them.  For example, if you installed Python yourself
+on a Linux machine, it would typically be somewhere like
+/usr/local/lib/python2.5/site-packages.  Installing Python packages
+this way often requires you to be able to write to the Python
+directories, which may require root priveleges, hence the "sudo"
+prefix.  If this is not the case, you can drop the "sudo".
+
+Alternatively, you can install the MR-MPI files (or any other Python
+packages) in your own user space.  The second "install" command does
+this, where you should replace "foo" with your directory of choice.
+
+If these commands are successful, an {mrmpi.py} and {_mrmpi_serial.so}
+file will be put in the appropriate directory.
+
+:line
+
+[Creating a shared MPI library] :link(shared)
+
+A shared library is one that is dynamically loadable, which is what
+Python requires.  On Linux this is a library file that ends in ".so",
+not ".a".  Such a shared library is normally not built if you
+installed MPI yourself, but it is easy to do.  Here is how to do it
+for "MPICH"_mpich, a popular open-source version of MPI, distributed
+by Argonne National Labs.  From within the mpich directory, type
+
+:link(mpich,http://www-unix.mcs.anl.gov/mpi)
+
+./configure --enable-sharedlib=gcc
+make
+make install :pre
+
+You may need to use "sudo make install" in place of the last line.
+The end result should be the file libmpich.so in /usr/local/lib.  Note
+that if the file libmpich.a already existed in /usr/local/lib, you
+will now have both a static and shared MPICH library.  This will be
+fine for Python MR-MPI since it only uses the shared library.  But if
+you build other codes with libmpich.a, then those builds may fail if
+the linker uses libmpich.so instead, unless other dynamic libraries
+are also linked to.
+
+:line
+
+[Extending Python with a parallel version of the MR-MPI library] :link(parallel)
+
+From the python directory, type
+
+python setup.py build :pre
+
+and then one of these commands:
+
+sudo python setup.py install
+python setup.py install --home=~/foo :pre
+
+The "build" command should compile all the needed MR-MPI C++ files,
+which will require MPI to be installed on your system.  This means it
+must find both the header file mpi.h and a shared library file,
+e.g. libmpich.so if the MPICH version of MPI is installed.  See the
+preceding section for how to create a build MPI as a shared library if
+it does not exist.
+
+The first "install" command will put the needed files in your Python's
+site-packages sub-directory, so that Python can load them.  For
+example, if you installed Python yourself on a Linux machine, it would
+typically be somewhere like /usr/local/lib/python2.5/site-packages.
+Installing Python packages this way often requires you to be able to
+write to the Python directories, which may require root priveleges,
+hence the "sudo" prefix.  If this is not the case, you can drop the
+"sudo".
+
+Alternatively, you can install the MR-MPI files (or any other Python
+packages) in your own user space.  The second "install" command does
+this, where you should replace "foo" with your directory of choice.
+
+If these commands are successful, an {mrmpi.py} and {_mrmpi.so} file
+will be put in the appropriate directory.
+
+:line
+
+[Extending Python with MPI itself] :link(mpi)
+
+There are several Python packages available that purport to wrap MPI
+and allow its functions to be called from Python.
+
+These include
+
+"pyMPI"_http://pympi.sourceforge.net/
+"maroonmpi"_http://code.google.com/p/maroonmpi/
+"mpi4py"_http://code.google.com/p/mpi4py/
+"myMPI"_http://nbcr.sdsc.edu/forum/viewtopic.php?t=89&sid=c997fefc3933bd66204875b436940f16
+"Pypar"_http://datamining.anu.edu.au/~ole/pypar :ul
+
+All of these except pyMPI work by wrapping the MPI library (which must
+be available on your system as a shared library, as discussed above),
+and exposing (some portion of) its interface to your Python script.
+This means they cannot be used interactively in parallel, since they
+do not address the issue of interactive input to multiple instances of
+Python running on different processors.  The one exception is pyMPI,
+which alters the Python interpreter to address this issue, and (I
+believe) creates a new alternate executable (in place of python
+itself) as a result.
+
+In principle any of these Python/MPI packages should work with the
+MR-MPI library.  However, when I downloaded and looked at a few of
+them, their docuemtation was incomplete and I had trouble with their
+installation.  It's not clear if some of the packages are still being
+actively developed and supported.
+
+The one I recommend, since I have successfully used it with the MR-MPI
+library, is Pypar.  Pypar requires the ubiqtuitous "Numpy
+package"_http://numpy.scipy.org be installed in your Python.  After
+launching python, type
+
+>>> import numpy :pre
+
+to see if it is installed.  If not, here is how to install it (version
+1.3.0b1 as of April 2009).  Unpack the numpy tarball and from its
+top-level directory, type
+
+python setup.py build
+sudo python setup.py install :pre
+
+The "sudo" is only needed if required to copy Numpy files into your
+Python distribution's site-packages directory.
+
+To install PyPar (version pypar-2.1.0_66 as of April 2009), unpack it
+and from its "source" directory, type
+
+python setup.py build
+sudo python setup.py install :pre
+
+Again, the "sudo" is only needed if required to copy PyPar files into
+your Python distribution's site-packages directory.
+
+If you have successully installed Pypar, you should be able to run
+python serially and type
+
+>>> import pypar :pre
+
+without error.  You should also be able to run python in parallel
+on a simple test script
+
+% mpirun -np 4 python test.script :pre
+
+where test.script contains the lines
+
+import pypar
+print "Proc %d out of %d procs" % (pypar.rank(),pypar.size()) :pre
+
+and see one line of output for each processor you ran on.
+
+:line
+
+[Testing the MR-MPI library from Python] :link(test)
+
+Before importing the MR-MPI library in a Python program, one more step
+is needed.  The interface to the library is via Python ctypes, which
+loads the shared MR-MPI library via a CDLL() call, which in turn is a
+wrapper on the C-library dlopen().  This command is different than a
+normal Python "import" and needs to be able to find the MR-MPI shared
+library, which is either in the Python site-packages directory or in a
+local directory you specified in the "python setup.py install"
+command, as described above.
+
+The simplest way to do this is add a line like this to your
+.cshrc or other shell start-up file.
+
+setenv LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/usr/local/lib/python2.5/site-packages :pre
+
+and then execute the file to insure the path has been updated.  This
+will extend the path that dlopen() uses to look for shared libraries.
+
+To test if the MR-MPI library has been successfully installed,
+launch python in serial and type
+
+>>> from mrmpi import mrmpi
+>>> mr = mrmpi() :pre
+
+If you get no errors, you're ready to use the library, as described
+below.
+
+If you built the MR-MPI library for parallel use, launch python 
+in parallel
+
+% mpirun -np 4 python test.script :pre
+
+where test.script contains the lines
+
+import pypar
+from mrmpi import mrmpi
+mr = mrmpi()
+print "Proc %d out of %d procs has" % (pypar.rank(),pypar.size()), mr :pre
+
+Again, if you get no errors, you're good to go.
+
+:line
+
+[Using the MR-MPI library from Python] :link(use)
+
+The Python interface to the MR-MPI library consists of an "mrmpi"
+class which creates a "mrmpi" object, with a set of methods that can
+be invoked on that object.  The sample code lines below assume you
+have first imported the "mrmpi" module as follows:
+
+from mrmpi import mrmpi :pre
+
+Note that when your script imports the Pypar package (same with some
+other Python/MPI packages), it initializes MPI for you.  Pypar does
+not, however, make the global MPI communicator (MPI_COMM_WORLD)
+visible to your program, so you can't pass it to the MR-MPI library.
+When using Pypar, the last line of your input script should thus be
+pypar.finalize(), to insure MPI is shut down correctly.
+
+Some of the methods defined by the mrmpi class take callback functions
+as arguments, e.g. "map()"_map.html and "reduce()"_reduce.html.  These
+are Python functions you define elsewhere in your script.  When you
+register "keys" and "values" with the library, they can be simple
+quantities like strings or ints or floats.  Or they can be Python data
+structures like lists or tuples.
+
+These are the class methods defined by the mrmpi module.  Their
+functionality and arguments are described in the "C++ interface
+section"_interface_c++.html.
+
+mr = mrmpi()                # create an mrmpi object
+mr = mrmpi(mpi_comm)        # ditto, but with a specified MPI communicator
+mr = mrmpi(0.0)             # ditto, and the library will finalize MPI :pre
+
+mr2 = mr.copy()             # copy mr to create mr2 :pre
+
+mr.destroy()                # destroy an mrmpi object, freeing its memory
+                            # this will also occur if Python garbage collects :pre
+
+mr.add(mr2)
+mr.aggregate()
+mr.aggregate(myhash)        # if specified, myhash is a hash function
+			    #   called back from the library as myhash(key)
+			    # myhash() should return an integer (a proc ID)
+mr.broadcast(root)
+mr.clone()
+mr.close()
+mr.collapse(key)
+mr.collate()
+mr.collate(myhash)          # if specified, myhash is the same function
+			    #   as for aggregate() :pre
+
+mr.compress(mycompress)     # mycompress is a function called back from the
+			    #   library as mycompress(key,mvalue,mr,ptr)
+			    #   where mvalue is a list of values associated
+			    #   with the key, mr is the MapReduce object,
+			    #   and you (optionally) provide ptr (see below)
+			    # your mycompress function should typically
+			    #   make calls like mr->add(key,value)
+mr.compress(mycompress,ptr) # if specified, ptr is any Python datum
+		            #    and is passed back to your mycompress()
+			    # if not specified, ptr = None :pre
+
+mr.convert()
+mr.gather(nprocs) :pre
+
+mr.map(nmap,mymap)          # mymap is a function called back from the
+			    #   library as mymap(itask,mr,ptr)
+			    #   where mr is the MapReduce object,
+			    #   and you (optionally) provide ptr (see below)
+			    # your mymap function should typically
+			    #   make calls like mr->add(key,value)
+mr.map(nmap,mymap,ptr)      # if specified, ptr is any Python datum
+			    #    and is passed back to your mymap()
+			    # if not specified, ptr = None
+mr.map(nmap,mymap,ptr,addflag) # if addflag is specfied as a non-zero int,
+			       #   new key/value pairs will be added to the
+			       #   existing key/value pairs :pre
+
+mr.map_file_list(file,mymap) # file is a file containing a list of filenames
+			     # mymap is a function called back from the
+			     #   library as mymap(itask,filename,mr,ptr)
+			     # as above, ptr and addflag are optional args
+mr.map_file_char(nmap,files,sepchar,delta,mymap)
+                             # files is a list of filenames
+			     # mymap is a function called back from the
+			     #   library as mymap(itask,str,mr,ptr)
+			     # as above, ptr and addflag are optional args
+mr.map_file_str(nmap,files,sepstr,delta,mymap)
+                             # files is a list of filenames
+			     # mymap is a function called back from the
+			     #   library as mymap(itask,str,mr,ptr)
+			     # as above, ptr and addflag are optional args
+mr.map_mr(mr2,mymap)         # pass key/values in mr2 to mymap
+                             # mymap is a function called back from the
+			     #   library as mymap(itask,key,value,mr,ptr)
+			     # as above, ptr and addflag are optional args :pre
+
+mr.open()
+mr.open(addflag)
+mr.print(proc,nstride,kflag,vflag) :pre
+                            
+mr.reduce(myreduce)         # myreduce is a function called back from the
+			    #   library as myreduce(key,mvalue,mr,ptr)
+			    #   where mvalue is a list of values associated
+			    #   with the key, mr is the MapReduce object,
+			    #   and you (optionally) provide ptr (see below)
+			    # your myreduce function should typically
+			    #   make calls like mr->add(key,value)
+mr.reduce(myreduce,ptr)     # if specified, ptr is any Python datum
+			    #    and is passed back to your myreduce()
+			    # if not specified, ptr = None
+mr.scrunch(nprocs,key) :pre
+
+mr.sort_keys(mycompare)
+mr.sort_values(mycompare)
+mr.sort_multivalues(mycompare) # compare is a function called back from the
+			       #   library as mycompare(a,b) where
+			       #   a and b are two keys or two values
+			       # your mycompare() should compare them
+			       #   and return a -1, 0, or 1 
+			       #   if a < b, or a == b, or a > b :pre
+
+mr.kv_stats(level)
+mr.kmv_stats(level) :pre
+
+mr.mapstyle(value)             # set mapstyle to value
+mr.all2all(value)              # set all2all to value
+mr.verbosity(value)            # set verbosity to value
+mr.timer(value)                # set timer to value
+mr.memsize(value)              # set memsize to value
+mr.minpage(value)              # set minpage to value
+mr.maxpage(value)              # set maxpage to value :pre
+
+mr.add(key,value)                 # add single key and value
+mr.add_multi_static(keys,values)  # add list of keys and values
+				  # all keys are assumed to be same length
+				  # all values are assumed to be same length
+mr.add_multi_dynamic(keys,values) # add list of keys and values
+				  # each key may be different length
+				  # each value may be different length :pre
+
+These class methods correspond one-to-one with the C++ methods
+described "here"_interface_c++.html, except that for C++ methods with
+multiple interfaces (e.g. "map()"_map.html), there are multiple Python
+methods with slightly different names, similar to the "C
+interface"_interface_c.html.
+
+There is no set function the the {keyalign} and {valuealign}
+"settings"_settings.html.  These are hard-wired to 1 for
+the Python interface, since no other values make sense, due to
+the pickling/unpickling that is performed in key and value data.
+
+See the Python scripts in the examples directory for
+"examples"_examples.html of how these calls are made from a Python
+program.  They are conceptually identical to the C++ and C programs in
+the same directory.

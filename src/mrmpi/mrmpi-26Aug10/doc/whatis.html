@@ -1,0 +1,106 @@
+<HTML>
+<CENTER><A HREF = "http://www.cs.sandia.gov/~sjplimp/mapreduce.html">MapReduce-MPI WWW Site</A> - <A HREF = "Manual.html">MapReduce-MPI Documentation</A> 
+</CENTER>
+
+
+
+
+<HR>
+
+<H3>What is a MapReduce? 
+</H3>
+<P>The canonical example of a MapReduce operation, described in both the
+<A HREF = "#Dean">Dean and Sanjay</A> and <A HREF = "#Tu">Tu, et al</A> papers, is counting the
+frequency of words in a collection of text files.  Imagine a large
+corpus of text comprising Gbytes or Tbytes of data.  To count how
+often each word appears, the following algorithm would work, written
+in Python:
+</P>
+<PRE>dict = {}
+for file in sys.argv[1:]:
+ text = open(file,'r').read()
+ words = text.split()
+ for word in words:
+   if word not in dict: dict[word] = 1
+   else: dict[word] += 1
+unique = dict.keys()
+for word in unique:
+ print dict[word],word 
+</PRE>
+<P>Dict is a "dictionary" or associative array which is a collection of
+key/value pairs where the keys are unique.  In this case, the key is a
+word and its value is the number of times it appears in any text file.
+The program loops over files, and splits the contents into words
+(separated by whitespace).  For each word, it either adds it to the
+dictionary or increments its associated value.  Finally, the resulting
+dictionary of unique words and their counts is printed.
+</P>
+<P>The drawback of this implementation is that it is inherently serial.
+The files are read one by one.  More importantly the dictionary data
+structure is updated one word at a time.
+</P>
+<P>A MapReduce formulation of the same task is as follows:
+</P>
+<PRE>array = []
+for file in sys.argv[1:]:
+ array += map(file)
+newarray = collate(array)
+unique = [] 
+for entry in newarray:
+ unique += reduce(entry)
+for entry in unique:
+ print entry[1],entry[0] 
+</PRE>
+<P>Array is now a linear list of key/value pairs where a key may appear
+many times (not a dictionary).  The map() function reads a file,
+splits it into words, and generates a key/value pair for each word ialignn
+the file.  The key is the word itself and the value is the integer 1.
+The collate() function reorganizes the (potentially very large) list
+of key/value pairs into a new array of key/value pairs where each
+unique key appears exactly once and the associated value is a
+concatenated list of all the values associated with the same key in
+the original array.  Thus, a key/value pair in the new array would be
+("dog",[1,1,1,1,1]) if the word "dog" appeared 5 times in the text
+corpus.  The reduce() function takes a single key/value entry from the
+new array and returns a key/value pair that has the word as its key
+and the count as its value, ("dog",5) in this case.  Finally, the
+elements of the unique array are printed.
+</P>
+<P>As written, the MapReduce algorithm could be executed on a single
+processor.  However, there is now evident parallelism.  The map()
+function calls are independent of each other and can be executed on
+different processors simultaneously.  Ditto for the reduce() function
+calls.  In this scenario, each processor would accumulate its own
+local "array" and "unique" lists of key/value pairs.
+</P>
+<P>Also note that if the map and reduce functions are viewed as black
+boxes that produce a list of key/value pairs (in the case of map) or
+convert a single key/value pair into a new key/value pair (in the case
+of reduce), then they are the only part of the above algorithm that is
+application-specific.  The remaining portions (the collate function,
+assignment of map or reduce tasks to processors, combining of the
+map/reduce output across processors) can be handled behind the scenes
+in an application-independent fashion.  That is the portion of the
+code that is handled by the MR-MPI (or other) MapReduce library.  The
+user only needs to provide a small driving program to call the library
+and serial functions for performing the desired map() and reduce()
+operations.
+</P>
+<HR>
+
+<A NAME = "Dean"></A>
+
+<P><B>(Dean)</B> J. Dean and S. Ghemawat, "MapReduce: Simplified Data
+Processing on Large Clusters", OSDI'04 conference (2004); J. Dean and
+S. Ghemawat, "MapReduce: Simplified Data Processing on Large
+Clusters", Communications of the ACM, 51, p 107-113 (2008).
+</P>
+<A NAME = "Tu"></A>
+
+<P><B>(Tu)</B> T. Tu, C. A. Rendleman, D. W. Borhani, R. O. Dror,
+J. Gullingsrud, M. O. Jensen, J. L. Kelpeis, P. Maragakis, P. Miller,
+K. A. Stafford, D. E. Shaw, "A Scalable Parallel Framework for
+Analyzing Terascale Molecular Dynamics Trajectories", SC08 proceedings
+(2008).
+</P>
+</HTML>

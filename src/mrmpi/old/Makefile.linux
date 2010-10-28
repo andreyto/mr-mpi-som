@@ -1,0 +1,10 @@
+# Linux Makefile for MapReduce library, g++, MPI
+
+#CC =		g++
+CC = /export/openmpi/bin/mpicxx
+CCFLAGS =	-O -DMPICH_IGNORE_CXX_SEEK
+DEPFLAGS =	-M
+ARCHIVE =	ar
+ARFLAGS =	-rc
+
+include Makefile.common

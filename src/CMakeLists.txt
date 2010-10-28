@@ -18,6 +18,9 @@ LINK_DIRECTORIES( ${LINK_DIRECTORIES} ${MRSOM_BINARY_DIR}/mrmpi )
 add_executable(mrsom mrsom.cpp)
 add_executable(som som.cpp)
 target_link_libraries(mrsom mpi)  
-target_link_libraries(mrsom mrmpi)  
-
+target_link_libraries(mrsom mrmpi)
+  
+add_executable(mrsom2 mrsom2.cpp)
+target_link_libraries(mrsom2 mpi)  
+target_link_libraries(mrsom2 mrmpi)
 

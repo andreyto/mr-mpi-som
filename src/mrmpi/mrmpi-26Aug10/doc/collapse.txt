@@ -1,0 +1,46 @@
+"MapReduce-MPI WWW Site"_mws - "MapReduce-MPI Documentation"_md :c
+
+:link(mws,http://www.cs.sandia.gov/~sjplimp/mapreduce.html)
+:link(md,Manual.html)
+
+:line
+
+MapReduce collapse() method :h3 
+
+uint64_t MapReduce::collapse(char *key, int keybytes) :pre
+
+This calls the collapse() method of a MapReduce object, which
+collapses a KeyValue object into a KeyMultiValue object with a single
+new key, given as an argument with its length in bytes.  The single
+new value in the KeyMultiValue object is a concatentated list of all
+the keys and values in the KeyValue object.  The method returns the
+total number of key/value pairs in the KeyMultiValue object, which
+will be 1 for each processor owning pairs.
+
+For example, if the KeyValue object contains these key/value pairs:
+
+("dog",3), ("me",45), ("parallel",1) :pre
+
+then the new KeyMultiValue object will contain a single key/value pair:
+
+(key,\["dog",3,"me",45,"parallel",1\]) :pre
+
+This method can be used to collect a set of key/value pairs to use in
+a "reduce()"_reduce.html method so that it can all be passed to a
+single invocation of your myreduce() function for output.  See the
+"Technical Details"_technical.html section for details on how the
+collapse() method affects the alignment of keys and values that may
+eventually be passed to your myreduce() function via the
+"reduce()"_reduce.html method.
+
+This method is an on-processor operation, requiring no communication.
+When run in parallel, each processor collapses the key/value pairs it
+owns into a single key/value pair.  Thus each processor will assign
+the same key to its new pair.  See the "gather()"_gather.html and
+"scrunch()"_scrunch.html methods for ways to collect all key/value
+pairs on to one or a few processors.
+
+:line
+
+[Related methods]: "clone()"_clone.html, "collate"_collate.html,
+"convert()"_convert.html

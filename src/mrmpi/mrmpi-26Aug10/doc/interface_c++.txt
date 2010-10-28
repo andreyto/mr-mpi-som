@@ -1,0 +1,81 @@
+"MapReduce-MPI WWW Site"_mws - "MapReduce-MPI Documentation"_md :c
+
+:link(mws,http://www.cs.sandia.gov/~sjplimp/mapreduce.html)
+:link(md,Manual.html)
+
+:line
+
+C++ Interface to the MapReduce-MPI Library :h3
+
+This mutiple-page section discusses how to call the MR-MPI library
+from a C++ program and gives a description of all its methods and
+variable settings.  Use of the library from a "C
+program"_interface_c.html (or other hi-level language) or from
+"Python"_interface_python.html is discussed in other sections of the
+manual.
+
+All the library methods operate on two basic data structures stored
+within the MapReduce object, a KeyValue object (KV) and a
+KeyMultiValue object (KMV).  When running in parallel, these objects
+are stored in a distributed fashion across multiple processors.
+
+A KV is a collection of key/value pairs.  The same key may appear many
+times in the collection, associated with values which may or may not
+be the same.
+
+A KMV is also a collection of key/value pairs.  But each key in the
+KMV is unique, meaning it appears exactly once (see the clone() method
+for a possible exception).  The value associated with a KMV key is a
+concatenated list (a multi-value) of all the values associated with
+the same key in the original KV.
+
+More details about how KV and KMV objects are stored are given in the
+"Technical Details"_technical.html section.
+
+Here is an overview of how the various library methods operate on KV
+and KMV objects.  This is useful to understand, since this determines
+how the various operations can be chained together in your program.
+
+"add()"_add.html, KV -> KV, add pairs from one KV to another, serial, 1 page
+"aggregate()"_aggregate.html, KV -> KV, pairs are aggregated onto procs, parallel, 7 pages
+"broadcast()"_broadcast.html, KV -> KV, send pairs from one proc to all procs, parallel, 2 pages 
+"clone()"_clone.html, KV -> KMV, each KV pair becomes a KMV pair, serial, 2 pages 
+"close()"_close.html, KV, allows one MapReduce object to add KV pairs to another, serial, 0 pages
+"collapse()"_collapse.html, KV -> KMV, all KV pairs become one KMV pair, serial, 2 pages
+"collate()"_collate.html, KV -> KMV, aggregate + convert, parallel, 4+ pages
+"compress()"_compress.html, KV -> KV, calls back to user program to compress duplicate keys, serial, 4+ pages
+"convert()"_convert.html, KV -> KMV, duplicate KV keys become one KMV key, serial, 4+ pages
+"gather()"_gather.html, KV -> KV, collect pairs on many procs to few procs, parallel, 2 pages
+"map()"_map.html, create or add to a KV, calls back to user program to generate pairs, serial, 1 page
+"reduce()"_reduce.html, KMV -> KV, calls back to user program to process KMV pairs, serial, 3 pages
+"open()"_open.html, create or add to a KV, allows one MapReduce object to add KV pairs to another, serial, 0 pages
+"print()"_print.html, KV or KMV, prints KV or KMV pairs to screen, serial, 1 page
+"scrunch()"_scrunch.html, KV -> KMV, gather + collapse, parallel, 3 pages
+"sort_keys()"_sort_keys.html, KV -> KV, calls back to user program to sort pairs by key, serial, 5 pages
+"sort_values()"_sort_values.html, KV -> KV, calls back to user program to sort pairs by value, serial, 5 pages
+"sort_multivalues()"_sort_multivalues.html, KMV -> KMV, calls back to user program to sort multi-values within each pair, serial, 4 pages
+"kv_stats()"_stats.html, KV, print stats about a KV, serial, 0 pages
+"kmv_stats()"_stats.html, KMV, print stats about a KMV, serial, 0 pages :tb()
+
+Note that each MapReduce object contains a single KV or KMV object (or
+neither) when its method is called. (Some methods operate on 2 or more
+MapReduce objects.)  When the method completes, the MapReduce object
+also contains a single KV or KMV object.  Thus if a method creates a
+new KV or KMV object, the old one is deleted, if it existed.  The KV
+object is also deleted if a KMV object is produced, and vice versa.
+
+The methods flagged as "serial" perform their operation on
+the portion of a KV or KMV owned by an individual processor.  They
+involve only local computation (performed simultaneously on all
+processors) and no parallel comuunication.  The methods flagged as
+"parallel" involve communication between processors.
+
+The listed page counts are the number of memory pages that method
+requires.  See the {memsize} "setting"_settings.html for a discussion
+of what memory pages are and how their size is set.  The methods whose
+page count is listed as 4+ all perform a "convert()"_convert.html
+operation internally.  The minimum number of pages this requires is 4.
+Depending on the page size and the characteristics of the KV pairs
+being converted to KMV pairs, more pages can be required.  See the
+out-of-core discussion in "this section"_technical.html#ooc for more
+details.

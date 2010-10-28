@@ -1,0 +1,50 @@
+"MapReduce-MPI WWW Site"_mws - "MapReduce-MPI Documentation"_md :c
+
+:link(mws,http://www.cs.sandia.gov/~sjplimp/mapreduce.html)
+:link(md,Manual.html)
+
+:line
+
+MapReduce print() method :h3
+
+void MapReduce::print(int proc, int nstride, int kflag, int vflag) :pre
+
+This calls the print() method of a MapReduce object, which prints out
+the KeyValue or KeyMultiValue pairs to the screen.  This can be useful
+for debugging purposes.
+
+If {proc} < 0, then all processors print their information, one
+processor at a time.  If {proc} >= 0, then only the specified {proc}
+prints its information.
+
+Each processor prints every Nth of its pairs, where N = {nstride}.
+Thus if {nstride} = 1, all pairs are printed.
+
+The {kflag} and {vflag} setting control the format of the printed
+output.  Only a limited set of choices is available.  If these choices
+do not match the format of your keys and values, you will need to pass
+your data to map() or reduce() function you write yourself to print
+them.  These can be invoked by the "map()"_map.html or
+"reduce()"_reduce.html methods.
+
+These are the recognized {kflag} and {vflag} settings:
+
+flag = 0 for NULL
+flag = 1 for 32-bit positive integer (int)
+flag = 2 for 64-bit unsigned integer (uint64_t)
+flag = 3 for 32-bit floating point value (float)
+flag = 4 for 64-bit floating point value (double)
+flag = 5 for a NULL-terminated string
+flag = 6 for a pair of 32-bit positive integers (int int)
+flag = 7 for a pair of 64-bit unsigned integers (uint64_t uint64_t) :ul
+
+For example, using {kflag} = 1 and {vflag} = 7, would be appropriate
+for keys that are 32-bit integers, and values that are a pair of
+64-bit integers.
+
+For KeyMultiValue pairs, the {vflag} setting is used to format each
+output value in the multi-value.
+
+:line
+
+[Related methods]: "collate()"_collate.html

@@ -1,0 +1,148 @@
+<HTML>
+<CENTER><A HREF = "http://www.cs.sandia.gov/~sjplimp/mapreduce.html">MapReduce-MPI WWW Site</A> - <A HREF = "Manual.html">MapReduce-MPI Documentation</A> 
+</CENTER>
+
+
+
+
+<HR>
+
+<H3>C interface to the MapReduce-MPI Library 
+</H3>
+<P>The MR-MPI library can be called from a C program, using the interface
+defined in src/cmapreduce.h.  This is a C file which should be
+included in your C program to define the API to the library:
+</P>
+<PRE>#include "cmapreduce.h" 
+</PRE>
+<P>Note that the C interface should also be usable to call the MapReduce
+MPI library from Fortran or other hi-level languages, including
+scripting languages.  See information below on how to do this from
+<A HREF = "interface_python.html">Python</A>.
+</P>
+<P>The C interface consists of the following functions.  Their
+functionality and arguments are described in the <A HREF = "interface_c++.html">C++ interface
+section</A>.
+</P>
+<PRE>void *MR_create(MPI_Comm comm);
+void *MR_create_mpi();
+void *MR_create_mpi_finalize();
+void *MR_copy(void *MRptr);
+void MR_destroy(void *MRptr); 
+</PRE>
+<PRE>uint64_t MR_add(void *MRptr);
+uint64_t MR_aggregate(void *MRptr, int (*myhash)(char *, int));
+uint64_t MR_broadcast(void *MRptr, int root);
+uint64_t MR_clone(void *MRptr);
+uint64_t MR_close(void *MRptr);
+uint64_t MR_collapse(void *MRptr, char *key, int keybytes);
+uint64_t MR_collate(void *MRptr, int (*myhash)(char *, int));
+uint64_t MR_compress(void *MRptr, 
+	 	     void (*mycompress)(char *, int, char *, int, int *, void *KVptr, void *APPptr),
+		     void *APPptr);
+uint64_t MR_convert(void *MRptr);
+uint64_t MR_gather(void *MRptr, int numprocs); 
+</PRE>
+<PRE>uint64_t MR_map(void *MRptr, int nmap,
+	        void (*mymap)(int, void *KVptr, void *APPptr),
+	        void *APPptr);
+uint64_t MR_map_add(void *MRptr, int nmap,
+	            void (*mymap)(int, void *KVptr, void *APPptr),
+		    void *APPptr, int addflag);
+uint64_t MR_map_file_list(void *MRptr, char *file,
+			  void (*mymap)(int, char *, void *KVptr, void *APPptr),
+			  void *APPptr);
+uint64_t MR_map_file_list_add(void *MRptr, char *file,
+		              void (*mymap)(int, char *, void *KVptr, void *APPptr),
+			      void *APPptr, int addflag);
+uint64_t MR_map_file_char(void *MRptr, int nmap, int files, char **files,
+		          char sepchar, int delta,
+		          void (*mymap)(int, char *, int, void *KVptr, void *APPptr),
+		          void *APPptr);
+uint64_t MR_map_file_char_add(void *MRptr, int nmap, int files, char **files,
+			      char sepchar, int delta,
+			      void (*mymap)(int, char *, int, void *KVptr, void *APPptr),
+			      void *APPptr, int addflag);
+uint64_t MR_map_file_str(void *MRptr, int nmap, int files, char **files,
+		         char *sepstr, int delta,
+		         void (*mymap)(int, char *, int, void *KVptr, void *APPptr),
+		         void *APPptr);
+uint64_t MR_map_file_str_add(void *MRptr, int nmap, int files, char **files,
+			     char *sepstr, int delta,
+			     void (*mymap)(int, char *, int, void *KVptr, void *APPptr),
+			     void *APPptr, int addflag);
+uint64_t MR_map_mr(void *MRptr, void *MRptr2,
+	           void (*mymap)(uint64_t, char *, int, char *, int *, void *KVptr, void *APPptr),
+	           void *APPptr);
+uint64_t MR_map_mr_add(void *MRptr, void *MRptr2,
+		  void (*mymap)(uint64_t, char *, int, char *, int *, void *KVptr, void *APPptr),
+		  void *APPptr, int addflag); 
+</PRE>
+<PRE>void MR_open(void *MRptr, int addflag);
+void MR_open_add(void *MRptr);
+void MR_print(void *MRptr, int, int, int, int); 
+</PRE>
+<PRE>uint64_t MR_reduce(void *MRptr,
+	           void (*myreduce)(char *, int, char *, int, int *, void *KVptr, void *APPptr),
+	           void *APPptr);
+uint64_t MR_scrunch(void *MRptr, int numprocs, char *key, int keybytes); 
+</PRE>
+<PRE>uint64_t MR_multivalue_blocks(void *MRptr);
+int MR_multivalue_block(void *MRptr, int iblock,
+			char **ptr_multivalue, int **ptr_valuesizes); 
+</PRE>
+<PRE>uint64_t MR_sort_keys(void *MRptr, 
+		      int (*mycompare)(char *, int, char *, int));
+uint64_t MR_sort_values(void *MRptr,
+		        int (*mycompare)(char *, int, char *, int));
+uint64_t MR_sort_multivalues(void *MRptr,
+			     int (*mycompare)(char *, int, char *, int)); 
+</PRE>
+<PRE>void MR_kv_stats(void *MRptr, int level);
+void MR_kmv_stats(void *MRptr, int level); 
+</PRE>
+<PRE>void MR_set_mapstyle(void *MRptr, int value);
+void MR_set_verbosity(void *MRptr, int value);
+void MR_set_timer(void *MRptr, int value);
+void MR_set_memsize(void *MRptr, int value);
+void MR_set_keyalign(void *MRptr, int value);
+void MR_set_valuealign(void *MRptr, int value); 
+</PRE>
+<PRE>void MR_kv_add(void *KVptr, char *key, int keybytes, 
+	       char *value, int valuebytes);
+void MR_kv_add_multi_static(void *KVptr, int n,
+			    char *key, int keybytes,
+			    char *value, int valuebytes);
+void MR_kv_add_multi_dynamic(void *KVptr, int n,
+			    char *key, int *keybytes,
+			    char *value, int *valuebytes); 
+</PRE>
+<P>These functions correspond one-to-one with the C++ methods described
+<A HREF = "interface_c++.html">here</A>, except that for C++ methods with multiple
+interfaces (e.g. <A HREF = "map.html">map()</A>), there are multiple C functions,
+with slightly different names.  The MR_set() functions are added to
+the C interface to enable the corresponding library variables to be
+set.
+</P>
+<P>Note that when you call MR_create() or MR_copy(), they return a "void
+*MRptr" which is a pointer to the MapReduce object created by the
+library.  This pointer is used as the first argument of all the other
+MR calls.  This means a C program can effectively instantiate multiple
+MapReduce objects by simply keeping track of the pointers returned to
+it.
+</P>
+<P>The remaining arguments of each function call are the same as those
+used with the C++ methods.  The only exceptions are several of the
+MR_kv_add() functions which take a KVptr as their first argument.
+This is a pointer to a KeyValue object.  These calls are made from
+your program's mymap(), myreduce(), and mycompress() functions to
+register key/value pairs with the MR-MPI library.  The KVptr is passed
+as an argument to your functions when they are called back from the
+MR-MPI library.
+</P>
+<P>See the C programs in the examples directory for
+<A HREF = "examples.html">examples</A> of how these calls are made from a C program.
+They are conceptually identical to the C++ programs in the same
+directory.
+</P>
+</HTML>

@@ -53,8 +53,8 @@ def work(myid, numProcs, inFileName, nodes, width, height, \
     #print "### Rank =", myid, "processed the data from", myLower, "to", myUpper#, myData, deltaNodes
     return
   
-  
-def broadcast(x, root, myid, numProcs,):
+## v3
+def broadcast(x, root, myid, numProcs):
     list = range(0, root) + range(root + 1, numProcs)
 
     # The process of rank 'root' sends 'x' to all other processes.
@@ -72,15 +72,96 @@ def broadcast(x, root, myid, numProcs,):
 
         # Deallocate and detach bsend's buffer.
         pypar.detach_and_dealloc()
-
         x_ = x
 
     # All processes with rank distinct from 'root' start receiving.
     else:
-        x_ = pypar.receive(root)
-        
+        x_ = pypar.receive(root)        
         
     return x_
+    
+def simple_broadcast_v4(x, root, myid, numprocs, buffer):
+    """ Broadcast implementation using bsend() w/ explicit definition of
+    receive buffers.
+
+    Input parameters:
+     - x: data to broadcast.
+     - root: rank of the process that initiates the broadcast.
+     - myid: rank of the process calling the function.
+     - buffer: well-dimensioned user-defined buffer for receiving 'x'.
+
+    Return value: the broadcasted data.
+    """
+    list = range(0, root) + range(root + 1, numprocs)
+
+    # The process of rank 'root' sends 'x' to all the other processes.
+    if root == myid:
+        for i in list:
+
+            # Determine automatically the size of bsend's buffer.
+            pypar.push_for_alloc(x, use_buffer=True)
+
+            # Allocate and attach bsend's buffer.   
+            pypar.alloc_and_attach()                            
+
+            # Send data to process of rank 'i'.
+            pypar.bsend(x, i, use_buffer=True)              
+
+            # Detach and deallocate bsend's buffer.
+            pypar.detach_and_dealloc()                          
+
+        buffer = x
+
+    # All processes with rank distinct from 'root' start receiving.
+    else:
+        buffer = pypar.receive(root, buffer)
+        
+    return buffer
+
+#def simple_broadcast_v5(x, root, myid, numprocs, buffer):
+    #""" Same as simple_broadcast_v4 except that it uses Pypar's
+    #bypass mode.
+
+    #The use of bypass mode implies that the programmer has to define his 
+    #own buffers on the receiving side (same as when 'use_buffer' is True) 
+    #and that he is limited to send numpy arrays and nothing else !
+
+    #Hence, this function works only with numpy arrays.
+
+    #Input parameters:
+     #- x: data to broadcast.
+     #- root: rank of the process that initiates the broadcast.
+     #- myid: rank of the process calling the function.
+     #- buffer: well-dimensioned user-defined buffer for receiving 'x'.
+
+    #Return value: the broadcasted data.
+    #"""
+    #list = range(0, root) + range(root + 1, numprocs)
+
+    ## The process of rank 'root' sends 'x' to all the other processes.
+    #if root == myid:
+        #for i in list:
+
+            ## Determine automatically the size of bsend's buffer.
+            #pypar.push_for_alloc(x, bypass=True)                        
+
+            ## Allocate and attach bsend's buffer.   
+            #pypar.alloc_and_attach()                            
+
+            ## Send data to process of rank 'i'.
+            #pypar.bsend(x, i, bypass=True)              
+
+            ## Detach and deallocate bsend's buffer.
+            #pypar.detach_and_dealloc()                          
+
+        #buffer = x
+
+    ## All processes with rank distinct from 'root' start receiving.
+    #else:
+        #buffer = pypar.receive(root, buffer, bypass=True)
+        
+    #return buffer
+
 
 def find_neighborhood(height, width, pt, dist):
     min_y = max(int(pt[0] - dist), 0)
@@ -119,7 +200,6 @@ def floatFormat(value):
     #n = 0
     #for r in range(height):
         #for c in range(width):
-            ##print r, c, nodes[r,c]
             #dist = 0.0
             #nodesNum = 0
             #for r2 in range(height):
@@ -129,7 +209,6 @@ def floatFormat(value):
                             #if r2 == r3 and c2 == c3:
                                 #continue
                             #tmp = eucl_dist(numpy.array((r2, c2)), numpy.array((r3, c3))) # coord dist
-                            ##print r2, c2, r3, c3, tmp
                             #if tmp <= minDist:
                                 #nodesNum += 1
                                 #dist += eucl_dist(nodes[r2, c2], nodes[r3, c3]) # weight dist
@@ -204,7 +283,31 @@ if MPI_myid == 0:
     nodes = numpy.array([[ [random() for i in range(FVDim)] for x in range(width)] for y in range(height)])
 else:
     nodes = numpy.array([[[0 for i in range(FVDim)] for x in range(width)] for y in range(height)])
+ 
+## BROADCASTING W/O SPECIFYING EXPLICIT RECIEVING BUFFER
 nodes = broadcast(nodes, 0, MPI_myid, MPI_numproc)
+## BROADCASTING WITH SPECIFYING EXPLICIT RECIEVING BUFFER
+#recvBuffer = numpy.array([[[0 for i in range(FVDim)] for x in range(width)] for y in range(height)])
+#recvBuffer = buffered_broadcast_bypass(nodes, 0, MPI_myid, MPI_numproc, recvBuffer)
+#recvBuffer = simple_broadcast_v4(nodes, 0, MPI_myid, MPI_numproc, recvBuffer)
+#print "v4 - rank " + str(MPI_myid) + " received: " + str(recvBuffer)
+#nodes = recvBuffer
+ 
+#if MPI_myid == 0:
+    ##snd_tab = numpy.array([[[1, 2, 3, 4], [5, 6, 7, 8]],[[11, 12, 13, 14], [15, 16, 17, 18]]])
+    ##snd_tab = numpy.array( [[[random() for i in range(4)] for x in range(2)] for y in range(2)] )
+    #snd_tab = numpy.array( [random() for i in range(10)] )
+#else:
+    ##snd_tab = numpy.array([[[0, 0, 0, 0], [0, 0, 0, 0]],[[0, 0, 0, 0], [0, 0, 0, 0]]])
+    ##snd_tab = numpy.array( [[[0 for i in range(4)] for x in range(2)] for y in range(2)] )
+    #snd_tab = numpy.array( [0 for i in range(10)] )
+    
+#rcv_tab = numpy.array( [[[0 for i in range(4)] for x in range(2)] for y in range(2)] )
+#rcv_tab = numpy.array( [0 for i in range(10)] )
+#rcv_tab = simple_broadcast_v4(snd_tab, 0, MPI_myid, MPI_numproc, rcv_tab) 
+#rcv_tab = broadcast(snd_tab, 0, MPI_myid, MPI_numproc) 
+#print "v4 - rank " + str(MPI_myid) + " received: " + str(rcv_tab)
+
 pypar.barrier()
 #print "Rank " + str(MPI_myid) + " received: " + str(nodes)
 
@@ -269,8 +372,8 @@ for l in n:
     trainVector.append(numpy.array(values, dt))
 print "### Rank %d reads %d rows (%d - %d) from %s." \
       % (MPI_myid, len(trainVector), myLower+1, myUpper, inFileName)
+      
 pypar.barrier()
-
 
 ## FILE READ (original)
 #f = open(inFileName, "r")
@@ -287,7 +390,7 @@ pypar.barrier()
                     
 for i in range(1, iterations+1):
     deltaNodes.fill(0)
-
+    
     if MPI_myid == 0:
         radiusDecaying = radius*exp(-1.0*i/timeConstant)
         radDivVal = 2 * radiusDecaying * i
@@ -326,8 +429,16 @@ for i in range(1, iterations+1):
             pypar.send(deltaNodes, 0)
             #print "Proc %d after seding the result" % MPI_myid
     
-    ## BROADCAST UPDATED NODE WIEGHTS
+    ## BROADCASTING W/O SPECIFYING EXPLICIT RECIEVING BUFFER
     nodes = broadcast(nodes, 0, MPI_myid, MPI_numproc)
+    #print nodes
+    ## BROADCASTING WITH SPECIFYING EXPLICIT RECIEVING BUFFER
+    #recvBuffer.fill(0)
+    #recvBuffer = buffered_broadcast(nodes, 0, MPI_myid, MPI_numproc, recvBuffer)
+    #recvBuffer = simple_broadcast_v4(nodes, 0, MPI_myid, MPI_numproc, recvBuffer)
+    #print recvBuffer
+    #nodes = recvBuffer
+    
     pypar.barrier()
 
 

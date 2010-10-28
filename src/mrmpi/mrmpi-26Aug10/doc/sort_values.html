@@ -1,0 +1,54 @@
+<HTML>
+<CENTER><A HREF = "http://www.cs.sandia.gov/~sjplimp/mapreduce.html">MapReduce-MPI WWW Site</A> - <A HREF = "Manual.html">MapReduce-MPI Documentation</A> 
+</CENTER>
+
+
+
+
+<HR>
+
+<H3>MapReduce sort_values() method 
+</H3>
+<PRE>uint64_t MapReduce::sort_values(int (*mycompare)(char *, int, char *, int)) 
+</PRE>
+<P>This calls the sort_values() method of a MapReduce object, which sorts
+a KeyValue object by its values to produce a new KeyValue object.  The
+mycompare() function you provide compares pairs of values for the
+sort, since the MapReduce object does not know how to interpret the
+content of your values.  The method returns the total number of
+key/value pairs in the new KeyValue object which will be the same as
+in the original.
+</P>
+<P>This method is used to sort key/value pairs by value before a KeyValue
+object is transformed into a KeyMultiValue object, e.g. via the
+<A HREF = "clone.html">clone()</A>, <A HREF = "collapse.html">collapse()</A>, or
+<A HREF = "convert.html">convert()</A> methods.  Note that these operations preserve
+the order of pairs in the KeyValue object when creating a
+KeyMultiValue object, which can then be passed to your application for
+output, e.g. via the <A HREF = "reduce.html">reduce()</A> method.  Note however,
+that sort_values() does NOT sort values across all processors but only
+sorts the values on each processor within the KeyValue object.  Thus
+if you <A HREF = "gather.html">gather()</A> or <A HREF = "aggregate.html">aggregate()</A> after
+performing a sort_values(), the sorted order will be lost, since those
+methods move key/value pairs to new processors.
+</P>
+<P>In this example the user function is called mycompare() and it must
+have the following interface
+</P>
+<PRE>int mycompare(char *value1, int len1, char *value2, int len2) 
+</PRE>
+<P>Value1 and value2 are pointers to the byte strings for 2 values, each
+of length len1 and len2.  Your function should compare them and return
+a -1, 0, or 1 if value1 is less than, equal to, or greater than
+value2, respectively.
+</P>
+<P>This method is an on-processor operation, requiring no communication.
+When run in parallel, each processor operates only on the key/value
+pairs it stores.
+</P>
+<HR>
+
+<P><B>Related methods</B>: <A HREF = "sort_keys.html">sort_keys()</A>,
+<A HREF = "sort_multivalues.html">sort_multivalues()</A>
+</P>
+</HTML>

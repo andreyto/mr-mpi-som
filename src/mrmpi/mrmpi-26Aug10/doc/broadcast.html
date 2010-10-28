@@ -1,0 +1,35 @@
+<HTML>
+<CENTER><A HREF = "http://www.cs.sandia.gov/~sjplimp/mapreduce.html">MapReduce-MPI WWW Site</A> - <A HREF = "Manual.html">MapReduce-MPI Documentation</A> 
+</CENTER>
+
+
+
+
+<HR>
+
+<H3>MapReduce broadcast() method 
+</H3>
+<PRE>uint64_t MapReduce::broadcast(int root) 
+</PRE>
+<P>This calls the broadcast() method of a MapReduce object, which delete
+the key/value pairs of a KeyValue object on all processors except
+root, and then broadcasts the key/value pairs owned by the root
+processor to all the other processors.  The end result is
+that all processors have a copy of the key/value pairs initially
+owned by the root processor.
+</P>
+<P>The resulting set of distributed key/value pairs will have P copies of
+each entry, where P = the # of processors.  This will in general not
+be useful for further MapReduce operations, but it can be useful after
+a <A HREF = "gather.html">gather()</A> before doing a final <A HREF = "reduce.html">reduce()</A>
+where you want to give each processor access to the entire gathered
+result and let it make a local copy of the datums.
+</P>
+<P>This method requires parallel communication as processors send their
+key/value pairs to other processors.
+</P>
+<HR>
+
+<P><B>Related methods</B>: <A HREF = "gather.html">gather()</A>
+</P>
+</HTML>

@@ -1,0 +1,53 @@
+<HTML>
+<CENTER><A HREF = "http://www.cs.sandia.gov/~sjplimp/mapreduce.html">MapReduce-MPI WWW Site</A> - <A HREF = "Manual.html">MapReduce-MPI Documentation</A> 
+</CENTER>
+
+
+
+
+<HR>
+
+<H3>Copy a MapReduce object 
+</H3>
+<PRE>MapReduce *MapReduce::copy() 
+</PRE>
+<P>This calls the copy() method of a MapReduce object, which creates a
+second MapReduce object which is an exact copy of the first, including
+all <A HREF = "settings.html">settings</A>, and returns a pointer to the new copy.
+</P>
+<P>If the original MapReduce object contained a KeyValue or KeyMultiValue
+object, as discussed <A HREF = "interface_c++.html">here</A>, then the new MapReduce
+object will contain a copy of it.  This means that all the key/value
+and/or key/multivalue pairs contained in the first MapReduce object
+are copied into the new MapReduce object.  Thus the first MapReduce
+object could be subsequently deleted without affecting the new
+MapReduce object.
+</P>
+<P>This is useful if you wish to retain a copy of a set of key/value
+pairs before processing it further.  See the <A HREF = "add.html">add()</A> method
+for how to merge the key/value pairs from two MapReduce objects into
+one.  For example, this sequence of calls:
+</P>
+<PRE>MapReduce *mr1 = new MapReduce(MPI_COMM_WORLD);
+mr1->map(ntasks,&mymap,NULL);
+MapReduce *mr2 = mr1->copy();
+mr2->collate(NULL);
+mr2->reduce(&myreduce2,NULL);
+mr1->add(mr2);
+delete mr2;
+mr1->collate(NULL);
+mr1->reduce(&myreduce1,NULL); 
+</PRE>
+<P>would generate one set of key/value pairs from the initial
+<A HREF = "map.html">map()</A> operation, then make a <A HREF = "copy.html">copy</A> of them,
+which are then <A HREF = "collate.html">collated</A> and <A HREF = "reduce.html">reduced</A> to a
+new set of key/value pairs.  The new set of key/value pairs are
+<A HREF = "add.html">added</A> to the original set produced by the <A HREF = "map.html">map()</A>
+operation to form an augmented set of key/value pairs, which could be
+further processed.
+</P>
+<HR>
+
+<P><B>Related methods</B>: <A HREF = "create.html">create</A>, <A HREF = "add.html">add()</A>
+</P>
+</HTML>

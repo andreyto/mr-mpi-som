@@ -1,0 +1,40 @@
+<HTML>
+<CENTER><A HREF = "http://www.cs.sandia.gov/~sjplimp/mapreduce.html">MapReduce-MPI WWW Site</A> - <A HREF = "Manual.html">MapReduce-MPI Documentation</A> 
+</CENTER>
+
+
+
+
+<HR>
+
+<H3>MapReduce gather() method 
+</H3>
+<PRE>uint64_t MapReduce::gather(int nprocs) 
+</PRE>
+<P>This calls the gather() method of a MapReduce object, which collects
+the key/value pairs of a KeyValue object spread across all processors
+to form a new KeyValue object on a subset (nprocs) of processors.
+Nprocs can be 1 or any number smaller than P, the total number of
+processors.  The gathering is done to the lowest ID processors, from 0
+to nprocs-1.  Processors with ID >= nprocs end up with an empty
+KeyValue object containing no key/value pairs.  The method returns the
+total number of key/value pairs in the new KeyValue object, which will
+be the same as in the original KeyValue object.
+</P>
+<P>This method can be used to collect the results of a
+<A HREF = "reduce.html">reduce()</A> to a single processor for output.  See the
+<A HREF = "collapse.html">collapse()</A> and <A HREF = "scrunch.html">scrunch()</A> methods for
+related ways to collect key/value pairs for output.  A gather() may
+also be useful before a <A HREF = "reduce.html">reduce()</A> if the number of unique
+key/value pairs is small enough that you wish to perform the reduce
+tasks on fewer processors.
+</P>
+<P>This method requires parallel point-to-point communication as
+processors send their key/value pairs to other processors.
+</P>
+<HR>
+
+<P><B>Related methods</B>: <A HREF = "scrunch.html">scrunch()</A>,
+<A HREF = "broadcast.html">broadcast()</A>
+</P>
+</HTML>

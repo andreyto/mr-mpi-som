@@ -1,0 +1,63 @@
+<HTML>
+<CENTER><A HREF = "http://www.cs.sandia.gov/~sjplimp/mapreduce.html">MapReduce-MPI WWW Site</A> - <A HREF = "Manual.html">MapReduce-MPI Documentation</A> 
+</CENTER>
+
+
+
+
+<HR>
+
+<H3>Create a MapReduce object 
+</H3>
+<PRE>MapReduce::MapReduce(MPI_Comm comm)
+MapReduce::MapReduce()
+MapReduce::MapReduce(double dummy) 
+</PRE>
+<P>You can create a MapReduce object in any of the three ways shown, as
+well as via the <A HREF = "copy.html">copy()</A> method.  The three creation methods
+differ slightly in how MPI is initialized and finalized.
+</P>
+<P>In the first case, you pass an MPI communicator to the constructor.
+This means your program should initialize (and finalize) MPI, which
+creates the MPI_COMM_WORLD communicator (all the processors you are
+running on).  Normally this is what you pass to the MapReduce
+constructor, but you can pass a communicator for a subset of your
+processors if desired.  You can also instantiate multiple MapReduce
+objects, giving them each a communicator for all the processors or
+communicators for a subset of processors.
+</P>
+<P>The second case can be used if your program does not use MPI at all.
+The library will initialize MPI if it has not already been
+initialized.  It will not finalize MPI, but this should be fine.
+Worst case, your program may complain when it exits if MPI has not
+been finalized.
+</P>
+<P>The third case is the same as the second except that the library will
+finalize MPI when the last instance of a MapReduce object is
+destructed.  Note that this means your program cannot delete all its
+MapReduce objects in a early phase of the program and then instantiate
+more MapReduce objects later.  This limitation is why the second case
+is provided.  The third case is invoked by passing a double to the
+constructor.  If this is done for any instantiated MapReduce object,
+then the library will finalize MPI.  The value of the double doesn't
+matter as it isn't used.  The use of a double is simply to make it
+different than the first case, since MPI_Comm is often implemented by
+MPI libraries as a type cast to an integer.
+</P>
+<P>As examples, any of these lines of code will create a MapReduce
+object, where "mr" is either a pointer to the object or the object
+itself:
+</P>
+<PRE>MapReduce *mr = new MapReduce(MPI_COMM_WORLD);
+MapReduce *mr = new MapReduce();
+MapReduce *mr = new MapReduce(0.0);
+MapReduce mr(MPI_COMM_WORLD);
+MapReduce mr();
+MapReduce mr;
+MapReduce mr(0.0); 
+</PRE>
+<HR>
+
+<P><B>Related methods</B>: <A HREF = "destroy.html">destroy</A>, <A HREF = "copy.html">copy()</A>
+</P>
+</HTML>

@@ -1,0 +1,52 @@
+"MapReduce-MPI WWW Site"_mws - "MapReduce-MPI Documentation"_md :c
+
+:link(mws,http://www.cs.sandia.gov/~sjplimp/mapreduce.html)
+:link(md,Manual.html)
+
+:line
+
+Writing a MapReduce program :h3
+
+The usual way to use the MR-MPI library is to write a small main
+program that calls the library.  In C++, your program includes two
+library header files and uses the MapReduce namespace:
+
+#include "mapreduce.h"
+#include "keyvalue.h"
+using namespace MAPREDUCE_NS :pre
+
+Follow these links for info on using the library from a "C
+program"_interface_c.html or from a "Python
+program"_interface_python.html.
+
+Arguments to the library's "map()"_map.html and "reduce()"_reduce.html
+methods include function pointers to serial "mymap" and "myreduce"
+functions in your code (named anything you wish), which will be
+"called back to" from the library as it performs the parallel map and
+reduce operations.
+
+A typical simple MapReduce program involves these steps:
+
+MapReduce *mr = new MapReduce(MPI_COMM_WORLD);   // instantiate an MR object
+mr->map(nfiles,&mymap);                          // parallel map
+mr->collate()                                    // collate keys
+mr->reduce(&myreduce);                           // parallel reduce
+delete mr;                                       // delete the MR object :pre
+
+The main program you write may be no more complicated than this.  The
+API for the MR-MPI library is a handful of methods which are
+components of a MapReduce operation.  They can be combined in more
+complex sequences of calls than listed above.  For example, one
+"map()"_map.html may be followed by several "reduce()"_reduce.html
+operations to massage your data in a desired way.  Output of final
+results is typically performed as part of a myreduce() function you
+write which executes on one or more processors and writes to a file(s)
+or the screen.
+
+The MR-MPI library operates on "keys" and "values" which are generated
+and manipulated by your mymap() and myreduce() functions.  A key and a
+value are simply byte strings of arbitrary length which are logically
+associated with each other, and can thus represent anything you wish.
+For example, a key can be a text string or a particle or grid cell ID.
+A value can be one or more numeric values or a text string or a
+composite data structure that you create.

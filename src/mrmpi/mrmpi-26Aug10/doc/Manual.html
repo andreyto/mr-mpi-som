@@ -1,0 +1,154 @@
+<HTML>
+<HEAD>
+<TITLE>MapReduce-MPI Library Users Manual</TITLE>
+<META NAME="docnumber" CONTENT="http://www.sandia.gov/~sjplimp/mapreduce.html">
+<META NAME="author" CONTENT="Sandia National Laboratories, Copyright (2009) Sandia Corporation">
+<META NAME="copyright" CONTENT="This software and manual is distributed under the modified Berkeley Software Distribution (BSD) License.">
+</HEAD>
+
+<BODY>
+
+<CENTER><A HREF = "http://www.sandia.gov/~sjplimp/mapreduce.html">MapReduce-MPI WWW Site</A> 
+</CENTER>
+
+
+<HR>
+
+<H1></H1>
+
+<H2><CENTER>MapReduce-MPI Library 
+</CENTER></H2>
+<P>This document describes the 15 March 2010 version of the open-source
+MapReduce-MPI (MR-MPI) library that implements the <A HREF = "http://en.wikipedia.org/wiki/Mapreduce">MapReduce
+operation</A> popularized by Google on top of standard MPI message
+passing.  The library is designed for parallel execution on
+distributed-memory platforms, but will also operate on a single
+processor.  The library is written in C++, is callable from hi-level
+langauges (C++, C, Fortran, Python, or other scripting languages), and
+requires no additional software except linking with an MPI library if
+you wish to perform MapReduces in parallel.
+</P>
+<P>Similar to the original Google design, a user performs a MapReduce by
+writing a small program that invokes the library.  The user typically
+provides two application-specific functions, a "map" and a "reduce",
+that are called by the library when a MapReduce operation is executed.
+"Map" and "reduce" are serial functions, meaning they are invoked
+independently on individual processors on portions of your data when
+performing a MapReduce operation in parallel.
+</P>
+<P>The goal of this library is to provide a simple and portable interface
+for users to create their own MapReduce programs, which can then be
+run on any desktop or large parallel machine using MPI.  See the
+Background section for features and limitations of this
+implementation.
+</P>
+<P>Source codes for the library is freely available for download from the
+<A HREF = "http://www.cs.sandia.gov/~sjplimp/mapreduce.html">MR-MPI web site</A> and is licensed under the modified <A HREF = "http://en.wikipedia.org/wiki/BSD_license">Berkeley
+Software Distribution (BSD) License</A>.  This basically means it can
+be used by anyone for any purpose.  See the LICENSE file provided with
+the distribution for more details.
+</P>
+<P>The distrubution includes a few examples of simple programs that
+illustrate the use of MapReduce.
+</P>
+<P>The authors of this library are <A HREF = "http://www.cs.sandia.gov/~sjplimp">Steve Plimpton</A> at Sandia
+National Laboratories and <A HREF = "http://www.cs.sandia.gov/~kddevin">Karen Devine</A> who can be contacted via
+email: sjplimp at sandia.gov, kddevin at sandia.gov.
+</P>
+
+
+
+
+
+
+
+
+
+
+<UL><LI><A HREF = "background.html">Background</A> 
+
+<LI><A HREF = "whatis.html">What is a MapReduce?</A> 
+
+<LI><A HREF = "start.html">Getting Started</A> 
+
+<LI><A HREF = "program.html">Writing a MapReduce program</A> 
+
+<LI><A HREF = "interface_c++.html">C++ Interface to the MapReduce-MPI Library</A> 
+
+<UL><LI>  <A HREF = "create.html">Create a MapReduce object</A> 
+
+<LI>  <A HREF = "copy.html">Copy a MapReduce object</A> 
+
+<LI>  <A HREF = "destroy.html">Destroy a MapReduce object</A> 
+
+<LI>  <A HREF = "add.html">MapReduce::add()</A> 
+
+<LI>  <A HREF = "aggregate.html">MapReduce::aggregate()</A> 
+
+<LI>  <A HREF = "broadcast.html">MapReduce::broadcast()</A> 
+
+<LI>  <A HREF = "clone.html">MapReduce::clone()</A> 
+
+<LI>  <A HREF = "open.html">MapReduce::close()</A> 
+
+<LI>  <A HREF = "collapse.html">MapReduce::collapse()</A> 
+
+<LI>  <A HREF = "collate.html">MapReduce::collate()</A> 
+
+<LI>  <A HREF = "compress.html">MapReduce::compress()</A> 
+
+<UL><LI>    <A HREF = "compress.html">MapReduce::multivalue_blocks()</A> 
+
+<LI>    <A HREF = "compress.html">MapReduce::multivalue_block()</A> 
+</UL>
+<LI>  <A HREF = "convert.html">MapReduce::convert()</A> 
+
+<LI>  <A HREF = "gather.html">MapReduce::gather()</A> 
+
+<LI>  <A HREF = "map.html">MapReduce::map()</A> 
+
+<LI>  <A HREF = "open.html">MapReduce::open()</A> 
+
+<LI>  <A HREF = "print.html">MapReduce::print()</A> 
+
+<LI>  <A HREF = "reduce.html">MapReduce::reduce()</A> 
+
+<UL><LI>    <A HREF = "reduce.html">MapReduce::multivalue_blocks()</A> 
+
+<LI>    <A HREF = "reduce.html">MapReduce::multivalue_block()</A> 
+</UL>
+<LI>  <A HREF = "scrunch.html">MapReduce::scrunch()</A> 
+
+<LI>  <A HREF = "sort_keys.html">MapReduce::sort_keys()</A> 
+
+<LI>  <A HREF = "sort_values.html">MapReduce::sort_values()</A> 
+
+<LI>  <A HREF = "sort_multivalues.html">MapReduce::sort_multivalues()</A> 
+
+<LI>  <A HREF = "stats.html">MapReduce::kv_stats()</A> 
+
+<LI>  <A HREF = "stats.html">MapReduce::kmv_stats()</A> 
+
+<LI>  <A HREF = "stats.html">MapReduce::cummulative_stats()</A> 
+
+<LI>  <A HREF = "kv_add.html">KeyValue::add()</A> 
+
+<LI>  <A HREF = "settings.html">Settings and defaults</A> 
+</UL>
+<LI><A HREF = "interface_c.html">C interface to the MapReduce-MPI Library</A> 
+
+<LI><A HREF = "interface_python.html">Python interface to the MapReduce-MPI Library</A> 
+
+<LI><A HREF = "technical.html">Technical Details</A> 
+
+<LI><A HREF = "examples/html">Examples</A> 
+
+<UL><LI>  <A HREF = "examples.html#word">Word frequency</A> 
+
+<LI>  <A HREF = "examples.html#rmat">R-MAT matrices</A> 
+</UL>
+
+</UL>
+</BODY>
+
+</HTML>

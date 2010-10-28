@@ -1,0 +1,45 @@
+"MapReduce-MPI WWW Site"_mws - "MapReduce-MPI Documentation"_md :c
+
+:link(mws,http://www.cs.sandia.gov/~sjplimp/mapreduce.html)
+:link(md,Manual.html)
+
+:line
+
+MapReduce sort_multivalues() method :h3
+
+uint64_t MapReduce::sort_multivalues(int (*mycompare)(char *, int, char *, int)) :pre
+
+This calls the sort_multivalues() method of a MapReduce object, which
+sorts the values for each key within a KeyMultiValue object to produce
+a new KeyMultiValue object.  The mycompare() function you provide
+compares pairs of values for the sort, since the MapReduce object does
+not know how to interpret the content of your values.  The method
+returns the total number of key/multi-value pairs in the new
+KeyMultiValue object which will be the same as in the original.
+
+This method can be used to sort a set of multi-values within a key
+before they are passed to your application, e.g. via the
+"reduce()"_reduce.html method.  Note that it typically only makes
+sense to use sort_multivalues() for a KeyMultiValue object created by
+the "convert()"_convert.html or "collate()"_collate.html methods, not
+KeyMultiValue objects created by the "clone()"_clone.html or
+"collapse()"_collapse.html or "scrunch()"_scrunch.html methods.
+
+In this example the user function is called mycompare() and it must
+have the following interface
+
+int mycompare(char *value1, int len1, char *value2, int len2) :pre
+
+Value1 and value2 are pointers to the byte strings for 2 values, each
+of length len1 and len2.  Your function should compare them and return
+a -1, 0, or 1 if value1 is less than, equal to, or greater than
+value2, respectively.
+
+This method is an on-processor operation, requiring no communication.
+When run in parallel, each processor operates only on the
+key/multi-value pairs it stores.
+
+:line
+
+[Related methods]: "sort_keys()"_sort_keys.html,
+"sort_values()"_sort_values.html

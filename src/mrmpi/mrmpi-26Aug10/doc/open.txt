@@ -1,0 +1,66 @@
+"MapReduce-MPI WWW Site"_mws - "MapReduce-MPI Documentation"_md :c
+
+:link(mws,http://www.cs.sandia.gov/~sjplimp/mapreduce.html)
+:link(md,Manual.html)
+
+:line
+
+MapReduce open() method :h3
+MapReduce close() method :h3
+
+void MapReduce::open()
+void MapReduce::open(int addflag)
+uint64_t MapReduce::close() :pre
+
+These call the open() and close() methods of a MapReduce object.  This
+is only necessary when you will be performing a map() or reduce() that
+generates key/value pairs, and you wish to add pairs not only to the
+MapReduce object which is invoking the map() and reduce(), but also to
+one or more other MapReduce objects.  In order to do this, you need to
+invoke the open() and close() methods on the other MapReduce
+object(s), so that they can accumulate new key/value pairs properly.
+The close() method returns the total number of key/value pairs in the
+KeyValue object.
+
+Here is an example of how this is done:
+
+MapReduce *mr = new MapReduce()
+MapReduce *mr2 = new MapReduce()
+mr2->open()
+mr->map(1000,mymap,mr2->kv);
+mr2->close() :pre
+
+void mymap(int itask, KeyValue *kv, void *ptr) \{
+  ...
+  kv->add(key1,key1bytes,value1,value1bytes);
+  KeyValue *kv2 = (KeyValue *) ptr;
+  kv2->add(key2,key2bytes,value2,value2bytes);
+\} :pre
+
+The mymap() function is being called from the "mr" MapReduce object,
+and can add key/value pairs to "mr" in the usual way, via the
+kv->add() function call.  But it can also add key/value pairs to the
+"mr2" MapReduce object via the kv2->add() function call.  To do this,
+3 things were necessary:
+
+call the open() method of mr2 before the map() was invoked
+pass a pointer to the map() which allows mymap() to retrieve the pointer to mr2's internal KeyValue object
+call the close() method of mr2 after the map() was invoked :ul
+
+The second bullet point was accomplishsed by passing mr2->kv directly
+to the map() method, but other variations are possible.  For example,
+a pointer to a data structure could be passed, which contains pointers
+to several other MapReduce objects.  In this case, the open() and
+close() methods for each of the other MapReduce objects would need to
+be called appropriately before and after the map() method, assuming
+they would each have key/value pairs added to them by the mymap()
+function.
+
+You can call open() and close() as many times as needed, but note
+calls to open() and close() should always come in pairs.  You should
+not call close() when an open() has not been invoked.  And you should
+not open() a second time without calling close() first.
+
+:line
+
+[Related methods]: "map()"_map.html, "reduce"_reduce.html

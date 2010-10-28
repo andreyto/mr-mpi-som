@@ -1,0 +1,49 @@
+"MapReduce-MPI WWW Site"_mws - "MapReduce-MPI Documentation"_md :c
+
+:link(mws,http://www.cs.sandia.gov/~sjplimp/mapreduce.html)
+:link(md,Manual.html)
+
+:line
+
+MapReduce sort_keys() method :h3
+
+uint64_t MapReduce::sort_keys(int (*mycompare)(char *, int, char *, int)) :pre
+
+This calls the sort_keys() method of a MapReduce object, which sorts a
+KeyValue object by its keys to produce a new KeyValue object.  The
+mycompare() function you provide compares pairs of keys for the sort,
+since the MapReduce object does not know how to interpret the content
+of your keys.  The method returns the total number of key/value pairs
+in the new KeyValue object which will be the same as in the original.
+
+This method is used to sort key/value pairs by key before a KeyValue
+object is transformed into a KeyMultiValue object, e.g. via the
+"clone()"_clone.html, "collapse()"_collapse.html, or
+"convert()"_convert.html methods.  Note that these operations preserve
+the order of paires in the KeyValue object when creating a
+KeyMultiValue object, which can then be passed to your application for
+output, e.g. via the "reduce()"_reduce.html method.  Note however,
+that sort_keys() does NOT sort keys across all processors but only
+sorts the keys on each processor within the KeyValue object.  Thus if
+you "gather()"_gather.html or "aggregate()"_aggregate.html after
+performing a sort_keys(), the sorted order will be lost, since those
+methods move key/value pairs to new processors.
+
+In this example the user function is called mycompare() and it must
+have the following interface
+
+int mycompare(char *key1, int len1, char *key2, int len2) :pre
+
+Key1 and key2 are pointers to the byte strings for 2 keys, each of
+length len1 and len2.  Your function should compare them and return a
+-1, 0, or 1 if key1 is less than, equal to, or greater than key2,
+respectively.
+
+This method is an on-processor operation, requiring no communication.
+When run in parallel, each processor operates only on the key/value
+pairs it stores.
+
+:line
+
+[Related methods]: "sort_values()"_sort_values.html,
+"sort_multivalues()"_sort_multivalues.html

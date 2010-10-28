@@ -1,0 +1,49 @@
+"MapReduce-MPI WWW Site"_mws - "MapReduce-MPI Documentation"_md :c
+
+:link(mws,http://www.cs.sandia.gov/~sjplimp/mapreduce.html)
+:link(md,Manual.html)
+
+:line
+
+Copy a MapReduce object :h3
+
+MapReduce *MapReduce::copy() :pre
+
+This calls the copy() method of a MapReduce object, which creates a
+second MapReduce object which is an exact copy of the first, including
+all "settings"_settings.html, and returns a pointer to the new copy.
+
+If the original MapReduce object contained a KeyValue or KeyMultiValue
+object, as discussed "here"_interface_c++.html, then the new MapReduce
+object will contain a copy of it.  This means that all the key/value
+and/or key/multivalue pairs contained in the first MapReduce object
+are copied into the new MapReduce object.  Thus the first MapReduce
+object could be subsequently deleted without affecting the new
+MapReduce object.
+
+This is useful if you wish to retain a copy of a set of key/value
+pairs before processing it further.  See the "add()"_add.html method
+for how to merge the key/value pairs from two MapReduce objects into
+one.  For example, this sequence of calls:
+
+MapReduce *mr1 = new MapReduce(MPI_COMM_WORLD);
+mr1->map(ntasks,&mymap,NULL);
+MapReduce *mr2 = mr1->copy();
+mr2->collate(NULL);
+mr2->reduce(&myreduce2,NULL);
+mr1->add(mr2);
+delete mr2;
+mr1->collate(NULL);
+mr1->reduce(&myreduce1,NULL); :pre
+
+would generate one set of key/value pairs from the initial
+"map()"_map.html operation, then make a "copy"_copy.html of them,
+which are then "collated"_collate.html and "reduced"_reduce.html to a
+new set of key/value pairs.  The new set of key/value pairs are
+"added"_add.html to the original set produced by the "map()"_map.html
+operation to form an augmented set of key/value pairs, which could be
+further processed.
+
+:line
+
+[Related methods]: "create"_create.html, "add()"_add.html

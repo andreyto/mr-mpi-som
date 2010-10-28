@@ -113,6 +113,20 @@ mrsom/fast:
 .PHONY : mrsom/fast
 
 # Convenience name for target.
+src/CMakeFiles/mrsom2.dir/rule:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/mrsom2.dir/rule
+.PHONY : src/CMakeFiles/mrsom2.dir/rule
+
+# Convenience name for target.
+mrsom2: src/CMakeFiles/mrsom2.dir/rule
+.PHONY : mrsom2
+
+# fast build rule for target.
+mrsom2/fast:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom2.dir/build.make src/CMakeFiles/mrsom2.dir/build
+.PHONY : mrsom2/fast
+
+# Convenience name for target.
 src/CMakeFiles/som.dir/rule:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/som.dir/rule
 .PHONY : src/CMakeFiles/som.dir/rule
@@ -150,6 +164,30 @@ mrsom.cpp.s:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom.dir/build.make src/CMakeFiles/mrsom.dir/mrsom.cpp.s
 .PHONY : mrsom.cpp.s
 
+mrsom2.o: mrsom2.cpp.o
+.PHONY : mrsom2.o
+
+# target to build an object file
+mrsom2.cpp.o:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom2.dir/build.make src/CMakeFiles/mrsom2.dir/mrsom2.cpp.o
+.PHONY : mrsom2.cpp.o
+
+mrsom2.i: mrsom2.cpp.i
+.PHONY : mrsom2.i
+
+# target to preprocess a source file
+mrsom2.cpp.i:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom2.dir/build.make src/CMakeFiles/mrsom2.dir/mrsom2.cpp.i
+.PHONY : mrsom2.cpp.i
+
+mrsom2.s: mrsom2.cpp.s
+.PHONY : mrsom2.s
+
+# target to generate assembly for a file
+mrsom2.cpp.s:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom2.dir/build.make src/CMakeFiles/mrsom2.dir/mrsom2.cpp.s
+.PHONY : mrsom2.cpp.s
+
 som.o: som.cpp.o
 .PHONY : som.o
 
@@ -182,11 +220,15 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... mrsom"
+	@echo "... mrsom2"
 	@echo "... rebuild_cache"
 	@echo "... som"
 	@echo "... mrsom.o"
 	@echo "... mrsom.i"
 	@echo "... mrsom.s"
+	@echo "... mrsom2.o"
+	@echo "... mrsom2.i"
+	@echo "... mrsom2.s"
 	@echo "... som.o"
 	@echo "... som.i"
 	@echo "... som.s"

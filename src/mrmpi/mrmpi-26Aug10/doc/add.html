@@ -1,0 +1,46 @@
+<HTML>
+<CENTER><A HREF = "http://www.cs.sandia.gov/~sjplimp/mapreduce.html">MapReduce-MPI WWW Site</A> - <A HREF = "Manual.html">MapReduce-MPI Documentation</A> 
+</CENTER>
+
+
+
+
+<HR>
+
+<H3>MapReduce add() method 
+</H3>
+<PRE>uint64_t MapReduce::add(MapReduce *mr2) 
+</PRE>
+<P>This calls the add() method of a MapReduce object, to add the KeyValue
+pairs contained in a second MapReduce object mr2, to the KeyValue
+object of the first MapReduce object, which is created if one does not
+exist.  This is useful if multiple MapReduce objects have been created
+and populated with key/value pairs and you wish to combine them before
+performing further operations, such as a <A HREF = "collate.html">collate()</A> and
+<A HREF = "reduce.html">reduce()</A>.
+</P>
+<P>For example, this sequence of calls:
+</P>
+<PRE>MapReduce *mr1 = new MapReduce(MPI_COMM_WORLD);
+mr1->map(ntasks,&mymap,NULL);
+MapReduce *mr2 = mr1->copy();
+mr2->collate(NULL);
+mr2->reduce(&myreduce2,NULL);
+mr1->add(mr2);
+delete mr2;
+mr1->collate(NULL);
+mr1->reduce(&myreduce1,NULL); 
+</PRE>
+<P>would generate one set of key/value pairs from the initial
+<A HREF = "map.html">map()</A> operation, then make a <A HREF = "copy.html">copy</A> of them,
+which are then <A HREF = "collate.html">collated</A> and <A HREF = "reduce.html">reduced</A> to a
+new set of key/value pairs.  The new set of key/value pairs are
+<A HREF = "add.html">added</A> to the original set produced by the <A HREF = "map.html">map()</A>
+operation to form an augmented set of key/value pairs, which could be
+further processed.
+</P>
+<HR>
+
+<P><B>Related methods</B>: <A HREF = "copy.html">copy</A>, <A HREF = "map.html">map()</A>
+</P>
+</HTML>

@@ -1,0 +1,45 @@
+<HTML>
+<CENTER><A HREF = "http://www.cs.sandia.gov/~sjplimp/mapreduce.html">MapReduce-MPI WWW Site</A> - <A HREF = "Manual.html">MapReduce-MPI Documentation</A> 
+</CENTER>
+
+
+
+
+<HR>
+
+<H3>MapReduce clone() method 
+</H3>
+<PRE>uint64_t MapReduce::clone() 
+</PRE>
+<P>This calls the clone() method of a MapReduce object, which converts a
+KeyValue object directly into a KeyMultiValue object.  It simply turns
+each key in KeyValue object into a key in the new KeyMultiValue
+object, with the same value.  The method returns the total number of
+key/value pairs in the KeyMultiValue object, which will be the same as
+the number in the KeyValue object.
+</P>
+<P>This method essentially enables a KeyValue object to be passed
+directly to a reduce operation, which requires a KeyMultiValue object
+as input.  Typically you would only do this if the keys in the
+KeyValue object are already unique, to avoid the extra overhead of an
+<A HREF = "aggregate.html">aggregate()</A> or <A HREF = "convert.html">convert()</A> or
+<A HREF = "collate.html">collate()</A>, but this is not required.  If they are not,
+then there will also be duplicate keys in the KeyMultiValue object.
+</P>
+<P>Note that one of the <A HREF = "map.html">map()</A> methods allows an existing
+KeyValue object to be passed as input to a user mymap() function,
+generating a new Keyvalue object in the process.  Thus there is
+typically no need to invoke clone() followed by
+<A HREF = "reduce.html">reduce()</A>.
+</P>
+<P>This method is an on-processor operation, requiring no communication.
+When run in parallel, the key/value pairs of the new KeyMultiValue
+object are stored on the same processor which owns the corresponding
+KeyValue pairs.
+</P>
+<HR>
+
+<P><B>Related methods</B>: <A HREF = "collapse.html">collapse()</A>, <A HREF = "collate.html">collate</A>,
+<A HREF = "convert.html">convert()</A>
+</P>
+</HTML>

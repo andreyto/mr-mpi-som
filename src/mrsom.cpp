@@ -127,8 +127,8 @@ void    train_online(SOM *som, DMatrix &F, float R, float Alpha, int* loc);
                      //);
 void    MR_train_batch(MapReduce *mr, SOM *som, DMatrix &F, DMatrix &W,
                        int *loc, int *scattered,
-                       float R, int argc, char* argv[], int myid,
-                       char *myname, int nprocs
+                       float R, int argc, char* argv[], int MPI_myId,
+                       char *myname, int MPI_nProcs
                        //VVV_FLOAT_T &numer_vec, VVV_FLOAT_T &denom_vec
                        );
 float   *normalize2(DMatrix &F, int n);
@@ -268,7 +268,7 @@ int main(int argc, char *argv[])
     }
     
     /// MPI///////////////////////////////////////////////////////////////
-    int myid, nprocs, length;
+    int MPI_myId, MPI_nProcs, MPI_length;
     char myname[MAX_STR];
     /// MPI_Status status;
     int ierr = MPI_Init(&argc, &argv);
@@ -276,9 +276,9 @@ int main(int argc, char *argv[])
         fprintf(stderr, "MPI initsialization failed !\n");
         exit(0);
     }
-    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
-    MPI_Comm_size(MPI_COMM_WORLD, &nprocs);
-    MPI_Get_processor_name(myname, &length);
+    MPI_Comm_rank(MPI_COMM_WORLD, &MPI_myId);
+    MPI_Comm_size(MPI_COMM_WORLD, &MPI_nProcs);
+    MPI_Get_processor_name(myname, &MPI_length);
     //double time0, time1;
     //struct timeval t1_start;
     //struct timeval t1_end;
@@ -289,13 +289,13 @@ int main(int argc, char *argv[])
     MapReduce *mr = new MapReduce(MPI_COMM_WORLD);
     //mr->verbosity = 2;
     //mr->timer = 1;
-    int chunksize = NVECS / nprocs;
+    int chunksize = NVECS / MPI_nProcs;
     int idx[NVECS], scattered[chunksize];
     int loc[NVECS];
     
     /// PREPARE RANDOM VECTORS IF RANDOM GEN IS CHOSEN
     /// AND PREPARE AN INDEX VECTOR TO SCATTER AMONG TASKS
-    if (myid == 0) {
+    if (MPI_myId == 0) {
         printf("INFO: %d x %d SOM, num epochs = %d, num features = %d, dimensionality = %d\n", SOM_X, SOM_Y, NEPOCHS, NVECS, NDIMEN);
         printf("Reading (%d x %d) feature vectors from %s...\n", NVECS, NDIMEN, argv[1]);
         vector<int> temp(NVECS, 0);
@@ -320,6 +320,7 @@ int main(int argc, char *argv[])
     float nrule, nrule0 = 0.9f;     /// LEARNING RATE FACTOR
     float R, R0;
     R0 = SOM_X / 2.0f;              /// INIT RADIUS FOR UPDATING NEIGHBORS
+    R = R0;
     int x = 0;                      /// 0...N-1
     
     /*
@@ -331,9 +332,9 @@ int main(int argc, char *argv[])
      */
      
     //ITERATIONS////////////////////////////////////////////////////////
-    while (NEPOCHS) {
+    while (NEPOCHS && R > 1.0) {
         if (TMODE == 0) { /// BATCH
-            if (myid == 0) {
+            if (MPI_myId == 0) {
                 /// R TO BROADCAST
                 R = R0 * exp(-10.0f * (x * x) / (N * N));
                 x++;
@@ -349,19 +350,19 @@ int main(int argc, char *argv[])
             MPI_Bcast((void *)W.data, NNODES * NDIMEN, MPI_FLOAT, 0,
                       MPI_COMM_WORLD);
             //#ifdef _DEBUG
-            //fprintf(stderr,"[Node %d]: %s, scattered? %d %d %d  \n", myid, myname, scattered[0], scattered[1], scattered[2]);
-            //fprintf(stderr,"[Node %d]: %s, R = %f \n", myid, myname, R);
-            //fprintf(stderr,"[Node %d]: %s, main FEATURES %0.2f %0.2f %0.2f  \n", myid, myname, F.rows[0][0], F.rows[0][1], F.rows[0][2]);
-            //fprintf(stderr,"[Node %d]: %s, main som weights %0.2f %0.2f %0.2f  \n", myid, myname, som->nodes[0]->weights[0], som->nodes[0]->weights[1], som->nodes[0]->weights[2]);
-            //fprintf(stderr,"[Node %d]: %s, main W.rows %0.2f %0.2f %0.2f  \n", myid, myname, W.rows[0][0], W.rows[0][1], W.rows[0][2]);
+            //fprintf(stderr,"[Node %d]: %s, scattered? %d %d %d  \n", MPI_myId, myname, scattered[0], scattered[1], scattered[2]);
+            //fprintf(stderr,"[Node %d]: %s, R = %f \n", MPI_myId, myname, R);
+            //fprintf(stderr,"[Node %d]: %s, main FEATURES %0.2f %0.2f %0.2f  \n", MPI_myId, myname, F.rows[0][0], F.rows[0][1], F.rows[0][2]);
+            //fprintf(stderr,"[Node %d]: %s, main som weights %0.2f %0.2f %0.2f  \n", MPI_myId, myname, som->nodes[0]->weights[0], som->nodes[0]->weights[1], som->nodes[0]->weights[2]);
+            //fprintf(stderr,"[Node %d]: %s, main W.rows %0.2f %0.2f %0.2f  \n", MPI_myId, myname, W.rows[0][0], W.rows[0][1], W.rows[0][2]);
             //#endif
             //train_batch2(som, F, R, numer, denom);
             MR_train_batch(mr, som, F, W, loc,
-                           scattered, R, argc, argv, myid, myname, nprocs);
+                           scattered, R, argc, argv, MPI_myId, myname, MPI_nProcs);
                            //numer, denom);
         }
         else if (TMODE == 1) { /// ONLINE, THIS IS SERIAL VERSION.
-            if (myid == 0) {
+            if (MPI_myId == 0) {
                 R = R0 * exp(-10.0f * (x * x) / (N * N));
                 /// LEARNING RULE SHRINKS OVER TIME, FOR ONLINE SOM
                 nrule = nrule0 * exp(-10.0f * (x * x) / (N * N));  
@@ -375,7 +376,7 @@ int main(int argc, char *argv[])
     //gettimeofday(&t1_end, NULL);
     //t1_time = t1_end.tv_sec - t1_start.tv_sec + (t1_end.tv_usec - t1_start.tv_usec) / 1.e6;
     //fprintf(stderr,"\n**** Processing time: %g seconds **** \n",t1_time);
-    //if (myid == 0) {
+    //if (MPI_myId == 0) {
     //for (int i=0; i<NNODES; i++)
     //printf("%f %f %f, %f %f %f\n", som->nodes[i]->weights[0],som->nodes[i]->weights[1],som->nodes[i]->weights[2], W.rows[i][0], W.rows[i][1], W.rows[i][2]);
     //}
@@ -384,7 +385,7 @@ int main(int argc, char *argv[])
     MPI_Barrier(MPI_COMM_WORLD);
     
     /// SAVE SOM//////////////////////////////////////////////////////////
-    if (myid == 0) {
+    if (MPI_myId == 0) {
         printf("Saving SOM...\n");
         char som_map[MAX_STR] = "";
         strcat(som_map, "result.map");
@@ -433,14 +434,14 @@ void train_online(SOM *som, DMatrix &f, float R, float Alpha, int *loc)
 /* ------------------------------------------------------------------------ */
 void MR_train_batch(MapReduce *mr, SOM *som, DMatrix &f, DMatrix &w,
                     int *loc, int *scattered,
-                    float R, int argc, char* argv[], int myid,
-                    char *myname, int nprocs)
+                    float R, int argc, char* argv[], int MPI_myId,
+                    char *myname, int MPI_nProcs)
 //VVV_FLOAT_T &numer_vec,
 //VVV_FLOAT_T &denom_vec)
 /* ------------------------------------------------------------------------ */
 {
     if (R > 1.0f) {
-        int new_nvecs = NVECS / nprocs; /// CHUNNK SIZE
+        int new_nvecs = NVECS / MPI_nProcs; /// CHUNNK SIZE
         GIFTBOX gfbox;
         gfbox.som = som;
         gfbox.new_nvecs = new_nvecs;
@@ -453,35 +454,35 @@ void MR_train_batch(MapReduce *mr, SOM *som, DMatrix &f, DMatrix &w,
         gfbox.loc = loc;
         //double tstart = MPI_Wtime();
         MPI_Barrier(MPI_COMM_WORLD);
-        //fprintf(stderr,"[Node %d]: %s train_batch_MR FEATURES %0.2f %0.2f %0.2f **** \n", myid, myname, f.rows[0][0],f.rows[0][1],f.rows[0][2]);
-        int num_keywords = mr->map(nprocs, &MR_compute_weight, &gfbox);
-        //fprintf(stderr,"[Node %d]: %s, mapper1 ends! -- num_keywords = %d! -------\n", myid, myname, num_keywords);
+        //fprintf(stderr,"[Node %d]: %s train_batch_MR FEATURES %0.2f %0.2f %0.2f **** \n", MPI_myId, myname, f.rows[0][0],f.rows[0][1],f.rows[0][2]);
+        int num_keywords = mr->map(MPI_nProcs, &MR_compute_weight, &gfbox);
+        //fprintf(stderr,"[Node %d]: %s, mapper1 ends! -- num_keywords = %d! -------\n", MPI_myId, myname, num_keywords);
         //mr->print(-1, 1, 5, 3);
-        int total_num_KM = mr->collate(NULL);     //AGGREGATES A KEYVALUE OBJECT ACROSS PROCESSORS AND CONVERTS IT INTO A KEYMULTIVALUE OBJECT.
-        //int total_num_KM = mr->clone();         //CONVERTS A KEYVALUE OBJECT DIRECTLY INTO A KEYMULTIVALUE OBJECT.
-        //fprintf(stderr,"[Node %d]: %s ------ COLLATE ends! total_num_KM = %d -------\n", myid, myname, total_num_KM);
+        int total_num_KM = mr->collate(NULL);     /// AGGREGATES A KEYVALUE OBJECT ACROSS PROCESSORS AND CONVERTS IT INTO A KEYMULTIVALUE OBJECT.
+        //int total_num_KM = mr->clone();         /// CONVERTS A KEYVALUE OBJECT DIRECTLY INTO A KEYMULTIVALUE OBJECT.
+        //fprintf(stderr,"[Node %d]: %s ------ COLLATE ends! total_num_KM = %d -------\n", MPI_myId, myname, total_num_KM);
         //mr->print(-1, 1, 5, 3);
         //MPI_Barrier(MPI_COMM_WORLD);
         int num_unique = mr->reduce(&MR_accumul_weight, (void *)NULL);
         ////int num_unique = mr->reduce(&accumul_weight, &gfbox);
-        //fprintf(stderr,"[Node %d]: %s ------ reducer ends! total_num_KM = %d -------\n", myid, myname, num_unique);
+        //fprintf(stderr,"[Node %d]: %s ------ reducer ends! total_num_KM = %d -------\n", MPI_myId, myname, num_unique);
         //mr->print(-1, 1, 5, 3);
         MPI_Barrier(MPI_COMM_WORLD);
         //int num_keywords2 = mr->map(mr, &MR_update_weight, &gfbox);
-        //fprintf(stderr,"[Node %d]: %s, mapper2 ends! -- num_keywords = %d! -------\n", myid, myname, num_keywords2);
+        //fprintf(stderr,"[Node %d]: %s, mapper2 ends! -- num_keywords = %d! -------\n", MPI_myId, myname, num_keywords2);
         ////mr->print(-1, 1, 5, 3);
         /*
-         * gather(NPROCS):
-         * NPROCS CAN BE 1 OR ANY NUMBER SMALLER THAN P, THE TOTAL
+         * gather(MPI_nProcs):
+         * MPI_nProcs CAN BE 1 OR ANY NUMBER SMALLER THAN P, THE TOTAL
          * NUMBER OF PROCESSORS. THE GATHERING IS DONE TO THE LOWEST ID
-         * PROCESSORS, FROM 0 TO NPROCS-1. PROCESSORS WITH ID >= NPROCS
+         * PROCESSORS, FROM 0 TO MPI_nProcs-1. PROCESSORS WITH ID >= MPI_nProcs
          * END UP WITH AN EMPTY KEYVALUE OBJECT CONTAINING NO KEY/VALUE
          * PAIRS.
          */
         mr->gather(1);
         //mr->print(-1, 1, 5, 3);
         int num_keywords2 = mr->map(mr, &MR_update_weight, &gfbox);
-        //fprintf(stderr,"[Node %d]: %s, mapper2 ends! -- num_keywords = %d! -------\n", myid, myname, num_keywords2);
+        //fprintf(stderr,"[Node %d]: %s, mapper2 ends! -- num_keywords = %d! -------\n", MPI_myId, myname, num_keywords2);
         //mr->print(-1, 1, 5, 3);
         //double tstop = MPI_Wtime();
     }
@@ -716,7 +717,7 @@ int save_2D_distance_map(SOM *som, char *fname)
                     float tmp = 0.0;
                     for (int x = 0; x < D; x++) {
                         //cout << "1 " << *(get_coords(pnode)) << endl;
-                        cout << x << " " << *(get_coords(pnode) + x) << endl;
+                        //cout << x << " " << *(get_coords(pnode) + x) << endl;
                         tmp += pow(*(get_coords(pnode) + x) - *(get_coords(node) + x), 2.0f);
                     }
                     tmp = sqrt(tmp);
@@ -751,11 +752,13 @@ void MR_compute_weight(int itask, KeyValue *kv, void *ptr)
     GIFTBOX *gb = (GIFTBOX *) ptr;
     DMatrix f = *(gb->f_vectors);
     VVV_FLOAT_T numer;
+    
     numer = VVV_FLOAT_T(gb->new_nvecs, vector<vector<float> > (NNODES,
                         vector<float>(NDIMEN, 0.0)));
     VVV_FLOAT_T denom;
     denom = VVV_FLOAT_T(gb->new_nvecs, vector<vector<float> > (NNODES,
                         vector<float>(NDIMEN, 0.0)));
+                        
     for (int n = 0; n < gb->new_nvecs; n++) {
         //float *normalized = normalize2(f, gb->idx_start+n); //n-th feature vector in the scatered list.
         float *normalized = normalize2(f, gb->loc[gb->idx_start+n]); //n-th feature vector in the scatered list.
@@ -768,6 +771,7 @@ void MR_compute_weight(int itask, KeyValue *kv, void *ptr)
         
         /// GET THE COORDS FOR THE BMU
         const float *p1 = get_coords(bmu_node);
+        
         for (int k = 0; k < NNODES; k++) {
             NODE *tp = gb->som->nodes[k];
             const float *p2 = get_coords(tp);
@@ -869,7 +873,7 @@ void MR_compute_weight(int itask, KeyValue *kv, void *ptr)
     //free(sum_demon);
     numer.clear();
     denom.clear();
-    //fprintf(stderr,"[Node %d]: %s end mapper **** \n", gb->myid, gb->myname);
+    //fprintf(stderr,"[Node %d]: %s end mapper **** \n", gb->MPI_myId, gb->myname);
 }
 
 
@@ -897,7 +901,7 @@ void MR_accumul_weight(char *key, int keybytes, char *multivalue,
         multivalue += SZFLOAT * 2;
     }
     //printf("summed %s, %f, %f, %f, %f\n", key, vec_numer[0],vec_numer[0],vec_denom[0],vec_denom[0]);
-    //fprintf(stderr,"[Node %d]: %s reduce %s, %f, %f \n", gb->myid, gb->myname, key, vec_numer[0],vec_numer[0],vec_denom[0],vec_denom[0]);
+    //fprintf(stderr,"[Node %d]: %s reduce %s, %f, %f \n", gb->MPI_myId, gb->myname, key, vec_numer[0],vec_numer[0],vec_denom[0],vec_denom[0]);
     
     /// New weights for node K and dimension D
     //cout << accumulate(vec_numer.begin(), vec_numer.end(), 0.0f) << " ";
@@ -921,7 +925,7 @@ void MR_accumul_weight(char *key, int keybytes, char *multivalue,
     //gb->weight_vectors[K][W] = new_weight;
     vec_numer.clear();
     vec_denom.clear();
-    //fprintf(stderr,"[Node %d]: %s, %s, %d, %d \n", gb->myid, gb->myname, key, keybytes, nvalues);
+    //fprintf(stderr,"[Node %d]: %s, %s, %d, %d \n", gb->MPI_myId, gb->myname, key, keybytes, nvalues);
     //kv->add(key, keybytes, (char *) &nvalues, sizeof(int));
 }
 

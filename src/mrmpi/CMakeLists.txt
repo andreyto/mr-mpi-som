@@ -12,5 +12,5 @@
 #SET(ARCHIVE "ar")
 #SET(ARFLAGS "-rc")
 
-add_library (mrmpi mapreduce.cpp mapreduce.cpp cmapreduce.cpp keyvalue.cpp keymultivalue.cpp spool.cpp irregular.cpp hash.cpp memory.cpp error.cpp ) 
+add_library (mrmpi mapreduce.cpp mapreduce.cpp cmapreduce.cpp keyvalue.cpp keymultivalue.cpp spool.cpp irregular.cpp hash.cpp memory.cpp error.cpp) 
 
