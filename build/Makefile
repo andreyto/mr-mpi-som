@@ -112,6 +112,19 @@ mrsom/fast:
 .PHONY : mrsom/fast
 
 #=============================================================================
+# Target rules for targets named mrsom0713
+
+# Build rule for target.
+mrsom0713: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 mrsom0713
+.PHONY : mrsom0713
+
+# fast build rule for target.
+mrsom0713/fast:
+	$(MAKE) -f src/CMakeFiles/mrsom0713.dir/build.make src/CMakeFiles/mrsom0713.dir/build
+.PHONY : mrsom0713/fast
+
+#=============================================================================
 # Target rules for targets named mrsom2
 
 # Build rule for target.
@@ -123,6 +136,19 @@ mrsom2: cmake_check_build_system
 mrsom2/fast:
 	$(MAKE) -f src/CMakeFiles/mrsom2.dir/build.make src/CMakeFiles/mrsom2.dir/build
 .PHONY : mrsom2/fast
+
+#=============================================================================
+# Target rules for targets named mrsom3
+
+# Build rule for target.
+mrsom3: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 mrsom3
+.PHONY : mrsom3
+
+# fast build rule for target.
+mrsom3/fast:
+	$(MAKE) -f src/CMakeFiles/mrsom3.dir/build.make src/CMakeFiles/mrsom3.dir/build
+.PHONY : mrsom3/fast
 
 #=============================================================================
 # Target rules for targets named som
@@ -159,7 +185,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... mrsom"
+	@echo "... mrsom0713"
 	@echo "... mrsom2"
+	@echo "... mrsom3"
 	@echo "... som"
 	@echo "... mrmpi"
 .PHONY : help

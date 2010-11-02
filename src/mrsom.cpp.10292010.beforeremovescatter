@@ -394,7 +394,7 @@ int main(int argc, char *argv[])
         strcat(som_map, "result.map");
         save_2D_distance_map(som, som_map);
         printf("Converting SOM map to distance map...\n");
-        system("python ./show2.py result.map");
+        system("python ./show.py");
         printf("Done!\n");
         
         ///
@@ -415,7 +415,7 @@ int main(int argc, char *argv[])
             }            
         }
         mapFile.close();        
-        system("../tools/umat -cin result.map.txt > test.eps");
+        system("../tools/umat -cin result.map.txt > result.eps");
         printf("Done!\n");
     }
     

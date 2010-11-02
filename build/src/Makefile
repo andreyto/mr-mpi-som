@@ -113,6 +113,20 @@ mrsom/fast:
 .PHONY : mrsom/fast
 
 # Convenience name for target.
+src/CMakeFiles/mrsom0713.dir/rule:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/mrsom0713.dir/rule
+.PHONY : src/CMakeFiles/mrsom0713.dir/rule
+
+# Convenience name for target.
+mrsom0713: src/CMakeFiles/mrsom0713.dir/rule
+.PHONY : mrsom0713
+
+# fast build rule for target.
+mrsom0713/fast:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom0713.dir/build.make src/CMakeFiles/mrsom0713.dir/build
+.PHONY : mrsom0713/fast
+
+# Convenience name for target.
 src/CMakeFiles/mrsom2.dir/rule:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/mrsom2.dir/rule
 .PHONY : src/CMakeFiles/mrsom2.dir/rule
@@ -125,6 +139,20 @@ mrsom2: src/CMakeFiles/mrsom2.dir/rule
 mrsom2/fast:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom2.dir/build.make src/CMakeFiles/mrsom2.dir/build
 .PHONY : mrsom2/fast
+
+# Convenience name for target.
+src/CMakeFiles/mrsom3.dir/rule:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/mrsom3.dir/rule
+.PHONY : src/CMakeFiles/mrsom3.dir/rule
+
+# Convenience name for target.
+mrsom3: src/CMakeFiles/mrsom3.dir/rule
+.PHONY : mrsom3
+
+# fast build rule for target.
+mrsom3/fast:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom3.dir/build.make src/CMakeFiles/mrsom3.dir/build
+.PHONY : mrsom3/fast
 
 # Convenience name for target.
 src/CMakeFiles/som.dir/rule:
@@ -164,6 +192,30 @@ mrsom.cpp.s:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom.dir/build.make src/CMakeFiles/mrsom.dir/mrsom.cpp.s
 .PHONY : mrsom.cpp.s
 
+mrsom0713.o: mrsom0713.cpp.o
+.PHONY : mrsom0713.o
+
+# target to build an object file
+mrsom0713.cpp.o:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom0713.dir/build.make src/CMakeFiles/mrsom0713.dir/mrsom0713.cpp.o
+.PHONY : mrsom0713.cpp.o
+
+mrsom0713.i: mrsom0713.cpp.i
+.PHONY : mrsom0713.i
+
+# target to preprocess a source file
+mrsom0713.cpp.i:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom0713.dir/build.make src/CMakeFiles/mrsom0713.dir/mrsom0713.cpp.i
+.PHONY : mrsom0713.cpp.i
+
+mrsom0713.s: mrsom0713.cpp.s
+.PHONY : mrsom0713.s
+
+# target to generate assembly for a file
+mrsom0713.cpp.s:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom0713.dir/build.make src/CMakeFiles/mrsom0713.dir/mrsom0713.cpp.s
+.PHONY : mrsom0713.cpp.s
+
 mrsom2.o: mrsom2.cpp.o
 .PHONY : mrsom2.o
 
@@ -187,6 +239,30 @@ mrsom2.s: mrsom2.cpp.s
 mrsom2.cpp.s:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom2.dir/build.make src/CMakeFiles/mrsom2.dir/mrsom2.cpp.s
 .PHONY : mrsom2.cpp.s
+
+mrsom3.o: mrsom3.cpp.o
+.PHONY : mrsom3.o
+
+# target to build an object file
+mrsom3.cpp.o:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom3.dir/build.make src/CMakeFiles/mrsom3.dir/mrsom3.cpp.o
+.PHONY : mrsom3.cpp.o
+
+mrsom3.i: mrsom3.cpp.i
+.PHONY : mrsom3.i
+
+# target to preprocess a source file
+mrsom3.cpp.i:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom3.dir/build.make src/CMakeFiles/mrsom3.dir/mrsom3.cpp.i
+.PHONY : mrsom3.cpp.i
+
+mrsom3.s: mrsom3.cpp.s
+.PHONY : mrsom3.s
+
+# target to generate assembly for a file
+mrsom3.cpp.s:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom3.dir/build.make src/CMakeFiles/mrsom3.dir/mrsom3.cpp.s
+.PHONY : mrsom3.cpp.s
 
 som.o: som.cpp.o
 .PHONY : som.o
@@ -220,15 +296,23 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... mrsom"
+	@echo "... mrsom0713"
 	@echo "... mrsom2"
+	@echo "... mrsom3"
 	@echo "... rebuild_cache"
 	@echo "... som"
 	@echo "... mrsom.o"
 	@echo "... mrsom.i"
 	@echo "... mrsom.s"
+	@echo "... mrsom0713.o"
+	@echo "... mrsom0713.i"
+	@echo "... mrsom0713.s"
 	@echo "... mrsom2.o"
 	@echo "... mrsom2.i"
 	@echo "... mrsom2.s"
+	@echo "... mrsom3.o"
+	@echo "... mrsom3.i"
+	@echo "... mrsom3.s"
 	@echo "... som.o"
 	@echo "... som.i"
 	@echo "... som.s"

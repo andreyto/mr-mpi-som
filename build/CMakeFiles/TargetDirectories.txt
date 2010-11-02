@@ -1,4 +1,6 @@
 /home/ssul/work/mrsom/MRSOM/build/src/mrmpi/CMakeFiles/mrmpi.dir
 /home/ssul/work/mrsom/MRSOM/build/src/CMakeFiles/mrsom.dir
+/home/ssul/work/mrsom/MRSOM/build/src/CMakeFiles/mrsom0713.dir
 /home/ssul/work/mrsom/MRSOM/build/src/CMakeFiles/mrsom2.dir
+/home/ssul/work/mrsom/MRSOM/build/src/CMakeFiles/mrsom3.dir
 /home/ssul/work/mrsom/MRSOM/build/src/CMakeFiles/som.dir

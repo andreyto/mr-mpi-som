@@ -2,6 +2,7 @@
 #from scipy import *
 from pylab import *
 from numpy import *
+import sys
 
 #plotfile = 'plot.png'
 
@@ -30,7 +31,8 @@ from numpy import *
 #from scipy.io import read_array
 
 #R_matrix = read_array('rgb_map',columns=((1,-1)))
-R_matrix = loadtxt('result.map')
+#fileName = sys.argv[1]
+R_matrix = loadtxt('result.umat.txt')
     
     
     

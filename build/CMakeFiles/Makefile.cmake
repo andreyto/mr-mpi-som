@@ -44,7 +44,9 @@ SET(CMAKE_MAKEFILE_PRODUCTS
 # Dependency information for all targets:
 SET(CMAKE_DEPEND_INFO_FILES
   "src/CMakeFiles/mrsom.dir/DependInfo.cmake"
+  "src/CMakeFiles/mrsom0713.dir/DependInfo.cmake"
   "src/CMakeFiles/mrsom2.dir/DependInfo.cmake"
+  "src/CMakeFiles/mrsom3.dir/DependInfo.cmake"
   "src/CMakeFiles/som.dir/DependInfo.cmake"
   "src/mrmpi/CMakeFiles/mrmpi.dir/DependInfo.cmake"
   )

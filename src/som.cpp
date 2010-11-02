@@ -473,9 +473,10 @@ void train_online(SOM *som, DMatrix &F, float R, float Alpha)
                     continue;
                 //GAUSSIAN NEIGHBORHOOD FUNCTION
                 float neighbor_fuct = exp(-(1.0f * dist * dist) / (R * R));
+                
                 updatew_online(som->nodes[k], normalized, Alpha * neighbor_fuct);
                 //for (int w = 0; w < NDIMEN; w++)
-                //node->weights[w] += Alpha_x_Hck * (vec[w] - node->weights[w]);
+                    //node->weights[w] += Alpha_x_Hck * (vec[w] - node->weights[w]);
             }
         }
     }

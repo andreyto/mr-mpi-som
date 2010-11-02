@@ -15,7 +15,7 @@ fmt = 'Q' ## unsigned long long
 fmtSize = struct.calcsize(fmt)
 
 import os
-MRSOM_ROOT = os.environ.get("MRSOM_ROOT")
+#MRSOM_ROOT = os.environ.get("MRSOM_ROOT")
         
 def work(myid, numProcs, inFileName, nodes, width, height, \
              radiusDecaying, radDivVal, learningRateDecaying, deltaNodes, myData):
@@ -457,7 +457,8 @@ if MPI_myid == 0:
     
     ## USING UMAT COMMAND IN SOM_PAK 3.1 TO SAVE CODEMAP IN EPS
     import subprocess
-    cmd = MRSOM_ROOT + "/tools/umat -cin " + mapFileName + " > " + mapFileName + ".eps"
+    #cmd = MRSOM_ROOT + "umat -cin " + mapFileName + " > " + mapFileName + ".eps"
+    cmd = "umat -cin " + mapFileName + " > " + mapFileName + ".eps"
     proc = subprocess.Popen(cmd,shell=True,stdout=subprocess.PIPE,)
     #stdout_value = proc.communicate()[0]
     #s = stdout_value.split()
