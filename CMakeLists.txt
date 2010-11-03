@@ -1,7 +1,7 @@
 PROJECT(MRSOM)
 
-SET( ${PROJECT_NAME}_MAJOR_VERSION 2 )
-SET( ${PROJECT_NAME}_MINOR_VERSION 1 )
+SET( ${PROJECT_NAME}_MAJOR_VERSION 4 )
+SET( ${PROJECT_NAME}_MINOR_VERSION 0 )
 SET( ${PROJECT_NAME}_PATCH_LEVEL 0 )
 
 cmake_minimum_required(VERSION 2.6)
@@ -41,6 +41,7 @@ if (MPI_FOUND)
 
     add_subdirectory(src)
     add_subdirectory(src/mrmpi)
+    
 else (MPI_FOUND) 
     message(FATAL_ERROR "OpenMPI is not found on this system")    
 endif (MPI_FOUND)   

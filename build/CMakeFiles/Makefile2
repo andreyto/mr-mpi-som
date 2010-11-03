@@ -56,129 +56,18 @@ CMAKE_BINARY_DIR = /home/ssul/work/mrsom/MRSOM/build
 # Directory level rules for directory src
 
 # Convenience name for "all" pass in the directory.
-src/all: src/CMakeFiles/mrsom.dir/all
-src/all: src/CMakeFiles/mrsom0713.dir/all
-src/all: src/CMakeFiles/mrsom2.dir/all
 src/all: src/CMakeFiles/mrsom3.dir/all
-src/all: src/CMakeFiles/som.dir/all
+src/all: src/CMakeFiles/mrsom4.dir/all
 .PHONY : src/all
 
 # Convenience name for "clean" pass in the directory.
-src/clean: src/CMakeFiles/mrsom.dir/clean
-src/clean: src/CMakeFiles/mrsom0713.dir/clean
-src/clean: src/CMakeFiles/mrsom2.dir/clean
 src/clean: src/CMakeFiles/mrsom3.dir/clean
-src/clean: src/CMakeFiles/som.dir/clean
+src/clean: src/CMakeFiles/mrsom4.dir/clean
 .PHONY : src/clean
 
 # Convenience name for "preinstall" pass in the directory.
 src/preinstall:
 .PHONY : src/preinstall
-
-#=============================================================================
-# Target rules for target src/CMakeFiles/mrsom.dir
-
-# All Build rule for target.
-src/CMakeFiles/mrsom.dir/all: src/mrmpi/CMakeFiles/mrmpi.dir/all
-	$(MAKE) -f src/CMakeFiles/mrsom.dir/build.make src/CMakeFiles/mrsom.dir/depend
-	$(MAKE) -f src/CMakeFiles/mrsom.dir/build.make src/CMakeFiles/mrsom.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles  10
-	@echo "Built target mrsom"
-.PHONY : src/CMakeFiles/mrsom.dir/all
-
-# Include target in all.
-all: src/CMakeFiles/mrsom.dir/all
-.PHONY : all
-
-# Build rule for subdir invocation for target.
-src/CMakeFiles/mrsom.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ssul/work/mrsom/MRSOM/build/CMakeFiles 10
-	$(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/mrsom.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ssul/work/mrsom/MRSOM/build/CMakeFiles 0
-.PHONY : src/CMakeFiles/mrsom.dir/rule
-
-# Convenience name for target.
-mrsom: src/CMakeFiles/mrsom.dir/rule
-.PHONY : mrsom
-
-# clean rule for target.
-src/CMakeFiles/mrsom.dir/clean:
-	$(MAKE) -f src/CMakeFiles/mrsom.dir/build.make src/CMakeFiles/mrsom.dir/clean
-.PHONY : src/CMakeFiles/mrsom.dir/clean
-
-# clean rule for target.
-clean: src/CMakeFiles/mrsom.dir/clean
-.PHONY : clean
-
-#=============================================================================
-# Target rules for target src/CMakeFiles/mrsom0713.dir
-
-# All Build rule for target.
-src/CMakeFiles/mrsom0713.dir/all: src/mrmpi/CMakeFiles/mrmpi.dir/all
-	$(MAKE) -f src/CMakeFiles/mrsom0713.dir/build.make src/CMakeFiles/mrsom0713.dir/depend
-	$(MAKE) -f src/CMakeFiles/mrsom0713.dir/build.make src/CMakeFiles/mrsom0713.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles  11
-	@echo "Built target mrsom0713"
-.PHONY : src/CMakeFiles/mrsom0713.dir/all
-
-# Include target in all.
-all: src/CMakeFiles/mrsom0713.dir/all
-.PHONY : all
-
-# Build rule for subdir invocation for target.
-src/CMakeFiles/mrsom0713.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ssul/work/mrsom/MRSOM/build/CMakeFiles 10
-	$(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/mrsom0713.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ssul/work/mrsom/MRSOM/build/CMakeFiles 0
-.PHONY : src/CMakeFiles/mrsom0713.dir/rule
-
-# Convenience name for target.
-mrsom0713: src/CMakeFiles/mrsom0713.dir/rule
-.PHONY : mrsom0713
-
-# clean rule for target.
-src/CMakeFiles/mrsom0713.dir/clean:
-	$(MAKE) -f src/CMakeFiles/mrsom0713.dir/build.make src/CMakeFiles/mrsom0713.dir/clean
-.PHONY : src/CMakeFiles/mrsom0713.dir/clean
-
-# clean rule for target.
-clean: src/CMakeFiles/mrsom0713.dir/clean
-.PHONY : clean
-
-#=============================================================================
-# Target rules for target src/CMakeFiles/mrsom2.dir
-
-# All Build rule for target.
-src/CMakeFiles/mrsom2.dir/all: src/mrmpi/CMakeFiles/mrmpi.dir/all
-	$(MAKE) -f src/CMakeFiles/mrsom2.dir/build.make src/CMakeFiles/mrsom2.dir/depend
-	$(MAKE) -f src/CMakeFiles/mrsom2.dir/build.make src/CMakeFiles/mrsom2.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles  12
-	@echo "Built target mrsom2"
-.PHONY : src/CMakeFiles/mrsom2.dir/all
-
-# Include target in all.
-all: src/CMakeFiles/mrsom2.dir/all
-.PHONY : all
-
-# Build rule for subdir invocation for target.
-src/CMakeFiles/mrsom2.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ssul/work/mrsom/MRSOM/build/CMakeFiles 10
-	$(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/mrsom2.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ssul/work/mrsom/MRSOM/build/CMakeFiles 0
-.PHONY : src/CMakeFiles/mrsom2.dir/rule
-
-# Convenience name for target.
-mrsom2: src/CMakeFiles/mrsom2.dir/rule
-.PHONY : mrsom2
-
-# clean rule for target.
-src/CMakeFiles/mrsom2.dir/clean:
-	$(MAKE) -f src/CMakeFiles/mrsom2.dir/build.make src/CMakeFiles/mrsom2.dir/clean
-.PHONY : src/CMakeFiles/mrsom2.dir/clean
-
-# clean rule for target.
-clean: src/CMakeFiles/mrsom2.dir/clean
-.PHONY : clean
 
 #=============================================================================
 # Target rules for target src/CMakeFiles/mrsom3.dir
@@ -187,7 +76,7 @@ clean: src/CMakeFiles/mrsom2.dir/clean
 src/CMakeFiles/mrsom3.dir/all: src/mrmpi/CMakeFiles/mrmpi.dir/all
 	$(MAKE) -f src/CMakeFiles/mrsom3.dir/build.make src/CMakeFiles/mrsom3.dir/depend
 	$(MAKE) -f src/CMakeFiles/mrsom3.dir/build.make src/CMakeFiles/mrsom3.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles  13
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles  10
 	@echo "Built target mrsom3"
 .PHONY : src/CMakeFiles/mrsom3.dir/all
 
@@ -216,38 +105,38 @@ clean: src/CMakeFiles/mrsom3.dir/clean
 .PHONY : clean
 
 #=============================================================================
-# Target rules for target src/CMakeFiles/som.dir
+# Target rules for target src/CMakeFiles/mrsom4.dir
 
 # All Build rule for target.
-src/CMakeFiles/som.dir/all:
-	$(MAKE) -f src/CMakeFiles/som.dir/build.make src/CMakeFiles/som.dir/depend
-	$(MAKE) -f src/CMakeFiles/som.dir/build.make src/CMakeFiles/som.dir/build
-	$(CMAKE_COMMAND) -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles  14
-	@echo "Built target som"
-.PHONY : src/CMakeFiles/som.dir/all
+src/CMakeFiles/mrsom4.dir/all: src/mrmpi/CMakeFiles/mrmpi.dir/all
+	$(MAKE) -f src/CMakeFiles/mrsom4.dir/build.make src/CMakeFiles/mrsom4.dir/depend
+	$(MAKE) -f src/CMakeFiles/mrsom4.dir/build.make src/CMakeFiles/mrsom4.dir/build
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles  11
+	@echo "Built target mrsom4"
+.PHONY : src/CMakeFiles/mrsom4.dir/all
 
 # Include target in all.
-all: src/CMakeFiles/som.dir/all
+all: src/CMakeFiles/mrsom4.dir/all
 .PHONY : all
 
 # Build rule for subdir invocation for target.
-src/CMakeFiles/som.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/ssul/work/mrsom/MRSOM/build/CMakeFiles 1
-	$(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/som.dir/all
+src/CMakeFiles/mrsom4.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ssul/work/mrsom/MRSOM/build/CMakeFiles 10
+	$(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/mrsom4.dir/all
 	$(CMAKE_COMMAND) -E cmake_progress_start /home/ssul/work/mrsom/MRSOM/build/CMakeFiles 0
-.PHONY : src/CMakeFiles/som.dir/rule
+.PHONY : src/CMakeFiles/mrsom4.dir/rule
 
 # Convenience name for target.
-som: src/CMakeFiles/som.dir/rule
-.PHONY : som
+mrsom4: src/CMakeFiles/mrsom4.dir/rule
+.PHONY : mrsom4
 
 # clean rule for target.
-src/CMakeFiles/som.dir/clean:
-	$(MAKE) -f src/CMakeFiles/som.dir/build.make src/CMakeFiles/som.dir/clean
-.PHONY : src/CMakeFiles/som.dir/clean
+src/CMakeFiles/mrsom4.dir/clean:
+	$(MAKE) -f src/CMakeFiles/mrsom4.dir/build.make src/CMakeFiles/mrsom4.dir/clean
+.PHONY : src/CMakeFiles/mrsom4.dir/clean
 
 # clean rule for target.
-clean: src/CMakeFiles/som.dir/clean
+clean: src/CMakeFiles/mrsom4.dir/clean
 .PHONY : clean
 
 #=============================================================================

@@ -99,45 +99,6 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named mrsom
-
-# Build rule for target.
-mrsom: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 mrsom
-.PHONY : mrsom
-
-# fast build rule for target.
-mrsom/fast:
-	$(MAKE) -f src/CMakeFiles/mrsom.dir/build.make src/CMakeFiles/mrsom.dir/build
-.PHONY : mrsom/fast
-
-#=============================================================================
-# Target rules for targets named mrsom0713
-
-# Build rule for target.
-mrsom0713: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 mrsom0713
-.PHONY : mrsom0713
-
-# fast build rule for target.
-mrsom0713/fast:
-	$(MAKE) -f src/CMakeFiles/mrsom0713.dir/build.make src/CMakeFiles/mrsom0713.dir/build
-.PHONY : mrsom0713/fast
-
-#=============================================================================
-# Target rules for targets named mrsom2
-
-# Build rule for target.
-mrsom2: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 mrsom2
-.PHONY : mrsom2
-
-# fast build rule for target.
-mrsom2/fast:
-	$(MAKE) -f src/CMakeFiles/mrsom2.dir/build.make src/CMakeFiles/mrsom2.dir/build
-.PHONY : mrsom2/fast
-
-#=============================================================================
 # Target rules for targets named mrsom3
 
 # Build rule for target.
@@ -151,17 +112,17 @@ mrsom3/fast:
 .PHONY : mrsom3/fast
 
 #=============================================================================
-# Target rules for targets named som
+# Target rules for targets named mrsom4
 
 # Build rule for target.
-som: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 som
-.PHONY : som
+mrsom4: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 mrsom4
+.PHONY : mrsom4
 
 # fast build rule for target.
-som/fast:
-	$(MAKE) -f src/CMakeFiles/som.dir/build.make src/CMakeFiles/som.dir/build
-.PHONY : som/fast
+mrsom4/fast:
+	$(MAKE) -f src/CMakeFiles/mrsom4.dir/build.make src/CMakeFiles/mrsom4.dir/build
+.PHONY : mrsom4/fast
 
 #=============================================================================
 # Target rules for targets named mrmpi
@@ -184,11 +145,8 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... mrsom"
-	@echo "... mrsom0713"
-	@echo "... mrsom2"
 	@echo "... mrsom3"
-	@echo "... som"
+	@echo "... mrsom4"
 	@echo "... mrmpi"
 .PHONY : help
 
