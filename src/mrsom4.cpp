@@ -156,11 +156,13 @@ void freeMatrix(DMatrix *matrix);
 void printMatrix(DMatrix A);
 int validMatrix(DMatrix matrix);
 
+/// For passing information to mr-mpi functions
 struct GIFTBOX {
     float r;
     const DMatrix *codebook;
 };
 
+/// For store raw result in mr_train_batch()
 typedef vector<vector<vector<float> > > VVV_FLOAT_T;
 
 /// MR-MPI fuctions and related functions
@@ -168,8 +170,7 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr);
 void mr_update_weight(uint64_t itask, char *key, int keybytes, char *value, int valuebytes, KeyValue *kv, void *ptr);
 void mr_sum(char *key, int keybytes, char *multivalue, int nvalues, int *valuebytes, KeyValue *kv, void *ptr);
 
-//float *normalize(float *f, int normalopt);
-float *normalize2(DMatrix &f, int n, int normalopt);
+float *normalize(DMatrix &f, int n, int normalopt);
 float *get_bmu_coord(const DMatrix *codebook, const float *fvec);
 float get_distance(float *vec1, const float *vec2, int distance_metric);
 float *get_wvec(unsigned int somx, unsigned int somy, const DMatrix *codebook);
@@ -468,7 +469,7 @@ void train_online(char* file, DMatrix *codebook, float R, float Alpha)
     fclose(fp); 
     
     for (int n = 0; n < NVECSPERFILE; n++) {
-        const float *normalized = normalize2(data, n, NORMALOPT); 
+        const float *normalized = normalize(data, n, NORMALOPT); 
         
         /// Get best node using d_k (t) = || x(t) = w_k (t) || ^2
         /// and d_c (t) == min d_k (t)
@@ -594,7 +595,7 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
     for (uint64_t n = 0; n < NVECSPERFILE; n++) {
 
         /// Normalize
-        const float *normalized = normalize2(data, n, NORMALOPT); 
+        const float *normalized = normalize(data, n, NORMALOPT); 
         
         /// GET THE BEST MATCHING UNIT
         /// p1[0] = x, p1[1] = y
@@ -829,47 +830,6 @@ void mr_sum(char *key, int keybytes, char *multivalue, int nvalues, int *valueby
     kv->add(key, strlen(key)+1, (char*)value.c_str(), value.length()+1);
 }
  
-/** MR-MPI map related function - Normalize vector
- * @param f
- * @param distance_metric
- */
-
-/*
-float *normalize(float *f, int normalopt)
-{
-    int d = NDIMEN;
-    float *aVector = (float *)malloc(SZFLOAT * d);
-    switch (normalopt) {
-    default:
-    case 0: /// NONE
-        for (unsigned int x = 0; x < d; x++) {
-            aVector[x] = f[x];
-        }
-        break;
-    case 1: /// MNMX
-        ////for (int x = 0; x < NDIMEN; x++)
-        ////m_data[x] = (0.9f - 0.1f) * (vec[x] + m_add[x]) * m_mul[x] + 0.1f;
-        break;
-    case 2: /// ZSCR
-        ////for (int x = 0; x < NDIMEN; x++)
-        ////m_data[x] = (vec[x] + m_add[x]) * m_mul[x];
-        break;
-    case 3: /// SIGM
-        ////for (int x = 0; x < NDIMEN; x++)
-        ////m_data[x] = 1.0f / (1.0f + exp(-((vec[x] + m_add[x]) * m_mul[x])));
-        break;
-    case 4: /// ENRG
-        float energy = 0.0f;
-        for (unsigned int x = 0; x < d; x++)
-            energy += f[x] * f[x];
-        energy = sqrt(energy);
-        for (unsigned int x = 0; x < d; x++)
-            aVector[x] = f[x] / energy;
-        break;
-    }
-    return aVector;
-}
-*/
 
 /** MR-MPI map related function - Normalize vector2
  * @param f
@@ -877,7 +837,7 @@ float *normalize(float *f, int normalopt)
  * @param distance_metric
  */
  
-float *normalize2(DMatrix &f, int n, int normalopt)
+float *normalize(DMatrix &f, int n, int normalopt)
 {
     float *m_data = (float *)malloc(SZFLOAT * NDIMEN);
     switch (normalopt) {
