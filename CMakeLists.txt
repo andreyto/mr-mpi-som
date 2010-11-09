@@ -43,8 +43,14 @@ if (MPI_FOUND)
     add_subdirectory(src/mrmpi)
     
 else (MPI_FOUND) 
-    message(FATAL_ERROR "OpenMPI is not found on this system")    
+    message(FATAL_ERROR "Any MPI is not found on this system")    
 endif (MPI_FOUND)   
+
+# search for Boost ###########################
+find_package( Boost )
+link_directories ( ${Boost_LIBRARY_DIRS} )
+include_directories ( ${Boost_INCLUDE_DIRS} )
+###############################################
 
 #SET(CCFLAGS "-g -Wall -O -I../mrmpi")
 #SET(CMAKE_CXX_FLAGS "-g -Wall ")

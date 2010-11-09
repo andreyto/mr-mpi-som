@@ -46,6 +46,11 @@
 //
 //  v.4.0.0
 //      11.03.2010      Init running version done!
+//
+//      11.04.2010      Initial result came out. Found out-of-disk operations. 
+//                      Try float compaction -> mrsom4.1.0.cpp
+//
+//      11.05.2010      Hydrid compaction v4.1.1. => v5
 //      
 //
 ////////////////////////////////////////////////////////////////////////////////
@@ -170,7 +175,7 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr);
 void mr_update_weight(uint64_t itask, char *key, int keybytes, char *value, int valuebytes, KeyValue *kv, void *ptr);
 void mr_sum(char *key, int keybytes, char *multivalue, int nvalues, int *valuebytes, KeyValue *kv, void *ptr);
 
-float *normalize(DMatrix &f, uint64_t n, int normalopt);
+float *normalize(DMatrix &f, int n, int normalopt);
 float *get_bmu_coord(const DMatrix *codebook, const float *fvec);
 float get_distance(float *vec1, const float *vec2, int distance_metric);
 float *get_wvec(unsigned int somx, unsigned int somy, const DMatrix *codebook);
@@ -193,7 +198,6 @@ int save_umat(DMatrix *codebook, char *fname);
 
 /// To make result file name with date
 string get_timedate(void);
-
 
 
 
@@ -254,9 +258,9 @@ int main(int argc, char **argv)
     /// Fill initial random weights
     ///
     srand((unsigned int)time(0));
-    for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) {        
-        for (unsigned int som_x = 0; som_x < SOM_X; som_x++) {
-            for (unsigned int d = 0; d < NDIMEN; d++) {
+    for (int som_y = 0; som_y < SOM_Y; som_y++) {        
+        for (int som_x = 0; som_x < SOM_X; som_x++) {
+            for (int d = 0; d < NDIMEN; d++) {
                 int w = 0xFFF & rand();
                 w -= 0x800;
                 codebook.rows[som_y][som_x*NDIMEN + d] = (float)w / 4096.0f;
@@ -288,13 +292,13 @@ int main(int argc, char **argv)
     * timer = 0 (none) or 1 (summary) or 2 (histogrammed)
     * memsize = N = number of Mbytes per page of memory
     * minpage = N = # of pages to pre-allocate per processor
-    * maxpage = N = max # of pages allocatable per processor
+    * maxpage = N = max # of pages allocatable per processor, 0 = no limit
     * keyalign = N = byte-alignment of keys
     * valuealign = N = byte-alignment of values
     * fpath = string 
     */
     mr->verbosity = 0;
-    mr->timer = 2;
+    mr->timer = 0;
     mr->mapstyle = 2;  /// master/slave mode
     MPI_Barrier(MPI_COMM_WORLD);
     
@@ -306,7 +310,7 @@ int main(int argc, char **argv)
     float R, R0;
     R0 = SOM_X / 2.0f;              /// init radius for updating neighbors
     R = R0;
-    unsigned int x = 0;                      /// 0...N-1
+    int x = 0;                      /// 0...N-1
     
     ///
     /// Training
@@ -353,16 +357,35 @@ int main(int argc, char **argv)
             /// 3. reduce: compute sum of numer and denom
             /// 4. map: compute new weight and upadte codebook
             ///
+            
+            /// v1
+            //uint64_t nRes = mr->map(argv[1], &mr_train_batch, &gf);
+            //mr->print(-1, 1, 5, 5);  
+            //mr->collate(NULL);
+            //mr->print(-1, 1, 5, 5);            
+            //nRes = mr->reduce(&mr_sum, NULL);
+            //mr->print(-1, 1, 5, 5);            
+            //mr->gather(1);
+            //mr->print(0, 1, 5, 5);
+            //nRes = mr->map(mr, &mr_update_weight, &gf);
+            
+            /// v2 - data compaction
             uint64_t nRes = mr->map(argv[1], &mr_train_batch, &gf);
+            //cout << "### map,mr_train_batch DONE ###\n";
             //mr->print(-1, 1, 5, 5);            
             mr->collate(NULL);
+            //cout << "### collate DONE ###\n";
             //mr->print(-1, 1, 5, 5);            
             nRes = mr->reduce(&mr_sum, NULL);
+            //cout << "### reduce, mr_sum DONE ###\n";
             //mr->print(-1, 1, 5, 5);            
             mr->gather(1);
+            //cout << "### gather DONE ###\n";
             //mr->print(0, 1, 5, 5);
             nRes = mr->map(mr, &mr_update_weight, &gf);
+            //cout << "### map, mr_update_weight DONE ###\n";
             //mr->print(-1, 1, 5, 5);            
+            
             MPI_Barrier(MPI_COMM_WORLD); 
 
             NEPOCHS--;
@@ -378,8 +401,7 @@ int main(int argc, char **argv)
         string outFileName = "result-umat-" + get_timedate() + ".txt";
         cout << "    U-mat file = " << outFileName << endl; 
         int ret = save_umat(&codebook, (char*)outFileName.c_str());
-        if (ret < 0) 
-            printf("    Fail (1) !\n");
+        if (ret < 0) printf("    Fail (1) !\n");
         else {
             printf("    Converting SOM map to U-map...\n");
             //string cmd = "python ./show2.py " + outFileName;
@@ -399,9 +421,9 @@ int main(int argc, char **argv)
         char temp[80];
         if (mapFile.is_open()) {
             mapFile << NDIMEN << " rect " << SOM_X << " " << SOM_Y << endl;
-            for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) { 
-                for (unsigned int som_x = 0; som_x < SOM_X; som_x++) { 
-                    for (unsigned int d = 0; d < NDIMEN; d++) {
+            for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
+                for (uint64_t som_x = 0; som_x < SOM_X; som_x++) { 
+                    for (uint64_t d = 0; d < NDIMEN; d++) {
                         sprintf(temp, "%f", codebook.rows[som_y][som_x*NDIMEN + d]);
                         mapFile << temp << " ";
                     }
@@ -414,13 +436,12 @@ int main(int argc, char **argv)
             //system((char*)cmd.c_str());
             printf("    Done (2) !\n");
         }
-        else 
-            printf("    Fail (2) !\n");
-            
+        else printf("    Fail (2) !\n");
+        
         string cmd = "python ./show2.py " + outFileName;
         system((char*)cmd.c_str());
         cmd = "./umat -cin " + outFileName2 + " > test.eps";
-        system((char*)cmd.c_str());        
+        system((char*)cmd.c_str());
     }
     MPI_Barrier(MPI_COMM_WORLD);
     
@@ -432,7 +453,7 @@ int main(int argc, char **argv)
     
     return 0;
 }
-
+ 
 /** MR-MPI Map function - batch training
  * @param itask
  * @param file - splitted feature vector file
@@ -462,9 +483,9 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
     if (SHUFFLE) {
         vector<vector<float> > vvFeature(NVECSPERFILE, vector<float> (NDIMEN));
         vector<uint64_t> vRowIdx;
-        for (unsigned int row = 0; row < NVECSPERFILE; row++) { 
+        for (uint64_t row = 0; row < NVECSPERFILE; row++) { 
             vRowIdx.push_back(row);
-            for (unsigned int col = 0; col < NDIMEN; col++) {
+            for (uint64_t col = 0; col < NDIMEN; col++) {
                 float tmp = 0.0f;
                 fscanf(fp, "%f", &tmp);
                 vvFeature[row][col] = tmp;
@@ -477,15 +498,15 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
         ///
         /// Set data matrix with shuffled rows
         ///
-        for (unsigned int row = 0; row < NVECSPERFILE; row++)
-            for (unsigned int col = 0; col < NDIMEN; col++)
+        for (uint64_t row = 0; row < NVECSPERFILE; row++)
+            for (uint64_t col = 0; col < NDIMEN; col++)
                 data.rows[row][col] = vvFeature[vRowIdx[row]][col];
         vvFeature.clear();
         vRowIdx.clear();
     }
     else {
-        for (unsigned int row = 0; row < NVECSPERFILE; row++) { 
-            for (unsigned int col = 0; col < NDIMEN; col++) {
+        for (uint64_t row = 0; row < NVECSPERFILE; row++) { 
+            for (uint64_t col = 0; col < NDIMEN; col++) {
                 float tmp = 0.0f;
                 fscanf(fp, "%f", &tmp);
                 data.rows[row][col] = tmp;
@@ -506,7 +527,7 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
     denom = VVV_FLOAT_T(SOM_Y, vector<vector<float> > (SOM_X,
                         vector<float>(NDIMEN, 0.0)));
     
-    for (unsigned int n = 0; n < NVECSPERFILE; n++) {
+    for (uint64_t n = 0; n < NVECSPERFILE; n++) {
 
         /// Normalize
         const float *normalized = normalize(data, n, NORMALOPT); 
@@ -517,19 +538,19 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
         
         
         /// Accumulate denoms and numers
-        for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) { 
-            for (unsigned int som_x = 0; som_x < SOM_X; som_x++) {
+        for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
+            for (uint64_t som_x = 0; som_x < SOM_X; som_x++) {
                 p2[0] = (float) som_x;
                 p2[1] = (float) som_y;
                 float dist = 0.0f;
-                for (unsigned int p = 0; p < NDIMEN; p++)
+                for (int p = 0; p < NDIMEN; p++)
                     dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
                 dist = sqrt(dist);
                 
                 float neighbor_fuct = 0.0f;
                 neighbor_fuct = exp(-(1.0f * dist * dist) / (gf->r * gf->r));
                 
-                for (unsigned int w = 0; w < NDIMEN; w++) {
+                for (int w = 0; w < NDIMEN; w++) {
                     float tempNumer = 1.0f * neighbor_fuct * normalized[w];
                     float tempDenom = neighbor_fuct;
                     numer[som_y][som_x][w] += 1.0f * neighbor_fuct * normalized[w];
@@ -542,100 +563,96 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
         delete normalized; 
     }    
     
-    for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) { 
-        for (unsigned int som_x = 0; som_x < SOM_X; som_x++) {
-            for (unsigned int w = 0; w < NDIMEN; w++) {
+    /// //////////////////////////////////////////////////////////////////////// 
+    /// v1 no compaction
+    ///
+    /*
+    for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
+        for (uint64_t som_x = 0; som_x < SOM_X; som_x++) {
+            for (int w = 0; w < NDIMEN; w++) {
                 string key = uint2str(som_y) + "," + uint2str(som_x) + "," + uint2str(w);
                 string value = float2str(numer[som_y][som_x][w]) + "," + float2str(denom[som_y][som_x][w]);
-                //if (!( (denom[som_y][som_x][w] == 0) && (numer[som_y][som_x][w] == 0) ))
-                    kv->add((char*)key.c_str(), key.length()+1, (char*)value.c_str(), value.length()+1);
+                //printf("orig floats = %g, %g\n", numer[som_y][som_x][w], denom[som_y][som_x][w]);
+                //if (numer[som_y][som_x][w] != 0 && denom[som_y][som_x][w] != 0)
+                kv->add((char*)key.c_str(), key.length()+1, (char*)value.c_str(), value.length()+1);
             }
         }
     }
+    */
+
+    /// //////////////////////////////////////////////////////////////////////// 
+    /// v2 value compaction
+    ///    
+    ///*
+    for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
+        for (uint64_t som_x = 0; som_x < SOM_X; som_x++) {
+            for (int w = 0; w < NDIMEN; w++) {
+                
+                
+                if (!( (denom[som_y][som_x][w] == 0) && (numer[som_y][som_x][w] == 0) )) {
+                    /// key compaction
+                    //char weightnum[MAXSTR]; /// key
+                    //sprintf(weightnum, "%d %d", k, w);
+                    //memcpy(bkey, &weightnum, strlen(weightnum) + 1);
+                    
+                    /// value compaction
+                    ///*
+                    unsigned char bNumer[SZFLOAT];    
+                    unsigned char bDenom[SZFLOAT];    
+                    unsigned char bConcated[SZFLOAT*2];            
+                    float n = numer[som_y][som_x][w];
+                    float d = denom[som_y][som_x][w];
+                    memcpy(bNumer, &n, SZFLOAT);
+                    memcpy(bDenom, &d, SZFLOAT);
+                    for (int i = 0; i < (int)SZFLOAT; i++) {
+                        bConcated[i] = bNumer[i];
+                        bConcated[i+SZFLOAT] = bDenom[i];
+                    } /// total 4*2 = 8bytes for two floats.
+                    
+                    /// DEBUG
+                    //printf("orig floats = %g, %g\n", numer[som_y][som_x][w], denom[som_y][som_x][w]);
+                    //unsigned char *c1 = (unsigned char *)malloc(SZFLOAT);
+                    //unsigned char *c2 = (unsigned char *)malloc(SZFLOAT);
+                    //for (int i = 0; i < (int)SZFLOAT; i++) {
+                        //c1[i] = bConcated[i];
+                        //c2[i] = bConcated[i+SZFLOAT];
+                    //}
+                    //printf("parsed floats = %g, %g\n", *(float *)c1, *(float *)c2);
+                    //delete c1;
+                    //delete c2;
+                    ///
+                
+                    string key = uint2str(som_y) + "," + uint2str(som_x) + "," + uint2str(w);
+                    //kv->add(bkey, strlen(weightnum) + 1, bConcated, SZFLOAT * 2);
+                    //cout << "*(float*)bConcated = " << *(float*)bConcated << endl;
+                    kv->add((char*)key.c_str(), key.length()+1, (char*)bConcated, SZFLOAT*2);    
+                }            
+                //*/
+                
+                
+                //const float *n1 = &(numer[som_y][som_x][w]); 
+                //const float *d1 = &(denom[som_y][som_x][w]); 
+                
+                //const byte *bn = reinterpret_cast<const byte *>(n1);
+                //const byte *bd = reinterpret_cast<const byte *>(d1);
+                
+                //char bConcated[SZFLOAT*2];            
+                //for (int i = 0; i < (int)SZFLOAT; i++) {
+                    //bConcated[i] = bn[i];
+                    //bConcated[i+SZFLOAT] = bd[i];
+                //}
+                //string key = uint2str(som_y) + "," + uint2str(som_x) + "," + uint2str(w);
+                //kv->add((char*)key.c_str(), key.length()+1, bConcated, SZFLOAT*2); 
+            }
+        }
+    }
+    //*/
+    /// //////////////////////////////////////////////////////////////////////// 
     
     numer.clear();
     denom.clear();
     freeMatrix(&data);
 }
-
-/** User-defined Reduce function - Sum numer and denom
- * (Qid,DBid) key into Qid for further aggregating.
- * @param key
- * @param keybytes
- * @param multivalue: collected blast result strings.  
- * @param nvalues
- * @param valuebytes
- * @param kv
- * @param ptr
- */
- 
-void mr_sum(char *key, int keybytes, char *multivalue, int nvalues, int *valuebytes, 
-         KeyValue *kv, void *ptr)
-{   
-    float numer = 0.0;
-    float denom = 0.0;
-
-    for (uint64_t i = 0; i < nvalues; i++) {
-        stringstream ss;
-        ss << multivalue;
-        vector<string> vValue = split(ss.str(), ',');
-        assert(vValue.size() == 2);
-        numer += str2float(vValue[0]);
-        denom += str2float(vValue[1]);
-        
-        multivalue += valuebytes[i];        
-    }
-    
-    string value = float2str(numer) + "," + float2str(denom);
-    kv->add(key, strlen(key)+1, (char*)value.c_str(), value.length()+1);
-}
-
-
-/** Update codebook numer and denom
- * (Qid,DBid) key into Qid for further aggregating.
- * @param itask
- * @param key
- * @param keybytes
- * @param value
- * @param valuebytes
- * @param kv
- * @param ptr
- */
- 
-void mr_update_weight(uint64_t itask, char *key, int keybytes, char *value,
-                      int valuebytes, KeyValue *kv, void *ptr)
-{
-    GIFTBOX *gf = (GIFTBOX *) ptr;
-    vector<string> vKey = split(string(key), ',');
-    assert(vKey.size() == 3);
-    vector<string> vValue = split(string(value), ',');
-    assert(vValue.size() == 2);
-
-    uint64_t row = str2uint(vKey[0]);
-    uint64_t col = str2uint(vKey[1]);
-    unsigned int d = str2uint(vKey[2]);    
-
-    float numer = str2float(vValue[0]);
-    float denom = str2float(vValue[1]);
-    float newWeight = 0.0;
-    if (denom != 0)
-        newWeight = numer / denom;
-    
-    //cout << "row, col, col*NDIMEN+d, numer, denom, newWeight = " 
-         //<< row << ","
-         //<< col << ","
-         //<< col*NDIMEN + d << ","
-         //<< numer << ","
-         //<< denom << ","
-         //<< newWeight << endl;         
-    
-    ////////////////////////////////////////////////////////
-    /// Should check newWeight > 0.0
-    if (newWeight > 0.0) 
-        gf->codebook->rows[row][col*NDIMEN + d] = newWeight;
-    ////////////////////////////////////////////////////////
-}
-
 
 
 /** MR-MPI Map function - Get node coords for the best matching unit (BMU)
@@ -656,8 +673,8 @@ float *get_bmu_coord(const DMatrix *codebook, const float *fvec)
     /// Check SOM_X * SOM_Y nodes one by one and compute the distance 
     /// D(W_K, Fvec) and get the mindist and get the coords for the BMU.
     ///
-    for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) { 
-        for (unsigned int som_x = 0; som_x < SOM_X; som_x++) {
+    for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
+        for (uint64_t som_x = 0; som_x < SOM_X; som_x++) {
 
             float *tempVec = get_wvec(som_y, som_x, codebook);  
             
@@ -708,16 +725,16 @@ int save_umat(DMatrix *codebook, char *fname)
     FILE *fp = fopen(fname, "wt");
     if (fp != 0) {
         int n = 0;
-        for (unsigned int som_y1 = 0; som_y1 < SOM_Y; som_y1++) {
-            for (unsigned int som_x1 = 0; som_x1 < SOM_X; som_x1++) {
+        for (int som_y1 = 0; som_y1 < SOM_Y; som_y1++) {
+            for (int som_x1 = 0; som_x1 < SOM_X; som_x1++) {
                 float dist = 0.0f;
                 int nodes_number = 0;
                 int coords1[2];
                 coords1[0] = som_x1;
                 coords1[1] = som_y1;               
                 
-                for (unsigned int som_y2 = 0; som_y2 < SOM_Y; som_y2++) {   
-                    for (unsigned int som_x2 = 0; som_x2 < SOM_X; som_x2++) {
+                for (int som_y2 = 0; som_y2 < SOM_Y; som_y2++) {   
+                    for (int som_x2 = 0; som_x2 < SOM_X; som_x2++) {
                         int coords2[2];
                         coords2[0] = som_x2;
                         coords2[1] = som_y2;    
@@ -725,7 +742,7 @@ int save_umat(DMatrix *codebook, char *fname)
                         if (som_x1 == som_x2 && som_y1 == som_y2) continue;
                             
                         float tmp = 0.0;
-                        for (unsigned int d = 0; d < D; d++) {
+                        for (int d = 0; d < D; d++) {
                             tmp += pow(coords1[d] - coords2[d], 2.0f);                            
                         }
                         tmp = sqrt(tmp);
@@ -750,13 +767,177 @@ int save_umat(DMatrix *codebook, char *fname)
 }
 
 
+/** Update codebook numer and denom
+ * (Qid,DBid) key into Qid for further aggregating.
+ * @param itask
+ * @param key
+ * @param keybytes
+ * @param value
+ * @param valuebytes
+ * @param kv
+ * @param ptr
+ */
+ 
+void mr_update_weight(uint64_t itask, char *key, int keybytes, char *value,
+                      int valuebytes, KeyValue *kv, void *ptr)
+{
+    GIFTBOX *gf = (GIFTBOX *) ptr;
+    
+    /// //////////////////////////////////////////////////////////////////////// 
+    /// v1
+    ///*
+    vector<string> vKey = split(string(key), ',');
+    assert(vKey.size() == 3);
+    vector<string> vValue = split(string(value), ',');
+    assert(vValue.size() == 2);
+
+    uint64_t row = str2uint(vKey[0]);
+    uint64_t col = str2uint(vKey[1]);
+    unsigned int d = str2uint(vKey[2]);    
+
+    float numer = str2float(vValue[0]);
+    float denom = str2float(vValue[1]);
+    float newWeight = 0.0;
+    if (denom != 0)
+        newWeight = numer / denom;
+    
+    //cout << "row, col, col*NDIMEN+d, numer, denom, newWeight = " 
+         //<< row << ","
+         //<< col << ","
+         //<< col*NDIMEN + d << ","
+         //<< numer << ","
+         //<< denom << ","
+         //<< newWeight << endl;         
+    
+    ////////////////////////////////////////////////////////
+    /// Should check newWeight > 0.0
+    if (newWeight > 0.0) 
+        gf->codebook->rows[row][col*NDIMEN + d] = newWeight;
+    ////////////////////////////////////////////////////////
+    //*/
+    
+    /// //////////////////////////////////////////////////////////////////////// 
+    /// v2
+    /*
+    vector<string> vKey = split(string(key), ',');
+    assert(vKey.size() == 3);
+
+    uint64_t row = str2uint(vKey[0]);
+    uint64_t col = str2uint(vKey[1]);
+    unsigned int d = str2uint(vKey[2]);
+    
+    float numer = 0.0;
+    float denom = 0.0;
+    
+    //for (int j = 0; j < 1; j++) {
+        unsigned char *c1 = (unsigned char *)malloc(SZFLOAT);
+        unsigned char *c2 = (unsigned char *)malloc(SZFLOAT);
+        for (int i = 0; i < (int)SZFLOAT; i++) {
+            c1[i] = value[i];
+            c2[i] = value[i+SZFLOAT];
+        }
+        //printf("parsed floats = %g %g\n", *(float *)c1, *(float *)c2);
+        numer = *(float *)c1;
+        denom = *(float *)c2;
+        //printf("%g ",*(float *) multivalue);
+        //value += SZFLOAT * 2;
+        
+        delete c1;
+        delete c2;        
+    //}
+    
+    float newWeight = 0.0;
+    if (denom != 0)
+        newWeight = numer / denom;
+        
+    ////////////////////////////////////////////////////////
+    /// Should check newWeight > 0.0
+    if (newWeight > 0.0) 
+        gf->codebook->rows[row][col*NDIMEN + d] = newWeight;
+    ////////////////////////////////////////////////////////
+    */
+}
+
+
+/** User-defined Reduce function - Sum numer and denom
+ * (Qid,DBid) key into Qid for further aggregating.
+ * @param key
+ * @param keybytes
+ * @param multivalue: collected blast result strings.  
+ * @param nvalues
+ * @param valuebytes
+ * @param kv
+ * @param ptr
+ */
+ 
+void mr_sum(char *key, int keybytes, char *multivalue, int nvalues, int *valuebytes, 
+            KeyValue *kv, void *ptr)
+{   
+    float numer = 0.0;
+    float denom = 0.0;
+
+    /// v1 ////////////////////////////////////////////////////////////////////
+    /*
+    for (int i = 0; i < nvalues; i++) {
+        stringstream ss;
+        ss << multivalue;
+        vector<string> vValue = split(ss.str(), ',');
+        assert(vValue.size() == 2);
+        numer += str2float(vValue[0]);
+        denom += str2float(vValue[1]);
+        
+        multivalue += valuebytes[i];        
+    }
+    
+    string value = float2str(numer) + "," + float2str(denom);
+    kv->add(key, strlen(key)+1, (char*)value.c_str(), value.length()+1);
+    */
+    
+    /// v2 ////////////////////////////////////////////////////////////////////
+    for (int j = 0; j < nvalues; j++) {
+        unsigned char *c1 = (unsigned char *)malloc(SZFLOAT);
+        unsigned char *c2 = (unsigned char *)malloc(SZFLOAT);
+        for (int i = 0; i < (int)SZFLOAT; i++) {
+            c1[i] = multivalue[i];
+            c2[i] = multivalue[i+SZFLOAT];
+        }
+        //printf("parsed floats = %g %g\n", *(float *)c1, *(float *)c2);
+        numer += *(float *)c1;
+        denom += *(float *)c2;
+        //printf("%g ",*(float *) multivalue);
+        multivalue += SZFLOAT * 2;
+        
+        delete c1;
+        delete c2;        
+    }
+    
+    /// value compaction
+    //unsigned char bNumer[SZFLOAT];    
+    //unsigned char bDenom[SZFLOAT];    
+    //unsigned char bConcated[SZFLOAT*2];            
+    //memcpy(bNumer, &numer, SZFLOAT);
+    //memcpy(bDenom, &denom, SZFLOAT);
+    //for (int i = 0; i < (int)SZFLOAT; i++) {
+        //bConcated[i] = bNumer[i];
+        //bConcated[i+SZFLOAT] = bDenom[i];
+    //} /// total 4*2 = 8bytes for two floats
+    
+    //kv->add(key, strlen(key)+1, (char*)bConcated, SZFLOAT*2);       
+    
+    ///
+    /// hybrid
+    string value = float2str(numer) + "," + float2str(denom);    
+    kv->add(key, strlen(key)+1, (char*)value.c_str(), value.length()+1);           
+}
+ 
+
 /** MR-MPI map related function - Normalize vector2
  * @param f
  * @param n - line number in feature vector file
  * @param distance_metric
  */
  
-float *normalize(DMatrix &f, uint64_t n, int normalopt)
+float *normalize(DMatrix &f, int n, int normalopt)
 {
     float *m_data = (float *)malloc(SZFLOAT * NDIMEN);
     switch (normalopt) {
@@ -863,7 +1044,7 @@ string float2str(float number)
     return ss.str();
     
     //char buf[100];
-    //sprintf(buf, "%0.9f", number);
+    //sprintf(buf, "%0.4f", number);
     //return string(buf);
 }
 
@@ -887,7 +1068,7 @@ float str2float(string str)
 DMatrix createMatrix(const unsigned int rows, const unsigned int cols)
 {
     DMatrix matrix;
-    unsigned int m, n;
+    uint64_t m, n;
     unsigned int i;
     m = rows;
     n = cols;
@@ -1014,7 +1195,6 @@ string get_timedate(void)
    return std::string(the_date);
 }
 
- 
 /** Online SOM training function - serial online SOM algorithm
  * string by bit score.
  * @param file - feature vector file
@@ -1124,6 +1304,5 @@ void train_online(char* file, DMatrix *codebook, float R, float Alpha)
     }
 }
 */
-
 
 /// EOF

@@ -281,20 +281,8 @@ int main(int argc, char **argv)
     /// MR-MPI
     ///
     MapReduce *mr = new MapReduce(MPI_COMM_WORLD);
-    /*
-    * mapstyle = 0 (chunk) or 1 (stride) or 2 (master/slave)
-    * all2all = 0 (irregular communication) or 1 (use MPI_Alltoallv)
-    * verbosity = 0 (none) or 1 (summary) or 2 (histogrammed)
-    * timer = 0 (none) or 1 (summary) or 2 (histogrammed)
-    * memsize = N = number of Mbytes per page of memory
-    * minpage = N = # of pages to pre-allocate per processor
-    * maxpage = N = max # of pages allocatable per processor
-    * keyalign = N = byte-alignment of keys
-    * valuealign = N = byte-alignment of values
-    * fpath = string 
-    */
     mr->verbosity = 0;
-    mr->timer = 2;
+    mr->timer = 0;
     mr->mapstyle = 2;  /// master/slave mode
     MPI_Barrier(MPI_COMM_WORLD);
     
@@ -354,14 +342,19 @@ int main(int argc, char **argv)
             /// 4. map: compute new weight and upadte codebook
             ///
             uint64_t nRes = mr->map(argv[1], &mr_train_batch, &gf);
+            //cout << "### map,mr_train_batch DONE ###\n";
             //mr->print(-1, 1, 5, 5);            
             mr->collate(NULL);
+            //cout << "### collate DONE ###\n";
             //mr->print(-1, 1, 5, 5);            
             nRes = mr->reduce(&mr_sum, NULL);
+            //cout << "### reduce, mr_sum DONE ###\n";
             //mr->print(-1, 1, 5, 5);            
             mr->gather(1);
+            //cout << "### gather DONE ###\n";
             //mr->print(0, 1, 5, 5);
             nRes = mr->map(mr, &mr_update_weight, &gf);
+            //cout << "### map, mr_update_weight DONE ###\n";
             //mr->print(-1, 1, 5, 5);            
             MPI_Barrier(MPI_COMM_WORLD); 
 
@@ -416,7 +409,7 @@ int main(int argc, char **argv)
         }
         else 
             printf("    Fail (2) !\n");
-            
+        
         string cmd = "python ./show2.py " + outFileName;
         system((char*)cmd.c_str());
         cmd = "./umat -cin " + outFileName2 + " > test.eps";
@@ -545,10 +538,13 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
     for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) { 
         for (unsigned int som_x = 0; som_x < SOM_X; som_x++) {
             for (unsigned int w = 0; w < NDIMEN; w++) {
-                string key = uint2str(som_y) + "," + uint2str(som_x) + "," + uint2str(w);
-                string value = float2str(numer[som_y][som_x][w]) + "," + float2str(denom[som_y][som_x][w]);
-                //if (!( (denom[som_y][som_x][w] == 0) && (numer[som_y][som_x][w] == 0) ))
+                ////////////////////////////////////////////////////////////////////////////////////////
+                if (!( (denom[som_y][som_x][w] == 0) && (numer[som_y][som_x][w] == 0) )) {
+                    string key = uint2str(som_y) + "," + uint2str(som_x) + "," + uint2str(w);
+                    string value = float2str(numer[som_y][som_x][w]) + "," + float2str(denom[som_y][som_x][w]);
                     kv->add((char*)key.c_str(), key.length()+1, (char*)value.c_str(), value.length()+1);
+                }
+                ////////////////////////////////////////////////////////////////////////////////////////
             }
         }
     }

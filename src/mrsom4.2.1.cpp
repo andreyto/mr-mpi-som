@@ -281,20 +281,8 @@ int main(int argc, char **argv)
     /// MR-MPI
     ///
     MapReduce *mr = new MapReduce(MPI_COMM_WORLD);
-    /*
-    * mapstyle = 0 (chunk) or 1 (stride) or 2 (master/slave)
-    * all2all = 0 (irregular communication) or 1 (use MPI_Alltoallv)
-    * verbosity = 0 (none) or 1 (summary) or 2 (histogrammed)
-    * timer = 0 (none) or 1 (summary) or 2 (histogrammed)
-    * memsize = N = number of Mbytes per page of memory
-    * minpage = N = # of pages to pre-allocate per processor
-    * maxpage = N = max # of pages allocatable per processor
-    * keyalign = N = byte-alignment of keys
-    * valuealign = N = byte-alignment of values
-    * fpath = string 
-    */
     mr->verbosity = 0;
-    mr->timer = 2;
+    mr->timer = 0;
     mr->mapstyle = 2;  /// master/slave mode
     MPI_Barrier(MPI_COMM_WORLD);
     
@@ -362,7 +350,7 @@ int main(int argc, char **argv)
             mr->gather(1);
             //mr->print(0, 1, 5, 5);
             nRes = mr->map(mr, &mr_update_weight, &gf);
-            //mr->print(-1, 1, 5, 5);            
+            ////mr->print(-1, 1, 5, 5);            
             MPI_Barrier(MPI_COMM_WORLD); 
 
             NEPOCHS--;
@@ -382,8 +370,8 @@ int main(int argc, char **argv)
             printf("    Fail (1) !\n");
         else {
             printf("    Converting SOM map to U-map...\n");
-            //string cmd = "python ./show2.py " + outFileName;
-            //system((char*)cmd.c_str());
+            string cmd = "python ./show2.py " + outFileName;
+            system((char*)cmd.c_str());
             printf("    Done (1) !\n");
         }
         
@@ -410,17 +398,13 @@ int main(int argc, char **argv)
             }
             mapFile.close();
             //string cmd = "./umat -cin " + outFileName2 + " > " + outFileName2 + ".eps";
-            //string cmd = "./umat -cin " + outFileName2 + " > test.eps";
-            //system((char*)cmd.c_str());
+            string cmd = "./umat -cin " + outFileName2 + " > test.eps";
+            system((char*)cmd.c_str());
             printf("    Done (2) !\n");
         }
         else 
             printf("    Fail (2) !\n");
-            
-        string cmd = "python ./show2.py " + outFileName;
-        system((char*)cmd.c_str());
-        cmd = "./umat -cin " + outFileName2 + " > test.eps";
-        system((char*)cmd.c_str());        
+        
     }
     MPI_Barrier(MPI_COMM_WORLD);
     
@@ -544,12 +528,22 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
     
     for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) { 
         for (unsigned int som_x = 0; som_x < SOM_X; som_x++) {
+            string value;
             for (unsigned int w = 0; w < NDIMEN; w++) {
-                string key = uint2str(som_y) + "," + uint2str(som_x) + "," + uint2str(w);
-                string value = float2str(numer[som_y][som_x][w]) + "," + float2str(denom[som_y][som_x][w]);
+                //string key = uint2str(som_y) + "," + uint2str(som_x) + "," + uint2str(w);
+                //string value = float2str(numer[som_y][som_x][w]) + "," + float2str(denom[som_y][som_x][w]);
+                if (!( (denom[som_y][som_x][w] == 0) && (numer[som_y][som_x][w] == 0) )) {
+                    if (w == 0) 
+                        value += float2str(numer[som_y][som_x][w]) + "," + float2str(denom[som_y][som_x][w]);
+                    else 
+                        value += ":" + float2str(numer[som_y][som_x][w]) + "," + float2str(denom[som_y][som_x][w]);
+                }
                 //if (!( (denom[som_y][som_x][w] == 0) && (numer[som_y][som_x][w] == 0) ))
-                    kv->add((char*)key.c_str(), key.length()+1, (char*)value.c_str(), value.length()+1);
+                    //kv->add((char*)key.c_str(), key.length()+1, (char*)value.c_str(), value.length()+1);
             }
+            string key = uint2str(som_y) + "," + uint2str(som_x);
+            kv->add((char*)key.c_str(), key.length()+1, (char*)value.c_str(), value.length()+1);
+            //cout << "key, value = " << key << " " << value << endl;
         }
     }
     
@@ -572,17 +566,38 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
 void mr_sum(char *key, int keybytes, char *multivalue, int nvalues, int *valuebytes, 
          KeyValue *kv, void *ptr)
 {   
+    //float numer = 0.0;
+    //float denom = 0.0;
+
+    //for (uint64_t i = 0; i < nvalues; i++) {
+        //stringstream ss;
+        //ss << multivalue;
+        //vector<string> vValue = split(ss.str(), ',');
+        //assert(vValue.size() == 2);
+        //numer += str2float(vValue[0]);
+        //denom += str2float(vValue[1]);
+        
+        //multivalue += valuebytes[i];        
+    //}
+    
+    //string value = float2str(numer) + "," + float2str(denom);
+    //kv->add(key, strlen(key)+1, (char*)value.c_str(), value.length()+1);
+    
     float numer = 0.0;
     float denom = 0.0;
 
     for (uint64_t i = 0; i < nvalues; i++) {
         stringstream ss;
         ss << multivalue;
-        vector<string> vValue = split(ss.str(), ',');
-        assert(vValue.size() == 2);
-        numer += str2float(vValue[0]);
-        denom += str2float(vValue[1]);
+        vector<string> vValue = split(ss.str(), ':');
+        assert(vValue.size() == NDIMEN);
         
+        for (uint64_t j = 0; j < NDIMEN; ++j) {
+            vector<string> vValue2 = split(vValue[j], ',');
+            assert(vValue2.size() == 2);
+            numer += str2float(vValue2[0]);
+            denom += str2float(vValue2[1]);
+        }        
         multivalue += valuebytes[i];        
     }
     
@@ -606,6 +621,35 @@ void mr_update_weight(uint64_t itask, char *key, int keybytes, char *value,
                       int valuebytes, KeyValue *kv, void *ptr)
 {
     GIFTBOX *gf = (GIFTBOX *) ptr;
+    //vector<string> vKey = split(string(key), ',');
+    //assert(vKey.size() == 3);
+    //vector<string> vValue = split(string(value), ',');
+    //assert(vValue.size() == 2);
+
+    //uint64_t row = str2uint(vKey[0]);
+    //uint64_t col = str2uint(vKey[1]);
+    //unsigned int d = str2uint(vKey[2]);    
+
+    //float numer = str2float(vValue[0]);
+    //float denom = str2float(vValue[1]);
+    //float newWeight = 0.0;
+    //if (denom != 0)
+        //newWeight = numer / denom;
+    
+    ////cout << "row, col, col*NDIMEN+d, numer, denom, newWeight = " 
+         ////<< row << ","
+         ////<< col << ","
+         ////<< col*NDIMEN + d << ","
+         ////<< numer << ","
+         ////<< denom << ","
+         ////<< newWeight << endl;         
+    
+    //////////////////////////////////////////////////////////
+    ///// Should check newWeight > 0.0
+    //if (newWeight > 0.0) 
+        //gf->codebook->rows[row][col*NDIMEN + d] = newWeight;
+    //////////////////////////////////////////////////////////
+    
     vector<string> vKey = split(string(key), ',');
     assert(vKey.size() == 3);
     vector<string> vValue = split(string(value), ',');
@@ -634,6 +678,7 @@ void mr_update_weight(uint64_t itask, char *key, int keybytes, char *value,
     if (newWeight > 0.0) 
         gf->codebook->rows[row][col*NDIMEN + d] = newWeight;
     ////////////////////////////////////////////////////////
+    
 }
 
 

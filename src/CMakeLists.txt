@@ -1,6 +1,8 @@
 include_directories(${MRSOM_SOURCE_DIR}/mrmpi)
 link_directories(${MRSOM_BINARY_DIR}/mrmpi)
 
+#include_directories(/home/ssul/work/distros2/boost/)
+
 #include_directories(${MRSOM_SOURCE_DIR}/src)
 #include_directories(${MRSOM_SOURCE_DIR}/signal)
 
@@ -21,6 +23,7 @@ LINK_DIRECTORIES( ${LINK_DIRECTORIES} ${MRSOM_BINARY_DIR}/mrmpi )
 #target_link_libraries(mrsom mpi)  
 #target_link_libraries(mrsom mrmpi)
   
+# Promoted to v4
 #add_executable(mrsom2 mrsom2.cpp)
 #target_link_libraries(mrsom2 mpi)  
 #target_link_libraries(mrsom2 mrmpi)
@@ -29,11 +32,53 @@ LINK_DIRECTORIES( ${LINK_DIRECTORIES} ${MRSOM_BINARY_DIR}/mrmpi )
 #target_link_libraries(mrsom0713 mpi)  
 #target_link_libraries(mrsom0713 mrmpi)
 
-add_executable(mrsom3 mrsom3.cpp)
-target_link_libraries(mrsom3 mpi)  
-target_link_libraries(mrsom3 mrmpi)
+#add_executable(mrsom3 mrsom3.cpp)
+#target_link_libraries(mrsom3 mpi)  
+#target_link_libraries(mrsom3 mrmpi)
 
+# v4
 add_executable(mrsom4 mrsom4.cpp)
 target_link_libraries(mrsom4 mpi)  
 target_link_libraries(mrsom4 mrmpi)
+ 
+# test compaction
+#add_executable(mrsom4.1.0 mrsom4.1.0.cpp)
+#target_link_libraries(mrsom4.1.0 mpi)  
+#target_link_libraries(mrsom4.1.0 mrmpi)
+
+# test compaction hybrid - only map use compaction
+# Promoted to v5
+#add_executable(mrsom4.1.1 mrsom4.1.1.cpp)
+#target_link_libraries(mrsom4.1.1 mpi)  
+#target_link_libraries(mrsom4.1.1 mrmpi)
+ 
+# test d=0 && n=0
+#add_executable(mrsom4.2.0 mrsom4.2.0.cpp)
+#target_link_libraries(mrsom4.2.0 mpi)  
+#target_link_libraries(mrsom4.2.0 mrmpi)
+ 
+# test map all d weights in a list ==> result not good
+#add_executable(mrsom4.2.1 mrsom4.2.1.cpp)
+#target_link_libraries(mrsom4.2.1 mpi)  
+#target_link_libraries(mrsom4.2.1 mrmpi)
+
+# d=0 && n=0 check, hybrid compaction
+add_executable(mrsom5 mrsom5.cpp)
+target_link_libraries(mrsom5 mpi)  
+target_link_libraries(mrsom5 mrmpi)
+
+# d=0 && n=0 check, hybrid compaction, BOOST
+#include_directories("/usr/include/boost/")
+#SET(CMAKE_CXX_FLAGS "-I /usr/include/boost/")
+#SET(LINKFLAGS "-L /usr/lib -lboost_iostreams -lboost_filesystem")
+add_executable(mrsom6 mrsom6.cpp memory_map.cpp)
+target_link_libraries(mrsom6 mpi)  
+target_link_libraries(mrsom6 mrmpi)
+target_link_libraries(mrsom6 boost_iostreams)
+target_link_libraries(mrsom6 boost_filesystem)
+#target_link_libraries(mrsom6 ${Boost_LIBRARIES})
+
+
+
+
 
