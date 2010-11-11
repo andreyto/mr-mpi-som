@@ -99,32 +99,6 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named mrsom4
-
-# Build rule for target.
-mrsom4: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 mrsom4
-.PHONY : mrsom4
-
-# fast build rule for target.
-mrsom4/fast:
-	$(MAKE) -f src/CMakeFiles/mrsom4.dir/build.make src/CMakeFiles/mrsom4.dir/build
-.PHONY : mrsom4/fast
-
-#=============================================================================
-# Target rules for targets named mrsom5
-
-# Build rule for target.
-mrsom5: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 mrsom5
-.PHONY : mrsom5
-
-# fast build rule for target.
-mrsom5/fast:
-	$(MAKE) -f src/CMakeFiles/mrsom5.dir/build.make src/CMakeFiles/mrsom5.dir/build
-.PHONY : mrsom5/fast
-
-#=============================================================================
 # Target rules for targets named mrsom6
 
 # Build rule for target.
@@ -136,6 +110,19 @@ mrsom6: cmake_check_build_system
 mrsom6/fast:
 	$(MAKE) -f src/CMakeFiles/mrsom6.dir/build.make src/CMakeFiles/mrsom6.dir/build
 .PHONY : mrsom6/fast
+
+#=============================================================================
+# Target rules for targets named mrsom7
+
+# Build rule for target.
+mrsom7: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 mrsom7
+.PHONY : mrsom7
+
+# fast build rule for target.
+mrsom7/fast:
+	$(MAKE) -f src/CMakeFiles/mrsom7.dir/build.make src/CMakeFiles/mrsom7.dir/build
+.PHONY : mrsom7/fast
 
 #=============================================================================
 # Target rules for targets named mrmpi
@@ -158,9 +145,8 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
-	@echo "... mrsom4"
-	@echo "... mrsom5"
 	@echo "... mrsom6"
+	@echo "... mrsom7"
 	@echo "... mrmpi"
 .PHONY : help
 

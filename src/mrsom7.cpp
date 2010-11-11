@@ -52,6 +52,19 @@
 //
 //      11.05.2010      Hydrid compaction v4.1.1. => v5
 //      
+//  v.5.0.0 => v.6.0.0
+//      11.08.2010      To do 1. do not use split files for input vector. Use 
+//                      memory-mapped file using Boost lib. Distribute indexes
+//                      to workers. 2. Increase memsize from 64MB to 512MB. Make
+//                      memsize configurable by command line argument. 3. Set
+//                      out-of-core operation working folder to /tmp. 4. float 
+//                      could be short. User typedef and double. 5. Consider
+//                      minpage and maxpage settings.
+//
+//      11.09.2010      Boost memory mapped file is added.
+//
+//  v.7
+//      11.10.2010      key -> integer        
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -121,6 +134,17 @@
 /// For shuffle
 #include <algorithm>
 
+/// For Boost 
+#include <iterator>
+#include <boost/iostreams/code_converter.hpp>
+#include <boost/iostreams/device/mapped_file.hpp>
+
+/// For Boost memory mapped file
+#include "memory_map.hpp"
+
+/// For Boost hash
+#include <boost/functional/hash.hpp>
+
 using namespace MAPREDUCE_NS;
 using namespace std;
 
@@ -128,30 +152,32 @@ using namespace std;
 #define SZFLOAT sizeof(float)
 #define MAXSTR 255
 
-enum TRAINTYPE      { BATCH, ONLINE };
+//enum TRAINTYPE      { BATCH, ONLINE };
 enum DISTTYPE       { EUCL, SOSD, TXCB, ANGL, MHLN };
 enum NORMALIZETYPE  { NONE, MNMX, ZSCR, SIGM, ENRG };
 enum TRAINSPEED     { SLOW, FAST };
 
 /// GLOBALS
-int NDIMEN = 0;             /// NUM OF DIMENSIONALITY
+int NDIMEN = 0;             /// Num of dimensionality
 int SOM_X = 50;
 int SOM_Y = 50;
 int SOM_D = 2;              /// 2=2D
-int NNODES = SOM_X*SOM_Y;   /// TOTAL NUM OF SOM NODES
-int NEPOCHS;                /// ITERATIONS
+int NNODES = SOM_X*SOM_Y;   /// Total num of som nodes
+int NEPOCHS;                /// Iterations
 int DISTOPT = EUCL;         /// 0=EUCL, 1=SOSD, 2=TXCB, 3=ANGL, 4=MHLN
 int TRAINMODE = 0;          /// 0=BATCH, 1=ONLINE
 int TRAINOPT = 0;           /// 0=SLOW, 1=FAST
 int NORMALOPT = NONE;       /// 0=NONE, 1=MNMX, 2=ZSCR, 3=SIGM, 4=ENRG
 int SHUFFLE = 0;            /// 0=no shuffling of input vector, 1=shuffle
-uint64_t NVECSPERFILE = 0;  /// NUM OF FEATURE VECTORS per file
+uint64_t NVECS = 0;         /// Total num of feature vectors 
+uint64_t NVECSPERFILE = 0;  /// Num of feature vectors per task
+int SZPAGE = 64;            /// page size (MB)
 
 /// Matrix
 typedef struct {
     uint64_t m, n;          /// ROWS, COLS
-    float *data;            /// DATA, ORDERED BY ROW, THEN BY COL
-    float **rows;           /// POINTERS TO ROWS IN DATA
+    float *data;            /// Data, ordered by row, then by col
+    float **rows;           /// Pointers to rows in data
 } DMatrix;
 
 /// Matrix mani functions
@@ -165,13 +191,22 @@ int validMatrix(DMatrix matrix);
 struct GIFTBOX {
     float r;
     const DMatrix *codebook;
+    const char* fdata;
 };
+
+/// For value compaction
+//struct NUMER_DENOM {
+    //float numer;
+    //float denom;
+//};
 
 /// For store raw result in mr_train_batch()
 typedef vector<vector<vector<float> > > VVV_FLOAT_T;
 
 /// MR-MPI fuctions and related functions
 void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr);
+void mr_train_batch2(int itask, KeyValue *kv, void *ptr);
+void mr_train_batch3(int itask, KeyValue *kv, void *ptr);
 void mr_update_weight(uint64_t itask, char *key, int keybytes, char *value, int valuebytes, KeyValue *kv, void *ptr);
 void mr_sum(char *key, int keybytes, char *multivalue, int nvalues, int *valuebytes, KeyValue *kv, void *ptr);
 
@@ -204,30 +239,48 @@ string get_timedate(void);
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv)
 {
-    if (argc == 6) {         
-        /// syntax: mrsom FILE NEPOCHS TRAINMODE NVECSPERFILE NDIMEN
+    
+    //boost::hash<std::string> string_hash;
+    //string str = "1,1,20";
+    //unsigned int h = string_hash(str);
+    //cout << "sizeof(size_t) = " << sizeof(size_t) << endl;
+    //cout << "sizeof(unsigned int) = " << sizeof(unsigned int) << endl;
+    //cout << "H code = " << h << endl;
+    //cout << "sizeof(uint64_t) = " << sizeof(uint64_t) << endl;
+    //cout << "sizeof(float) = " << sizeof(float) << endl;
+    //cout << "sizeof(double) = " << sizeof(double) << endl;
+    //cout << "sizeof(NUMER_DENOM)= " << sizeof(NUMER_DENOM) << endl;
+    
+    if (argc == 7) {         
+        /// syntax: mrsom FILE NEPOCHS NVECS NDIMEN NVECSPERFILE SZPAGE
         NEPOCHS = atoi(argv[2]);
-        TRAINMODE = atoi(argv[3]);
-        NVECSPERFILE = atoi(argv[4]);
-        NDIMEN = atoi(argv[5]);
+        //TRAINMODE = atoi(argv[3]);
+        NVECS = atoi(argv[3]);
+        NDIMEN = atoi(argv[4]);
+        NVECSPERFILE = atoi(argv[5]);
+        SZPAGE = atoi(argv[6]);
     }
-    else if (argc == 8) {  
-        /// syntax: mrsom FILE NEPOCHS TRAINMODE NVECSPERFILE NDIMEN SOMX SOMY
+    else if (argc == 9) {  
+        /// syntax: mrsom FILE NEPOCHS NVECS NDIMEN NVECSPERFILE SZPAGE SOMX SOMY
         NEPOCHS = atoi(argv[2]);
-        TRAINMODE = atoi(argv[3]);
-        NVECSPERFILE = atoi(argv[4]);
-        NDIMEN = atoi(argv[5]);
-        SOM_X = atoi(argv[6]);
-        SOM_Y = atoi(argv[7]);
+        //TRAINMODE = atoi(argv[3]);
+        NVECS = atoi(argv[3]);
+        NDIMEN = atoi(argv[4]);
+        NVECSPERFILE = atoi(argv[5]);
+        SZPAGE = atoi(argv[6]);
+        SOM_X = atoi(argv[7]);
+        SOM_Y = atoi(argv[8]);
         NNODES = SOM_X * SOM_Y;
     }
     else {
-        printf("    mrsom FILE NEPOCHS TRAINMODE NVECSPERFILE NDIMEN [X Y]\n\n");
+        printf("    mrsom FILE NEPOCHS NVECS NDIMEN NVECSPERFILE SZPAGE [X Y]\n\n");
         printf("    FILE        = master file.\n");
         printf("    NEPOCHS     = number of iterations.\n");
-        printf("    TRAINMODE   = 0-batch, 1-online.\n");
-        printf("    NVECSPERFILE = number of feature vectors.\n");
+        //printf("    TRAINMODE   = 0-batch, 1-online.\n");
+        printf("    NVECS       = number of feature vectors.\n");
         printf("    NDIMEN      = number of dimensionality of feature vector.\n");
+        printf("    NVECSPERFILE = num vectors per task.\n");
+        printf("    SZPAGE    = page size (MB).\n");
         printf("    [X Y]       = optional, SOM map size. Default = [50 50]\n");
         exit(0);
     }
@@ -269,6 +322,37 @@ int main(int argc, char **argv)
     }
     
     ///
+    /// Creat memory-mapped file for feature vectors
+    ///
+    const std::string path(argv[1]);
+    MMAP_AG::memory_map mmapFile(path);
+    float f;
+    if (mmapFile.is_open()) {
+        //cout << "### INFO: The input file is mmaped.\n";
+        //gf.fdata = mmapFile.data(); /// set mmaped file pointer
+        //cout << m_file2.data() << endl;
+        //unsigned long int fLen = 0;
+        //fLen = boost::filesystem::file_size(path);
+        //cout << "path, fLen = " << path << " " << fLen << endl;
+        
+        /// TEST
+        //char *c1 = (char *)malloc(sizeof(float));
+        //for (int j = 0; j < fLen; j += 4) {
+            //for (int i = 0; i < sizeof(float); i++) {
+                //c1[i] = *(mmapFile.data()+i+j);
+            //}
+            //f = *(float *)c1;
+            //cout << "f1 = " << f << endl;
+        //}
+        //delete c1;
+        ///
+    }
+    else {
+        cerr << "### ERROR: failed to create mmap file\n";
+        exit(1);
+    }
+    
+    ///
     /// MPI init
     ///
     MPI_Init(&argc, &argv);
@@ -299,7 +383,13 @@ int main(int argc, char **argv)
     */
     mr->verbosity = 0;
     mr->timer = 0;
-    mr->mapstyle = 2;  /// master/slave mode
+    mr->mapstyle = 2;       /// master/slave mode
+    mr->memsize = SZPAGE;   /// page size
+    //mr->minpage = 1;
+    //mr->maxpage = 4;
+    mr->keyalign = 8;       /// default: key type = uint_64t = 8 bytes
+    mr->valuealign = 8;     /// sizeof(float)*2 = 8 bytes
+    //mr->fpath = "/tmp";     /// place to save out-of-core file(s)
     MPI_Barrier(MPI_COMM_WORLD);
     
     ///
@@ -311,11 +401,12 @@ int main(int argc, char **argv)
     R0 = SOM_X / 2.0f;              /// init radius for updating neighbors
     R = R0;
     int x = 0;                      /// 0...N-1
+    GIFTBOX gf;
     
     ///
     /// Training
     ///
-    if (TRAINMODE == ONLINE) {
+    //if (TRAINMODE == ONLINE) {
         /*
          * Just for test. Working online version is in mrsom3.cpp
          *
@@ -333,8 +424,8 @@ int main(int argc, char **argv)
             NEPOCHS--;
         }
         */
-    }
-    else if (TRAINMODE == BATCH) {
+    //}
+    //else if (TRAINMODE == BATCH) {
         while (NEPOCHS && R > 1.0) {
             if (MPI_myId == 0) {
                 R = R0 * exp(-10.0f * (x * x) / (N * N));
@@ -346,9 +437,9 @@ int main(int argc, char **argv)
             MPI_Bcast((void *)codebook.data, SOM_Y * SOM_X * NDIMEN, MPI_FLOAT, 0,
                       MPI_COMM_WORLD);
             
-            GIFTBOX gf;
             gf.r = R;
             gf.codebook = &codebook;
+            gf.fdata = mmapFile.data(); /// set mmaped file pointer
             
             /// 
             /// 1. map: Each worker loads its feature vector and add 
@@ -358,7 +449,9 @@ int main(int argc, char **argv)
             /// 4. map: compute new weight and upadte codebook
             ///
             
+            ///
             /// v1
+            ///
             //uint64_t nRes = mr->map(argv[1], &mr_train_batch, &gf);
             //mr->print(-1, 1, 5, 5);  
             //mr->collate(NULL);
@@ -369,19 +462,37 @@ int main(int argc, char **argv)
             //mr->print(0, 1, 5, 5);
             //nRes = mr->map(mr, &mr_update_weight, &gf);
             
+            ///
             /// v2 - data compaction
-            uint64_t nRes = mr->map(argv[1], &mr_train_batch, &gf);
-            //cout << "### map,mr_train_batch DONE ###\n";
-            //mr->print(-1, 1, 5, 5);            
+            ///
+            
+            /// v2-2. using Boost mmaped file
+            uint64_t nmap = NVECS / NVECSPERFILE;
+            //cout << "nmap = " << nmap << endl;            
+            //uint64_t nRes = mr->map(nmap, &mr_train_batch2, &gf);
+            //mr->print(-1, 1, 5, 3);   
+            uint64_t nRes = mr->map(nmap, &mr_train_batch3, &gf);
+            //mr->print(-1, 1, 2, 3);   
+            ///
+            
+            /// v2-1. using master file
+            //uint64_t nRes = mr->map(argv[1], &mr_train_batch, &gf);
+            //cout << "### map, mr_train_batch DONE ###\n";
+            //mr->print(-1, 1, 5, 3);   
+            ///
+                     
             mr->collate(NULL);
             //cout << "### collate DONE ###\n";
-            //mr->print(-1, 1, 5, 5);            
+            //mr->print(-1, 1, 2, 3);          
+              
             nRes = mr->reduce(&mr_sum, NULL);
             //cout << "### reduce, mr_sum DONE ###\n";
-            //mr->print(-1, 1, 5, 5);            
+            //mr->print(-1, 1, 2, 3);            
+            
             mr->gather(1);
             //cout << "### gather DONE ###\n";
             //mr->print(0, 1, 5, 5);
+            
             nRes = mr->map(mr, &mr_update_weight, &gf);
             //cout << "### map, mr_update_weight DONE ###\n";
             //mr->print(-1, 1, 5, 5);            
@@ -390,7 +501,7 @@ int main(int argc, char **argv)
 
             NEPOCHS--;
         }  
-    }
+    //}
     MPI_Barrier(MPI_COMM_WORLD);
     
     ///
@@ -401,11 +512,9 @@ int main(int argc, char **argv)
         string outFileName = "result-umat-" + get_timedate() + ".txt";
         cout << "    U-mat file = " << outFileName << endl; 
         int ret = save_umat(&codebook, (char*)outFileName.c_str());
-        if (ret < 0) printf("    Fail (1) !\n");
+        if (ret < 0) printf("    Failed (1) !\n");
         else {
             printf("    Converting SOM map to U-map...\n");
-            //string cmd = "python ./show2.py " + outFileName;
-            //system((char*)cmd.c_str());
             printf("    Done (1) !\n");
         }
         
@@ -413,7 +522,6 @@ int main(int argc, char **argv)
         /// Save SOM map for umat tool
         /// Usage: /tools/umat -cin result.map > result.eps
         ///
-        //char *outFileName2 = "result.map.txt";
         string outFileName2 = "result-map-" + get_timedate() + ".txt";  
         cout << "    MAP file = " << outFileName2 << endl;       
         ofstream mapFile(outFileName2.c_str());
@@ -431,12 +539,9 @@ int main(int argc, char **argv)
                 }
             }
             mapFile.close();
-            //string cmd = "./umat -cin " + outFileName2 + " > " + outFileName2 + ".eps";
-            //string cmd = "./umat -cin " + outFileName2 + " > test.eps";
-            //system((char*)cmd.c_str());
             printf("    Done (2) !\n");
         }
-        else printf("    Fail (2) !\n");
+        else printf("    Failed (2) !\n");
         
         string cmd = "python ./show2.py " + outFileName;
         system((char*)cmd.c_str());
@@ -445,6 +550,7 @@ int main(int argc, char **argv)
     }
     MPI_Barrier(MPI_COMM_WORLD);
     
+    mmapFile.close();
     freeMatrix(&codebook);
     delete mr;
     MPI_Finalize();
@@ -454,6 +560,289 @@ int main(int argc, char **argv)
     return 0;
 }
  
+/** MR-MPI Map function - batch training2
+ * @param itask - number of work items
+ * @param kv
+ * @param ptr
+ */
+ 
+void mr_train_batch3(int itask, KeyValue *kv, void *ptr)
+{
+    GIFTBOX *gf = (GIFTBOX *) ptr;
+    const char *fdata = gf->fdata;
+    
+    ///
+    /// Load feature vectors from mmap file pointer
+    ///
+    char *c1 = (char *)malloc(SZFLOAT);
+    //vector<vector<float> > vvFeature(NVECSPERFILE, vector<float> (NDIMEN, 0.0));
+    DMatrix data;
+    data = initMatrix();
+    data = createMatrix(NVECSPERFILE, NDIMEN);
+    if (!validMatrix(data)) {
+        printf("FATAL: not valid data matrix.\n");
+        exit(0);
+    }
+    
+    float f = 0.0f;    
+    for (uint64_t k = 0; k < NVECSPERFILE; k++) {
+        for (int j = 0; j < NDIMEN; j++) {
+            for (int i = 0; i < SZFLOAT; i++) {
+                c1[i] = *((fdata + itask*NDIMEN*SZFLOAT*NVECSPERFILE) + k*NDIMEN*SZFLOAT + j*SZFLOAT + i);
+            }
+            f = *(float *)c1;
+            //cout << f << " ";
+            data.rows[k][j] = f;
+        }
+        //cout << endl;
+    }
+        
+    delete c1;
+    
+    //cout << "itask = " << itask << endl;
+    //for (uint64_t k = 0; k < NVECSPERFILE; k++) {
+        //for (int j = 0; j < NDIMEN; j++) {
+            //cout << vvFeature[k][j] << " ";
+        //}
+        //cout << endl;
+    //}
+    //cout << "data.size() = " << data.size() << endl;    
+    
+    ///
+    /// Read data one by one and compute denom and numer and add to KV
+    ///
+    float p2[SOM_D];
+    VVV_FLOAT_T numer;    
+    numer = VVV_FLOAT_T(SOM_Y, vector<vector<float> > (SOM_X,
+                        vector<float>(NDIMEN, 0.0)));
+    VVV_FLOAT_T denom;
+    denom = VVV_FLOAT_T(SOM_Y, vector<vector<float> > (SOM_X,
+                        vector<float>(NDIMEN, 0.0)));
+    
+    for (uint64_t n = 0; n < NVECSPERFILE; n++) {
+
+        /// Normalize
+        const float *normalized = normalize(data, n, NORMALOPT); 
+        
+        /// GET THE BEST MATCHING UNIT
+        /// p1[0] = x, p1[1] = y
+        const float *p1 = get_bmu_coord(gf->codebook, normalized);
+        
+        /// Accumulate denoms and numers
+        for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
+            for (uint64_t som_x = 0; som_x < SOM_X; som_x++) {
+                p2[0] = (float) som_x;
+                p2[1] = (float) som_y;
+                float dist = 0.0f;
+                for (int p = 0; p < NDIMEN; p++)
+                    dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
+                dist = sqrt(dist);
+                
+                float neighbor_fuct = 0.0f;
+                neighbor_fuct = exp(-(1.0f * dist * dist) / (gf->r * gf->r));
+                
+                for (int w = 0; w < NDIMEN; w++) {
+                    float tempNumer = 1.0f * neighbor_fuct * normalized[w];
+                    float tempDenom = neighbor_fuct;
+                    numer[som_y][som_x][w] += 1.0f * neighbor_fuct * normalized[w];
+                    denom[som_y][som_x][w] += neighbor_fuct;
+                }
+            }
+        }
+        
+        delete p1;
+        delete normalized; 
+    }    
+    
+    /// //////////////////////////////////////////////////////////////////////// 
+    /// v2 value compaction
+    ///    
+    ///*
+    for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
+        for (uint64_t som_x = 0; som_x < SOM_X; som_x++) {
+            for (int w = 0; w < NDIMEN; w++) {
+                if (!( (denom[som_y][som_x][w] == 0) && (numer[som_y][som_x][w] == 0) )) {
+                    
+                    /// value compaction
+                    ///*
+                    unsigned char bNumer[SZFLOAT];    
+                    unsigned char bDenom[SZFLOAT];    
+                    unsigned char bConcated[SZFLOAT*2];            
+                    float n = numer[som_y][som_x][w];
+                    float d = denom[som_y][som_x][w];
+                    memcpy(bNumer, &n, SZFLOAT);
+                    memcpy(bDenom, &d, SZFLOAT);
+                    for (int i = 0; i < (int)SZFLOAT; i++) {
+                        bConcated[i] = bNumer[i];
+                        bConcated[i+SZFLOAT] = bDenom[i];
+                    } /// total 4*2 = 8bytes for two floats.
+                        
+                    //string key = uint2str(som_y) + "," + uint2str(som_x) + "," + uint2str(w);
+                    //unsigned int iKey = SOM_X*NDIMEN*som_y + NDIMEN*som_x + w;
+                    /// for 4-byte alignment
+                    uint64_t iKey = SOM_X*NDIMEN*som_y + NDIMEN*som_x + w; 
+                    
+                    /// DEBUG
+                    //cout << "y,x,d = " << som_y << " " << som_x << " " << w << endl;
+                    //cout << "iKey = " << iKey << endl;                    
+                    //cout << "y: iKey / SOM_X*NDIMEN = " << iKey/(SOM_X*NDIMEN) << endl;
+                    //cout << "x: iKey%temp1 / NDIMEN = " << iKey%(SOM_X*NDIMEN)/NDIMEN << endl;
+                    //cout << "d: iKey%temp1 % NDIMEN = " << iKey%(SOM_X*NDIMEN)%NDIMEN << endl;
+                    ///
+                    
+                    //kv->add((char*)key.c_str(), key.length()+1, (char*)bConcated, SZFLOAT*2);    
+                    //kv->add((char*)&iKey, sizeof(unsigned int), (char*)bConcated, SZFLOAT*2);    
+                    kv->add((char*)&iKey, sizeof(uint64_t), (char*)bConcated, SZFLOAT*2);    
+                }            
+                //*/ 
+            }
+        }
+    }
+    //*/
+    /// //////////////////////////////////////////////////////////////////////// 
+    
+    numer.clear();
+    denom.clear();
+    
+    //vvFeature.clear();
+    freeMatrix(&data);
+}
+     
+     
+ 
+/** MR-MPI Map function - batch training2
+ * @param itask - number of work items
+ * @param kv
+ * @param ptr
+ */
+ 
+void mr_train_batch2(int itask, KeyValue *kv, void *ptr)
+{
+    GIFTBOX *gf = (GIFTBOX *) ptr;
+    const char *fdata = gf->fdata;
+    
+    ///
+    /// Load feature vectors from mmap file pointer
+    ///
+    char *c1 = (char *)malloc(SZFLOAT);
+    //vector<vector<float> > vvFeature(NVECSPERFILE, vector<float> (NDIMEN, 0.0));
+    DMatrix data;
+    data = initMatrix();
+    data = createMatrix(NVECSPERFILE, NDIMEN);
+    if (!validMatrix(data)) {
+        printf("FATAL: not valid data matrix.\n");
+        exit(0);
+    }
+    float f = 0.0f;
+    
+    for (uint64_t k = 0; k < NVECSPERFILE; k++) {
+        for (int j = 0; j < NDIMEN; j++) {
+            for (int i = 0; i < SZFLOAT; i++) {
+                c1[i] = *((fdata + itask*NDIMEN*SZFLOAT*NVECSPERFILE) + k*NDIMEN*SZFLOAT + j*SZFLOAT + i);
+            }
+            f = *(float *)c1;
+            //cout << f << " ";
+            data.rows[k][j] = f;
+        }
+        //cout << endl;
+    }
+        
+    delete c1;
+    
+    //cout << "itask = " << itask << endl;
+    //for (uint64_t k = 0; k < NVECSPERFILE; k++) {
+        //for (int j = 0; j < NDIMEN; j++) {
+            //cout << vvFeature[k][j] << " ";
+        //}
+        //cout << endl;
+    //}
+    //cout << "data.size() = " << data.size() << endl;    
+    
+    ///
+    /// Read data one by one and compute denom and numer and add to KV
+    ///
+    float p2[SOM_D];
+    VVV_FLOAT_T numer;    
+    numer = VVV_FLOAT_T(SOM_Y, vector<vector<float> > (SOM_X,
+                        vector<float>(NDIMEN, 0.0)));
+    VVV_FLOAT_T denom;
+    denom = VVV_FLOAT_T(SOM_Y, vector<vector<float> > (SOM_X,
+                        vector<float>(NDIMEN, 0.0)));
+    
+    for (uint64_t n = 0; n < NVECSPERFILE; n++) {
+
+        /// Normalize
+        const float *normalized = normalize(data, n, NORMALOPT); 
+        
+        /// GET THE BEST MATCHING UNIT
+        /// p1[0] = x, p1[1] = y
+        const float *p1 = get_bmu_coord(gf->codebook, normalized);
+        
+        /// Accumulate denoms and numers
+        for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
+            for (uint64_t som_x = 0; som_x < SOM_X; som_x++) {
+                p2[0] = (float) som_x;
+                p2[1] = (float) som_y;
+                float dist = 0.0f;
+                for (int p = 0; p < NDIMEN; p++)
+                    dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
+                dist = sqrt(dist);
+                
+                float neighbor_fuct = 0.0f;
+                neighbor_fuct = exp(-(1.0f * dist * dist) / (gf->r * gf->r));
+                
+                for (int w = 0; w < NDIMEN; w++) {
+                    float tempNumer = 1.0f * neighbor_fuct * normalized[w];
+                    float tempDenom = neighbor_fuct;
+                    numer[som_y][som_x][w] += 1.0f * neighbor_fuct * normalized[w];
+                    denom[som_y][som_x][w] += neighbor_fuct;
+                }
+            }
+        }
+        
+        delete p1;
+        delete normalized; 
+    }    
+    
+    
+    /// //////////////////////////////////////////////////////////////////////// 
+    /// v2 value compaction
+    ///    
+    ///*
+    for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
+        for (uint64_t som_x = 0; som_x < SOM_X; som_x++) {
+            for (int w = 0; w < NDIMEN; w++) {
+                if (!( (denom[som_y][som_x][w] == 0) && (numer[som_y][som_x][w] == 0) )) {
+                    
+                    /// value compaction
+                    unsigned char bNumer[SZFLOAT];    
+                    unsigned char bDenom[SZFLOAT];    
+                    unsigned char bConcated[SZFLOAT*2];            
+                    float n = numer[som_y][som_x][w];
+                    float d = denom[som_y][som_x][w];
+                    memcpy(bNumer, &n, SZFLOAT);
+                    memcpy(bDenom, &d, SZFLOAT);
+                    for (int i = 0; i < (int)SZFLOAT; i++) {
+                        bConcated[i] = bNumer[i];
+                        bConcated[i+SZFLOAT] = bDenom[i];
+                    } /// total 4*2 = 8bytes for two floats.
+                        
+                    string key = uint2str(som_y) + "," + uint2str(som_x) + "," + uint2str(w);
+                    kv->add((char*)key.c_str(), key.length()+1, (char*)bConcated, SZFLOAT*2);    
+                }            
+            }
+        }
+    }
+    //*/
+    /// //////////////////////////////////////////////////////////////////////// 
+    
+    numer.clear();
+    denom.clear();
+    
+    //vvFeature.clear();
+    freeMatrix(&data);
+}
+     
 /** MR-MPI Map function - batch training
  * @param itask
  * @param file - splitted feature vector file
@@ -482,9 +871,11 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
     
     if (SHUFFLE) {
         vector<vector<float> > vvFeature(NVECSPERFILE, vector<float> (NDIMEN));
-        vector<uint64_t> vRowIdx;
+        //vector<uint64_t> vRowIdx;
+        vector<uint64_t> vRowIdx(NVECSPERFILE);
         for (uint64_t row = 0; row < NVECSPERFILE; row++) { 
-            vRowIdx.push_back(row);
+            //vRowIdx.push_back(row);
+            vRowIdx[row] = row;
             for (uint64_t col = 0; col < NDIMEN; col++) {
                 float tmp = 0.0f;
                 fscanf(fp, "%f", &tmp);
@@ -781,11 +1172,51 @@ int save_umat(DMatrix *codebook, char *fname)
 void mr_update_weight(uint64_t itask, char *key, int keybytes, char *value,
                       int valuebytes, KeyValue *kv, void *ptr)
 {
-    GIFTBOX *gf = (GIFTBOX *) ptr;
+    GIFTBOX *gf = (GIFTBOX *) ptr;   
     
     /// //////////////////////////////////////////////////////////////////////// 
+    /// v3
+    //unsigned int iKey = *((unsigned int *)key);
+    uint64_t iKey = *((uint64_t *)key);
+    //cout << iKey << endl;
+    //cout << "y: iKey / SOM_X*NDIMEN = " << iKey/(SOM_X*NDIMEN) << endl;
+    //cout << "x: iKey%temp1 / NDIMEN = " << iKey%(SOM_X*NDIMEN)/NDIMEN << endl;
+    //cout << "d: iKey%temp1 % NDIMEN = " << iKey%(SOM_X*NDIMEN)%NDIMEN << endl;
+    unsigned int row = iKey/(SOM_X*NDIMEN);
+    unsigned int col = iKey%(SOM_X*NDIMEN)/NDIMEN;
+    unsigned int d = iKey%(SOM_X*NDIMEN)%NDIMEN;    
+     
+     
+    vector<string> vValue = split(string(value), ',');
+    assert(vValue.size() == 2);
+    float numer = str2float(vValue[0]);
+    float denom = str2float(vValue[1]);
+    float newWeight = 0.0;
+    if (denom != 0)
+        newWeight = numer / denom;
+    //cout << "newW, numer, denom = " << newWeight << " " << numer << " " << denom << endl;
+    
+    
+    ///    
+    //NUMER_DENOM nd = *((NUMER_DENOM *)value);
+    //float numer = nd.numer;
+    //float denom = nd.denom;
+    //float newWeight = 0.0;
+    //if (denom != 0)
+        //newWeight =  numer / denom;    
+    ////cout << "newW, numer, denom = " << newWeight << " " << numer << " " << denom << endl;
+    ///
+    
+    
+    ////////////////////////////////////////////////////////
+    /// Should check newWeight > 0.0
+    if (newWeight > 0.0) 
+        gf->codebook->rows[row][col*NDIMEN + d] = newWeight;
+    ////////////////////////////////////////////////////////
+                                  
+    /// //////////////////////////////////////////////////////////////////////// 
     /// v1
-    ///*
+    /*
     vector<string> vKey = split(string(key), ',');
     assert(vKey.size() == 3);
     vector<string> vValue = split(string(value), ',');
@@ -814,7 +1245,7 @@ void mr_update_weight(uint64_t itask, char *key, int keybytes, char *value,
     if (newWeight > 0.0) 
         gf->codebook->rows[row][col*NDIMEN + d] = newWeight;
     ////////////////////////////////////////////////////////
-    //*/
+    */
     
     /// //////////////////////////////////////////////////////////////////////// 
     /// v2
@@ -927,7 +1358,21 @@ void mr_sum(char *key, int keybytes, char *multivalue, int nvalues, int *valueby
     ///
     /// hybrid
     string value = float2str(numer) + "," + float2str(denom);    
-    kv->add(key, strlen(key)+1, (char*)value.c_str(), value.length()+1);           
+    ///
+    
+    /// Using struct
+    //NUMER_DENOM nd;
+    //nd.numer = numer;
+    //nd.denom = denom;
+    ///
+    
+    /// v2
+    //kv->add(key, strlen(key)+1, (char*)value.c_str(), value.length()+1);           
+    
+    /// v3
+    //kv->add(key, sizeof(unsigned int), (char*)value.c_str(), value.length()+1);           
+    kv->add(key, sizeof(uint64_t), (char*)value.c_str(), value.length()+1);           
+    //kv->add(key, sizeof(uint64_t), (char*)&nd, sizeof(NUMER_DENOM));           
 }
  
 
@@ -1014,19 +1459,16 @@ float get_distance(float *vec1, const float *vec2, int distance_metric)
 }
 
 
-
 /* ------------------------------------------------------------------------ */
 string uint2str(uint64_t number)
-/* ------------------------------------------------------------------------ */
+
 {
     stringstream ss;
     ss << number;
     return ss.str();
 }
-
-/* ------------------------------------------------------------------------ */
+ 
 uint64_t str2uint(string str)
-/* ------------------------------------------------------------------------ */
 {
     std::stringstream ss;
     ss << str;
@@ -1034,10 +1476,8 @@ uint64_t str2uint(string str)
     ss >> f;
     return f;
 }
-
-/* ------------------------------------------------------------------------ */
+ 
 string float2str(float number)
-/* ------------------------------------------------------------------------ */
 {
     stringstream ss;
     ss << number;
@@ -1048,9 +1488,7 @@ string float2str(float number)
     //return string(buf);
 }
 
-/* ------------------------------------------------------------------------ */
 float str2float(string str)
-/* ------------------------------------------------------------------------ */
 {
     std::stringstream ss;
     ss << str;
@@ -1306,3 +1744,4 @@ void train_online(char* file, DMatrix *codebook, float R, float Alpha)
 */
 
 /// EOF
+

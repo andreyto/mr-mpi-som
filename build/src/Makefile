@@ -99,34 +99,6 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
-src/CMakeFiles/mrsom4.dir/rule:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/mrsom4.dir/rule
-.PHONY : src/CMakeFiles/mrsom4.dir/rule
-
-# Convenience name for target.
-mrsom4: src/CMakeFiles/mrsom4.dir/rule
-.PHONY : mrsom4
-
-# fast build rule for target.
-mrsom4/fast:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom4.dir/build.make src/CMakeFiles/mrsom4.dir/build
-.PHONY : mrsom4/fast
-
-# Convenience name for target.
-src/CMakeFiles/mrsom5.dir/rule:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/mrsom5.dir/rule
-.PHONY : src/CMakeFiles/mrsom5.dir/rule
-
-# Convenience name for target.
-mrsom5: src/CMakeFiles/mrsom5.dir/rule
-.PHONY : mrsom5
-
-# fast build rule for target.
-mrsom5/fast:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom5.dir/build.make src/CMakeFiles/mrsom5.dir/build
-.PHONY : mrsom5/fast
-
-# Convenience name for target.
 src/CMakeFiles/mrsom6.dir/rule:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/mrsom6.dir/rule
 .PHONY : src/CMakeFiles/mrsom6.dir/rule
@@ -140,12 +112,27 @@ mrsom6/fast:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom6.dir/build.make src/CMakeFiles/mrsom6.dir/build
 .PHONY : mrsom6/fast
 
+# Convenience name for target.
+src/CMakeFiles/mrsom7.dir/rule:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/mrsom7.dir/rule
+.PHONY : src/CMakeFiles/mrsom7.dir/rule
+
+# Convenience name for target.
+mrsom7: src/CMakeFiles/mrsom7.dir/rule
+.PHONY : mrsom7
+
+# fast build rule for target.
+mrsom7/fast:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom7.dir/build.make src/CMakeFiles/mrsom7.dir/build
+.PHONY : mrsom7/fast
+
 memory_map.o: memory_map.cpp.o
 .PHONY : memory_map.o
 
 # target to build an object file
 memory_map.cpp.o:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom6.dir/build.make src/CMakeFiles/mrsom6.dir/memory_map.cpp.o
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom7.dir/build.make src/CMakeFiles/mrsom7.dir/memory_map.cpp.o
 .PHONY : memory_map.cpp.o
 
 memory_map.i: memory_map.cpp.i
@@ -154,6 +141,7 @@ memory_map.i: memory_map.cpp.i
 # target to preprocess a source file
 memory_map.cpp.i:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom6.dir/build.make src/CMakeFiles/mrsom6.dir/memory_map.cpp.i
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom7.dir/build.make src/CMakeFiles/mrsom7.dir/memory_map.cpp.i
 .PHONY : memory_map.cpp.i
 
 memory_map.s: memory_map.cpp.s
@@ -162,55 +150,8 @@ memory_map.s: memory_map.cpp.s
 # target to generate assembly for a file
 memory_map.cpp.s:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom6.dir/build.make src/CMakeFiles/mrsom6.dir/memory_map.cpp.s
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom7.dir/build.make src/CMakeFiles/mrsom7.dir/memory_map.cpp.s
 .PHONY : memory_map.cpp.s
-
-mrsom4.o: mrsom4.cpp.o
-.PHONY : mrsom4.o
-
-# target to build an object file
-mrsom4.cpp.o:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom4.dir/build.make src/CMakeFiles/mrsom4.dir/mrsom4.cpp.o
-.PHONY : mrsom4.cpp.o
-
-mrsom4.i: mrsom4.cpp.i
-.PHONY : mrsom4.i
-
-# target to preprocess a source file
-mrsom4.cpp.i:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom4.dir/build.make src/CMakeFiles/mrsom4.dir/mrsom4.cpp.i
-.PHONY : mrsom4.cpp.i
-
-mrsom4.s: mrsom4.cpp.s
-.PHONY : mrsom4.s
-
-# target to generate assembly for a file
-mrsom4.cpp.s:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom4.dir/build.make src/CMakeFiles/mrsom4.dir/mrsom4.cpp.s
-.PHONY : mrsom4.cpp.s
-
-mrsom5.o: mrsom5.cpp.o
-.PHONY : mrsom5.o
-
-# target to build an object file
-mrsom5.cpp.o:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom5.dir/build.make src/CMakeFiles/mrsom5.dir/mrsom5.cpp.o
-.PHONY : mrsom5.cpp.o
-
-mrsom5.i: mrsom5.cpp.i
-.PHONY : mrsom5.i
-
-# target to preprocess a source file
-mrsom5.cpp.i:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom5.dir/build.make src/CMakeFiles/mrsom5.dir/mrsom5.cpp.i
-.PHONY : mrsom5.cpp.i
-
-mrsom5.s: mrsom5.cpp.s
-.PHONY : mrsom5.s
-
-# target to generate assembly for a file
-mrsom5.cpp.s:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom5.dir/build.make src/CMakeFiles/mrsom5.dir/mrsom5.cpp.s
-.PHONY : mrsom5.cpp.s
 
 mrsom6.o: mrsom6.cpp.o
 .PHONY : mrsom6.o
@@ -236,6 +177,30 @@ mrsom6.cpp.s:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom6.dir/build.make src/CMakeFiles/mrsom6.dir/mrsom6.cpp.s
 .PHONY : mrsom6.cpp.s
 
+mrsom7.o: mrsom7.cpp.o
+.PHONY : mrsom7.o
+
+# target to build an object file
+mrsom7.cpp.o:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom7.dir/build.make src/CMakeFiles/mrsom7.dir/mrsom7.cpp.o
+.PHONY : mrsom7.cpp.o
+
+mrsom7.i: mrsom7.cpp.i
+.PHONY : mrsom7.i
+
+# target to preprocess a source file
+mrsom7.cpp.i:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom7.dir/build.make src/CMakeFiles/mrsom7.dir/mrsom7.cpp.i
+.PHONY : mrsom7.cpp.i
+
+mrsom7.s: mrsom7.cpp.s
+.PHONY : mrsom7.s
+
+# target to generate assembly for a file
+mrsom7.cpp.s:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom7.dir/build.make src/CMakeFiles/mrsom7.dir/mrsom7.cpp.s
+.PHONY : mrsom7.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -243,22 +208,18 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... edit_cache"
-	@echo "... mrsom4"
-	@echo "... mrsom5"
 	@echo "... mrsom6"
+	@echo "... mrsom7"
 	@echo "... rebuild_cache"
 	@echo "... memory_map.o"
 	@echo "... memory_map.i"
 	@echo "... memory_map.s"
-	@echo "... mrsom4.o"
-	@echo "... mrsom4.i"
-	@echo "... mrsom4.s"
-	@echo "... mrsom5.o"
-	@echo "... mrsom5.i"
-	@echo "... mrsom5.s"
 	@echo "... mrsom6.o"
 	@echo "... mrsom6.i"
 	@echo "... mrsom6.s"
+	@echo "... mrsom7.o"
+	@echo "... mrsom7.i"
+	@echo "... mrsom7.s"
 .PHONY : help
 
 

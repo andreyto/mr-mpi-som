@@ -37,9 +37,9 @@ LINK_DIRECTORIES( ${LINK_DIRECTORIES} ${MRSOM_BINARY_DIR}/mrmpi )
 #target_link_libraries(mrsom3 mrmpi)
 
 # v4
-add_executable(mrsom4 mrsom4.cpp)
-target_link_libraries(mrsom4 mpi)  
-target_link_libraries(mrsom4 mrmpi)
+#add_executable(mrsom4 mrsom4.cpp)
+#target_link_libraries(mrsom4 mpi)  
+#target_link_libraries(mrsom4 mrmpi)
  
 # test compaction
 #add_executable(mrsom4.1.0 mrsom4.1.0.cpp)
@@ -63,20 +63,23 @@ target_link_libraries(mrsom4 mrmpi)
 #target_link_libraries(mrsom4.2.1 mrmpi)
 
 # d=0 && n=0 check, hybrid compaction
-add_executable(mrsom5 mrsom5.cpp)
-target_link_libraries(mrsom5 mpi)  
-target_link_libraries(mrsom5 mrmpi)
+#add_executable(mrsom5 mrsom5.cpp)
+#target_link_libraries(mrsom5 mpi)  
+#target_link_libraries(mrsom5 mrmpi)
 
 # d=0 && n=0 check, hybrid compaction, BOOST
-#include_directories("/usr/include/boost/")
-#SET(CMAKE_CXX_FLAGS "-I /usr/include/boost/")
-#SET(LINKFLAGS "-L /usr/lib -lboost_iostreams -lboost_filesystem")
 add_executable(mrsom6 mrsom6.cpp memory_map.cpp)
 target_link_libraries(mrsom6 mpi)  
 target_link_libraries(mrsom6 mrmpi)
 target_link_libraries(mrsom6 boost_iostreams)
 target_link_libraries(mrsom6 boost_filesystem)
-#target_link_libraries(mrsom6 ${Boost_LIBRARIES})
+
+# key -> integer
+add_executable(mrsom7 mrsom7.cpp memory_map.cpp)
+target_link_libraries(mrsom7 mpi)  
+target_link_libraries(mrsom7 mrmpi)
+target_link_libraries(mrsom7 boost_iostreams)
+target_link_libraries(mrsom7 boost_filesystem)
 
 
 

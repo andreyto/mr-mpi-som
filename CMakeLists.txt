@@ -5,14 +5,20 @@ SET( ${PROJECT_NAME}_MINOR_VERSION 0 )
 SET( ${PROJECT_NAME}_PATCH_LEVEL 0 )
 
 cmake_minimum_required(VERSION 2.6)
-
-#set(MPI_ROOT /export/openmpi)
-#set(MPI_COMPILER ${MPI_ROOT}/bin/mpicxx)
-#set(MPI_LIBRARY MPI_LIBRARY-NOTFOUND) 
-find_package(MPI REQUIRED)
+ 
 #find_package(Pthreads)
 
-if (MPI_FOUND)   
+# Search for MPI ###########################
+find_package( MPI REQUIRED )
+if (MPI_FOUND)  
+    MESSAGE("MPI information:")
+    MESSAGE("   MPI_INCLUDE_PATH: ${MPI_INCLUDE_PATH}")
+    MESSAGE("   MPI_LIBRARY: ${MPI_LIBRARY}")
+    MESSAGE("   MPI_LIBRARIES: ${MPI_LIBRARIES}")
+    MESSAGE("   MPIEXEC: ${MPIEXEC}")
+    MESSAGE("   MPI_C_COMPILER: ${MPI_C_COMPILER}")
+    MESSAGE("   MPI_CXX_COMPILER: ${MPI_CXX_COMPILER}")
+ 
     find_program(MPI_C_COMPILER NAMES mpicc DOC "MPI C compiler.")
     mark_as_advanced(MPI_C_COMPILER)
     if (MPI_C_COMPILER)
@@ -23,34 +29,32 @@ if (MPI_FOUND)
     mark_as_advanced(MPI_CXX_COMPILER)
     if (MPI_CXX_COMPILER)
         set(CMAKE_CXX_COMPILER ${MPI_CXX_COMPILER})
-    endif (MPI_CXX_COMPILER)
-  
-    #SET(CMAKE_C_FLAGS "-g -Wall -pg -O -I./mrmpi")
-    #SET(CMAKE_CXX_FLAGS "-g -Wall -pg -O -I./mrmpi")
-    #SET(CMAKE_C_FLAGS "-Wall -pg -O -I./mrmpi")
-    #SET(CMAKE_CXX_FLAGS "-Wall -pg -O -I./mrmpi")
-    #SET(CMAKE_C_COMPILER /export/openmpi/bin/mpicc)
-    #SET(CMAKE_CXX_COMPILER /export/openmpi/bin/mpicxx)
-    #SET(CMAKE_C_COMPILER MPI_C_COMPILER)
-    #SET(CMAKE_CXX_COMPILER MPI_CXX_COMPILER)
-
-    #CMAKE_EXE_LINKER_FLAGS
-    #CMAKE_SHARED_LINKER_FLAGS
-    #CMAKE_MODULE_LINKER_FLAGS
-    #SET(CMAKE_EXE_LINKER_FLAGS "-g -O -L./mrmpi")
-
-    add_subdirectory(src)
-    add_subdirectory(src/mrmpi)
-    
+    endif (MPI_CXX_COMPILER)    
 else (MPI_FOUND) 
     message(FATAL_ERROR "Any MPI is not found on this system")    
 endif (MPI_FOUND)   
 
-# search for Boost ###########################
-find_package( Boost )
-link_directories ( ${Boost_LIBRARY_DIRS} )
-include_directories ( ${Boost_INCLUDE_DIRS} )
+# Search for Boost ###########################
+#set(BOOST_ROOT "/usr")
+find_package( Boost REQUIRED )
+
+if (Boost_FOUND)
+    MESSAGE("Boost information:")
+    MESSAGE("   Boost_INCLUDE_DIRS: ${Boost_INCLUDE_DIRS}")
+    MESSAGE("   Boost_LIBRARIES: ${Boost_LIBRARIES}")
+    MESSAGE("   Boost_LIBRARY_DIRS: ${Boost_LIBRARY_DIRS}")
+
+    link_directories ( ${Boost_LIBRARY_DIRS} )
+    include_directories ( ${Boost_INCLUDE_DIRS} )
+else (Boost_FOUND)
+    message(FATAL_ERROR "Any Boost lib is not found on this system")    
+endif (Boost_FOUND)
 ###############################################
+
+
+add_subdirectory(src)
+add_subdirectory(src/mrmpi)
+
 
 #SET(CCFLAGS "-g -Wall -O -I../mrmpi")
 #SET(CMAKE_CXX_FLAGS "-g -Wall ")

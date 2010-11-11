@@ -131,14 +131,16 @@
 /// For shuffle
 #include <algorithm>
 
-/// For boost
-#include <boost/lambda/lambda.hpp>
+/// For Boost 
 #include <iterator>
 #include <boost/iostreams/code_converter.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 
 /// For Boost memory mapped file
 #include "memory_map.hpp"
+
+/// For Boost hash
+#include <boost/functional/hash.hpp>
 
 using namespace MAPREDUCE_NS;
 using namespace std;
@@ -147,13 +149,13 @@ using namespace std;
 #define SZFLOAT sizeof(float)
 #define MAXSTR 255
 
-enum TRAINTYPE      { BATCH, ONLINE };
+//enum TRAINTYPE      { BATCH, ONLINE };
 enum DISTTYPE       { EUCL, SOSD, TXCB, ANGL, MHLN };
 enum NORMALIZETYPE  { NONE, MNMX, ZSCR, SIGM, ENRG };
 enum TRAINSPEED     { SLOW, FAST };
 
 /// GLOBALS
-int NDIMEN = 0;             /// NUM OF DIMENSIONALITY
+int NDIMEN = 0;             /// Num of dimensionality
 int SOM_X = 50;
 int SOM_Y = 50;
 int SOM_D = 2;              /// 2=2D
@@ -171,8 +173,8 @@ int SZPAGE = 64;            /// page size (MB)
 /// Matrix
 typedef struct {
     uint64_t m, n;          /// ROWS, COLS
-    float *data;            /// DATA, ORDERED BY ROW, THEN BY COL
-    float **rows;           /// POINTERS TO ROWS IN DATA
+    float *data;            /// Data, ordered by row, then by col
+    float **rows;           /// Pointers to rows in data
 } DMatrix;
 
 /// Matrix mani functions
@@ -227,44 +229,45 @@ string get_timedate(void);
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv)
 {
-    /// BOST test
-    //using namespace boost::lambda;
-    //typedef std::istream_iterator<int> in;
+    
+    //boost::hash<std::string> string_hash;
+    //string str = "1,1,20";
+    //unsigned int h = string_hash(str);
+    //cout << "sizeof(size_t) = " << sizeof(size_t) << endl;
+    //cout << "sizeof(unsigned int) = " << sizeof(unsigned int) << endl;
+    //cout << "H code = " << h << endl;
 
-    //std::for_each(
-        //in(std::cin), in(), std::cout << (_1 * 3) << " " );
-    ///        
-        
-    if (argc == 8) {         
+
+    if (argc == 7) {         
         /// syntax: mrsom FILE NEPOCHS TRAINMODE NVECS NDIMEN NVECSPERFILE SZPAGE
         NEPOCHS = atoi(argv[2]);
-        TRAINMODE = atoi(argv[3]);
-        NVECS = atoi(argv[4]);
-        NDIMEN = atoi(argv[5]);
-        NVECSPERFILE = atoi(argv[6]);
-        SZPAGE = atoi(argv[7]);
+        //TRAINMODE = atoi(argv[3]);
+        NVECS = atoi(argv[3]);
+        NDIMEN = atoi(argv[4]);
+        NVECSPERFILE = atoi(argv[5]);
+        SZPAGE = atoi(argv[6]);
     }
-    else if (argc == 10) {  
+    else if (argc == 9) {  
         /// syntax: mrsom FILE NEPOCHS TRAINMODE NVECS NDIMEN NVECSPERFILE SZPAGE SOMX SOMY
         NEPOCHS = atoi(argv[2]);
-        TRAINMODE = atoi(argv[3]);
-        NVECS = atoi(argv[4]);
-        NDIMEN = atoi(argv[5]);
-        NVECSPERFILE = atoi(argv[6]);
-        SZPAGE = atoi(argv[7]);
-        SOM_X = atoi(argv[8]);
-        SOM_Y = atoi(argv[9]);
+        //TRAINMODE = atoi(argv[3]);
+        NVECS = atoi(argv[3]);
+        NDIMEN = atoi(argv[4]);
+        NVECSPERFILE = atoi(argv[5]);
+        SZPAGE = atoi(argv[6]);
+        SOM_X = atoi(argv[7]);
+        SOM_Y = atoi(argv[8]);
         NNODES = SOM_X * SOM_Y;
     }
     else {
         printf("    mrsom FILE NEPOCHS TRAINMODE NVECS NDIMEN NVECSPERFILE SZPAGE [X Y]\n\n");
         printf("    FILE        = master file.\n");
         printf("    NEPOCHS     = number of iterations.\n");
-        printf("    TRAINMODE   = 0-batch, 1-online.\n");
+        //printf("    TRAINMODE   = 0-batch, 1-online.\n");
         printf("    NVECS       = number of feature vectors.\n");
         printf("    NDIMEN      = number of dimensionality of feature vector.\n");
         printf("    NVECSPERFILE = num vectors per task.\n");
-        printf("    SZPAGE      = size of page (MB).\n");
+        printf("    SZPAGE    = page size (MB).\n");
         printf("    [X Y]       = optional, SOM map size. Default = [50 50]\n");
         exit(0);
     }
@@ -312,6 +315,7 @@ int main(int argc, char **argv)
     MMAP_AG::memory_map mmapFile(path);
     float f;
     if (mmapFile.is_open()) {
+        cout << "### INFO: The input file is mmaped.\n";
         //gf.fdata = mmapFile.data(); /// set mmaped file pointer
         //cout << m_file2.data() << endl;
         //unsigned long int fLen = 0;
@@ -334,7 +338,6 @@ int main(int argc, char **argv)
         cerr << "### ERROR: failed to create mmap file\n";
         exit(1);
     }
-    cout << "### INFO: the input file is mmaped.\n";
     
     ///
     /// MPI init
@@ -365,10 +368,12 @@ int main(int argc, char **argv)
     * valuealign = N = byte-alignment of values
     * fpath = string 
     */
-    mr->verbosity = 0;
+    mr->verbosity = 1;
     mr->timer = 0;
     mr->mapstyle = 2;       /// master/slave mode
     mr->memsize = SZPAGE;   /// page size
+    //mr->maxpage = 4;
+    mr->keyalign = 4;       /// sizeof(unsigned int)
     //mr->fpath = "/tmp";     /// place to save out-of-core file(s)
     MPI_Barrier(MPI_COMM_WORLD);
     
@@ -386,7 +391,7 @@ int main(int argc, char **argv)
     ///
     /// Training
     ///
-    if (TRAINMODE == ONLINE) {
+    //if (TRAINMODE == ONLINE) {
         /*
          * Just for test. Working online version is in mrsom3.cpp
          *
@@ -404,8 +409,8 @@ int main(int argc, char **argv)
             NEPOCHS--;
         }
         */
-    }
-    else if (TRAINMODE == BATCH) {
+    //}
+    //else if (TRAINMODE == BATCH) {
         while (NEPOCHS && R > 1.0) {
             if (MPI_myId == 0) {
                 R = R0 * exp(-10.0f * (x * x) / (N * N));
@@ -417,7 +422,6 @@ int main(int argc, char **argv)
             MPI_Bcast((void *)codebook.data, SOM_Y * SOM_X * NDIMEN, MPI_FLOAT, 0,
                       MPI_COMM_WORLD);
             
-            //GIFTBOX gf;
             gf.r = R;
             gf.codebook = &codebook;
             gf.fdata = mmapFile.data(); /// set mmaped file pointer
@@ -474,7 +478,7 @@ int main(int argc, char **argv)
 
             NEPOCHS--;
         }  
-    }
+    //}
     MPI_Barrier(MPI_COMM_WORLD);
     
     ///
@@ -523,7 +527,7 @@ int main(int argc, char **argv)
     }
     MPI_Barrier(MPI_COMM_WORLD);
     
-    //mmapFile.close();
+    mmapFile.close();
     freeMatrix(&codebook);
     delete mr;
     MPI_Finalize();
@@ -1229,19 +1233,16 @@ float get_distance(float *vec1, const float *vec2, int distance_metric)
 }
 
 
-
 /* ------------------------------------------------------------------------ */
 string uint2str(uint64_t number)
-/* ------------------------------------------------------------------------ */
+
 {
     stringstream ss;
     ss << number;
     return ss.str();
 }
-
-/* ------------------------------------------------------------------------ */
+ 
 uint64_t str2uint(string str)
-/* ------------------------------------------------------------------------ */
 {
     std::stringstream ss;
     ss << str;
@@ -1249,10 +1250,8 @@ uint64_t str2uint(string str)
     ss >> f;
     return f;
 }
-
-/* ------------------------------------------------------------------------ */
+ 
 string float2str(float number)
-/* ------------------------------------------------------------------------ */
 {
     stringstream ss;
     ss << number;
@@ -1263,9 +1262,7 @@ string float2str(float number)
     //return string(buf);
 }
 
-/* ------------------------------------------------------------------------ */
 float str2float(string str)
-/* ------------------------------------------------------------------------ */
 {
     std::stringstream ss;
     ss << str;
