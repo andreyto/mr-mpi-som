@@ -64,7 +64,8 @@
 //      11.09.2010      Boost memory mapped file is added.
 //
 //  v.7
-//      11.10.2010      key -> integer        
+//      11.10.2010      key -> integer     
+//      11.11.2010      key -> uint64_t (8bytes) for keyalign   
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -148,36 +149,36 @@
 using namespace MAPREDUCE_NS;
 using namespace std;
 
-#define _DEBUG
+//#define _DEBUG
+//#define float float
 #define SZFLOAT sizeof(float)
 #define MAXSTR 255
 
-//enum TRAINTYPE      { BATCH, ONLINE };
 enum DISTTYPE       { EUCL, SOSD, TXCB, ANGL, MHLN };
 enum NORMALIZETYPE  { NONE, MNMX, ZSCR, SIGM, ENRG };
 enum TRAINSPEED     { SLOW, FAST };
 
 /// GLOBALS
-int NDIMEN = 0;             /// Num of dimensionality
-int SOM_X = 50;
-int SOM_Y = 50;
-int SOM_D = 2;              /// 2=2D
-int NNODES = SOM_X*SOM_Y;   /// Total num of som nodes
-int NEPOCHS;                /// Iterations
-int DISTOPT = EUCL;         /// 0=EUCL, 1=SOSD, 2=TXCB, 3=ANGL, 4=MHLN
-int TRAINMODE = 0;          /// 0=BATCH, 1=ONLINE
-int TRAINOPT = 0;           /// 0=SLOW, 1=FAST
-int NORMALOPT = NONE;       /// 0=NONE, 1=MNMX, 2=ZSCR, 3=SIGM, 4=ENRG
-int SHUFFLE = 0;            /// 0=no shuffling of input vector, 1=shuffle
-uint64_t NVECS = 0;         /// Total num of feature vectors 
-uint64_t NVECSPERFILE = 0;  /// Num of feature vectors per task
-int SZPAGE = 64;            /// page size (MB)
+unsigned int NDIMEN = 0;            /// Num of dimensionality
+unsigned int SOM_X = 50;            /// Width of SOM MAP 
+unsigned int SOM_Y = 50;            /// Height of SOM MAP
+unsigned int SOM_D = 2;             /// Dimension of SOM MAP, 2=2D
+unsigned int NNODES = SOM_X*SOM_Y;  /// Total num of som nodes
+unsigned int NEPOCHS;               /// Iterations (=epochs)
+unsigned int DISTOPT = EUCL;        /// Distance metric: 0=EUCL, 1=SOSD, 2=TXCB, 3=ANGL, 4=MHLN
+//unsigned int TRAINMODE = 0;         /// 0=BATCH, 1=ONLINE
+unsigned int TRAINOPT = 0;          /// Train option: 0=SLOW, 1=FAST
+unsigned int NORMALOPT = NONE;      /// Normalize: 0=NONE, 1=MNMX, 2=ZSCR, 3=SIGM, 4=ENRG
+unsigned int SHUFFLE = 0;           /// Shuffling of input vector order: 0=no, 1=shuffle
+uint64_t NVECS = 0;                 /// Total num of feature vectors 
+uint64_t NVECSPERFILE = 0;          /// Num of feature vectors per task
+unsigned int SZPAGE = 64;           /// Page size (MB), default = 64MB
 
 /// Matrix
 typedef struct {
-    uint64_t m, n;          /// ROWS, COLS
-    float *data;            /// Data, ordered by row, then by col
-    float **rows;           /// Pointers to rows in data
+    uint64_t m, n;                  /// ROWS, COLS
+    float *data;                    /// Data, ordered by row, then by col
+    float **rows;                   /// Pointers to rows in data
 } DMatrix;
 
 /// Matrix mani functions
@@ -210,16 +211,16 @@ void mr_train_batch3(int itask, KeyValue *kv, void *ptr);
 void mr_update_weight(uint64_t itask, char *key, int keybytes, char *value, int valuebytes, KeyValue *kv, void *ptr);
 void mr_sum(char *key, int keybytes, char *multivalue, int nvalues, int *valuebytes, KeyValue *kv, void *ptr);
 
-float *normalize(DMatrix &f, int n, int normalopt);
+float *normalize(DMatrix &f, unsigned int n, unsigned int normalopt);
 float *get_bmu_coord(const DMatrix *codebook, const float *fvec);
-float get_distance(float *vec1, const float *vec2, int distance_metric);
+float get_distance(float *vec1, const float *vec2, unsigned int distance_metric);
 float *get_wvec(unsigned int somx, unsigned int somy, const DMatrix *codebook);
  
 /// Conversion util
 string float2str(float number);
 float str2float(string str);
 string uint2str(uint64_t number);
-uint64_t str2uint(string str);
+//uint64_t str2uint(string str);
 
 /// Tokenizer routines
 vector<string> &split(const string &s, char delim, vector<string> &vecElems);
@@ -238,23 +239,10 @@ string get_timedate(void);
 
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv)
-{
-    
-    //boost::hash<std::string> string_hash;
-    //string str = "1,1,20";
-    //unsigned int h = string_hash(str);
-    //cout << "sizeof(size_t) = " << sizeof(size_t) << endl;
-    //cout << "sizeof(unsigned int) = " << sizeof(unsigned int) << endl;
-    //cout << "H code = " << h << endl;
-    //cout << "sizeof(uint64_t) = " << sizeof(uint64_t) << endl;
-    //cout << "sizeof(float) = " << sizeof(float) << endl;
-    //cout << "sizeof(double) = " << sizeof(double) << endl;
-    //cout << "sizeof(NUMER_DENOM)= " << sizeof(NUMER_DENOM) << endl;
-    
+{    
     if (argc == 7) {         
         /// syntax: mrsom FILE NEPOCHS NVECS NDIMEN NVECSPERFILE SZPAGE
         NEPOCHS = atoi(argv[2]);
-        //TRAINMODE = atoi(argv[3]);
         NVECS = atoi(argv[3]);
         NDIMEN = atoi(argv[4]);
         NVECSPERFILE = atoi(argv[5]);
@@ -263,7 +251,6 @@ int main(int argc, char **argv)
     else if (argc == 9) {  
         /// syntax: mrsom FILE NEPOCHS NVECS NDIMEN NVECSPERFILE SZPAGE SOMX SOMY
         NEPOCHS = atoi(argv[2]);
-        //TRAINMODE = atoi(argv[3]);
         NVECS = atoi(argv[3]);
         NDIMEN = atoi(argv[4]);
         NVECSPERFILE = atoi(argv[5]);
@@ -276,11 +263,10 @@ int main(int argc, char **argv)
         printf("    mrsom FILE NEPOCHS NVECS NDIMEN NVECSPERFILE SZPAGE [X Y]\n\n");
         printf("    FILE        = master file.\n");
         printf("    NEPOCHS     = number of iterations.\n");
-        //printf("    TRAINMODE   = 0-batch, 1-online.\n");
         printf("    NVECS       = number of feature vectors.\n");
         printf("    NDIMEN      = number of dimensionality of feature vector.\n");
         printf("    NVECSPERFILE = num vectors per task.\n");
-        printf("    SZPAGE    = page size (MB).\n");
+        printf("    SZPAGE      = page size (MB).\n");
         printf("    [X Y]       = optional, SOM map size. Default = [50 50]\n");
         exit(0);
     }
@@ -303,7 +289,7 @@ int main(int argc, char **argv)
     codebook = initMatrix();
     codebook = createMatrix(SOM_Y, SOM_X*NDIMEN);
     if (!validMatrix(codebook)) {
-        printf("FATAL: not valid codebook matrix.\n");
+        fprintf(stderr, "FATAL: not valid codebook matrix.\n");
         exit(0);
     }
     
@@ -311,9 +297,9 @@ int main(int argc, char **argv)
     /// Fill initial random weights
     ///
     srand((unsigned int)time(0));
-    for (int som_y = 0; som_y < SOM_Y; som_y++) {        
-        for (int som_x = 0; som_x < SOM_X; som_x++) {
-            for (int d = 0; d < NDIMEN; d++) {
+    for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) {        
+        for (unsigned int som_x = 0; som_x < SOM_X; som_x++) {
+            for (unsigned int d = 0; d < NDIMEN; d++) {
                 int w = 0xFFF & rand();
                 w -= 0x800;
                 codebook.rows[som_y][som_x*NDIMEN + d] = (float)w / 4096.0f;
@@ -326,7 +312,6 @@ int main(int argc, char **argv)
     ///
     const std::string path(argv[1]);
     MMAP_AG::memory_map mmapFile(path);
-    float f;
     if (mmapFile.is_open()) {
         //cout << "### INFO: The input file is mmaped.\n";
         //gf.fdata = mmapFile.data(); /// set mmaped file pointer
@@ -338,6 +323,7 @@ int main(int argc, char **argv)
         /// TEST
         //char *c1 = (char *)malloc(sizeof(float));
         //for (int j = 0; j < fLen; j += 4) {
+            //float f;
             //for (int i = 0; i < sizeof(float); i++) {
                 //c1[i] = *(mmapFile.data()+i+j);
             //}
@@ -400,7 +386,7 @@ int main(int argc, char **argv)
     float R, R0;
     R0 = SOM_X / 2.0f;              /// init radius for updating neighbors
     R = R0;
-    int x = 0;                      /// 0...N-1
+    unsigned int x = 0;                      /// 0...N-1
     GIFTBOX gf;
     
     ///
@@ -529,9 +515,9 @@ int main(int argc, char **argv)
         char temp[80];
         if (mapFile.is_open()) {
             mapFile << NDIMEN << " rect " << SOM_X << " " << SOM_Y << endl;
-            for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
-                for (uint64_t som_x = 0; som_x < SOM_X; som_x++) { 
-                    for (uint64_t d = 0; d < NDIMEN; d++) {
+            for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) { 
+                for (unsigned int som_x = 0; som_x < SOM_X; som_x++) { 
+                    for (unsigned int d = 0; d < NDIMEN; d++) {
                         sprintf(temp, "%f", codebook.rows[som_y][som_x*NDIMEN + d]);
                         mapFile << temp << " ";
                     }
@@ -586,8 +572,8 @@ void mr_train_batch3(int itask, KeyValue *kv, void *ptr)
     
     float f = 0.0f;    
     for (uint64_t k = 0; k < NVECSPERFILE; k++) {
-        for (int j = 0; j < NDIMEN; j++) {
-            for (int i = 0; i < SZFLOAT; i++) {
+        for (unsigned int j = 0; j < NDIMEN; j++) {
+            for (unsigned int i = 0; i < SZFLOAT; i++) {
                 c1[i] = *((fdata + itask*NDIMEN*SZFLOAT*NVECSPERFILE) + k*NDIMEN*SZFLOAT + j*SZFLOAT + i);
             }
             f = *(float *)c1;
@@ -629,19 +615,19 @@ void mr_train_batch3(int itask, KeyValue *kv, void *ptr)
         const float *p1 = get_bmu_coord(gf->codebook, normalized);
         
         /// Accumulate denoms and numers
-        for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
-            for (uint64_t som_x = 0; som_x < SOM_X; som_x++) {
+        for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) { 
+            for (unsigned int som_x = 0; som_x < SOM_X; som_x++) {
                 p2[0] = (float) som_x;
                 p2[1] = (float) som_y;
                 float dist = 0.0f;
-                for (int p = 0; p < NDIMEN; p++)
+                for (unsigned int p = 0; p < NDIMEN; p++)
                     dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
                 dist = sqrt(dist);
                 
                 float neighbor_fuct = 0.0f;
                 neighbor_fuct = exp(-(1.0f * dist * dist) / (gf->r * gf->r));
                 
-                for (int w = 0; w < NDIMEN; w++) {
+                for (unsigned int w = 0; w < NDIMEN; w++) {
                     float tempNumer = 1.0f * neighbor_fuct * normalized[w];
                     float tempDenom = neighbor_fuct;
                     numer[som_y][som_x][w] += 1.0f * neighbor_fuct * normalized[w];
@@ -658,9 +644,9 @@ void mr_train_batch3(int itask, KeyValue *kv, void *ptr)
     /// v2 value compaction
     ///    
     ///*
-    for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
-        for (uint64_t som_x = 0; som_x < SOM_X; som_x++) {
-            for (int w = 0; w < NDIMEN; w++) {
+    for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) { 
+        for (unsigned int som_x = 0; som_x < SOM_X; som_x++) {
+            for (unsigned int w = 0; w < NDIMEN; w++) {
                 if (!( (denom[som_y][som_x][w] == 0) && (numer[som_y][som_x][w] == 0) )) {
                     
                     /// value compaction
@@ -672,7 +658,7 @@ void mr_train_batch3(int itask, KeyValue *kv, void *ptr)
                     float d = denom[som_y][som_x][w];
                     memcpy(bNumer, &n, SZFLOAT);
                     memcpy(bDenom, &d, SZFLOAT);
-                    for (int i = 0; i < (int)SZFLOAT; i++) {
+                    for (unsigned int i = 0; i < SZFLOAT; i++) {
                         bConcated[i] = bNumer[i];
                         bConcated[i+SZFLOAT] = bDenom[i];
                     } /// total 4*2 = 8bytes for two floats.
@@ -736,8 +722,8 @@ void mr_train_batch2(int itask, KeyValue *kv, void *ptr)
     float f = 0.0f;
     
     for (uint64_t k = 0; k < NVECSPERFILE; k++) {
-        for (int j = 0; j < NDIMEN; j++) {
-            for (int i = 0; i < SZFLOAT; i++) {
+        for (unsigned int j = 0; j < NDIMEN; j++) {
+            for (unsigned int i = 0; i < SZFLOAT; i++) {
                 c1[i] = *((fdata + itask*NDIMEN*SZFLOAT*NVECSPERFILE) + k*NDIMEN*SZFLOAT + j*SZFLOAT + i);
             }
             f = *(float *)c1;
@@ -779,19 +765,19 @@ void mr_train_batch2(int itask, KeyValue *kv, void *ptr)
         const float *p1 = get_bmu_coord(gf->codebook, normalized);
         
         /// Accumulate denoms and numers
-        for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
-            for (uint64_t som_x = 0; som_x < SOM_X; som_x++) {
+        for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) { 
+            for (unsigned int som_x = 0; som_x < SOM_X; som_x++) {
                 p2[0] = (float) som_x;
                 p2[1] = (float) som_y;
                 float dist = 0.0f;
-                for (int p = 0; p < NDIMEN; p++)
+                for (unsigned int p = 0; p < NDIMEN; p++)
                     dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
                 dist = sqrt(dist);
                 
                 float neighbor_fuct = 0.0f;
                 neighbor_fuct = exp(-(1.0f * dist * dist) / (gf->r * gf->r));
                 
-                for (int w = 0; w < NDIMEN; w++) {
+                for (unsigned int w = 0; w < NDIMEN; w++) {
                     float tempNumer = 1.0f * neighbor_fuct * normalized[w];
                     float tempDenom = neighbor_fuct;
                     numer[som_y][som_x][w] += 1.0f * neighbor_fuct * normalized[w];
@@ -809,9 +795,9 @@ void mr_train_batch2(int itask, KeyValue *kv, void *ptr)
     /// v2 value compaction
     ///    
     ///*
-    for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
-        for (uint64_t som_x = 0; som_x < SOM_X; som_x++) {
-            for (int w = 0; w < NDIMEN; w++) {
+    for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) { 
+        for (unsigned int som_x = 0; som_x < SOM_X; som_x++) {
+            for (unsigned int w = 0; w < NDIMEN; w++) {
                 if (!( (denom[som_y][som_x][w] == 0) && (numer[som_y][som_x][w] == 0) )) {
                     
                     /// value compaction
@@ -822,7 +808,7 @@ void mr_train_batch2(int itask, KeyValue *kv, void *ptr)
                     float d = denom[som_y][som_x][w];
                     memcpy(bNumer, &n, SZFLOAT);
                     memcpy(bDenom, &d, SZFLOAT);
-                    for (int i = 0; i < (int)SZFLOAT; i++) {
+                    for (unsigned int i = 0; i < SZFLOAT; i++) {
                         bConcated[i] = bNumer[i];
                         bConcated[i+SZFLOAT] = bDenom[i];
                     } /// total 4*2 = 8bytes for two floats.
@@ -876,7 +862,7 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
         for (uint64_t row = 0; row < NVECSPERFILE; row++) { 
             //vRowIdx.push_back(row);
             vRowIdx[row] = row;
-            for (uint64_t col = 0; col < NDIMEN; col++) {
+            for (unsigned int col = 0; col < NDIMEN; col++) {
                 float tmp = 0.0f;
                 fscanf(fp, "%f", &tmp);
                 vvFeature[row][col] = tmp;
@@ -890,14 +876,14 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
         /// Set data matrix with shuffled rows
         ///
         for (uint64_t row = 0; row < NVECSPERFILE; row++)
-            for (uint64_t col = 0; col < NDIMEN; col++)
+            for (unsigned int col = 0; col < NDIMEN; col++)
                 data.rows[row][col] = vvFeature[vRowIdx[row]][col];
         vvFeature.clear();
         vRowIdx.clear();
     }
     else {
         for (uint64_t row = 0; row < NVECSPERFILE; row++) { 
-            for (uint64_t col = 0; col < NDIMEN; col++) {
+            for (unsigned int col = 0; col < NDIMEN; col++) {
                 float tmp = 0.0f;
                 fscanf(fp, "%f", &tmp);
                 data.rows[row][col] = tmp;
@@ -929,19 +915,19 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
         
         
         /// Accumulate denoms and numers
-        for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
-            for (uint64_t som_x = 0; som_x < SOM_X; som_x++) {
+        for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) { 
+            for (unsigned int som_x = 0; som_x < SOM_X; som_x++) {
                 p2[0] = (float) som_x;
                 p2[1] = (float) som_y;
                 float dist = 0.0f;
-                for (int p = 0; p < NDIMEN; p++)
+                for (unsigned int p = 0; p < NDIMEN; p++)
                     dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
                 dist = sqrt(dist);
                 
                 float neighbor_fuct = 0.0f;
                 neighbor_fuct = exp(-(1.0f * dist * dist) / (gf->r * gf->r));
                 
-                for (int w = 0; w < NDIMEN; w++) {
+                for (unsigned int w = 0; w < NDIMEN; w++) {
                     float tempNumer = 1.0f * neighbor_fuct * normalized[w];
                     float tempDenom = neighbor_fuct;
                     numer[som_y][som_x][w] += 1.0f * neighbor_fuct * normalized[w];
@@ -958,9 +944,9 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
     /// v1 no compaction
     ///
     /*
-    for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
-        for (uint64_t som_x = 0; som_x < SOM_X; som_x++) {
-            for (int w = 0; w < NDIMEN; w++) {
+    for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) { 
+        for (unsigned int som_x = 0; som_x < SOM_X; som_x++) {
+            for (unsigned int w = 0; w < NDIMEN; w++) {
                 string key = uint2str(som_y) + "," + uint2str(som_x) + "," + uint2str(w);
                 string value = float2str(numer[som_y][som_x][w]) + "," + float2str(denom[som_y][som_x][w]);
                 //printf("orig floats = %g, %g\n", numer[som_y][som_x][w], denom[som_y][som_x][w]);
@@ -975,9 +961,9 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
     /// v2 value compaction
     ///    
     ///*
-    for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
-        for (uint64_t som_x = 0; som_x < SOM_X; som_x++) {
-            for (int w = 0; w < NDIMEN; w++) {
+    for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) { 
+        for (unsigned int som_x = 0; som_x < SOM_X; som_x++) {
+            for (unsigned int w = 0; w < NDIMEN; w++) {
                 
                 
                 if (!( (denom[som_y][som_x][w] == 0) && (numer[som_y][som_x][w] == 0) )) {
@@ -995,7 +981,7 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
                     float d = denom[som_y][som_x][w];
                     memcpy(bNumer, &n, SZFLOAT);
                     memcpy(bDenom, &d, SZFLOAT);
-                    for (int i = 0; i < (int)SZFLOAT; i++) {
+                    for (unsigned int i = 0; i < SZFLOAT; i++) {
                         bConcated[i] = bNumer[i];
                         bConcated[i+SZFLOAT] = bDenom[i];
                     } /// total 4*2 = 8bytes for two floats.
@@ -1004,7 +990,7 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
                     //printf("orig floats = %g, %g\n", numer[som_y][som_x][w], denom[som_y][som_x][w]);
                     //unsigned char *c1 = (unsigned char *)malloc(SZFLOAT);
                     //unsigned char *c2 = (unsigned char *)malloc(SZFLOAT);
-                    //for (int i = 0; i < (int)SZFLOAT; i++) {
+                    //for (unsigned int i = 0; i < SZFLOAT; i++) {
                         //c1[i] = bConcated[i];
                         //c2[i] = bConcated[i+SZFLOAT];
                     //}
@@ -1028,7 +1014,7 @@ void mr_train_batch(int itask, char *file, KeyValue *kv, void *ptr)
                 //const byte *bd = reinterpret_cast<const byte *>(d1);
                 
                 //char bConcated[SZFLOAT*2];            
-                //for (int i = 0; i < (int)SZFLOAT; i++) {
+                //for (unsigned int i = 0; i < SZFLOAT; i++) {
                     //bConcated[i] = bn[i];
                     //bConcated[i+SZFLOAT] = bd[i];
                 //}
@@ -1064,8 +1050,8 @@ float *get_bmu_coord(const DMatrix *codebook, const float *fvec)
     /// Check SOM_X * SOM_Y nodes one by one and compute the distance 
     /// D(W_K, Fvec) and get the mindist and get the coords for the BMU.
     ///
-    for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
-        for (uint64_t som_x = 0; som_x < SOM_X; som_x++) {
+    for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) { 
+        for (unsigned int som_x = 0; som_x < SOM_X; som_x++) {
 
             float *tempVec = get_wvec(som_y, som_x, codebook);  
             
@@ -1115,25 +1101,25 @@ int save_umat(DMatrix *codebook, char *fname)
     float min_dist = 1.5f;
     FILE *fp = fopen(fname, "wt");
     if (fp != 0) {
-        int n = 0;
-        for (int som_y1 = 0; som_y1 < SOM_Y; som_y1++) {
-            for (int som_x1 = 0; som_x1 < SOM_X; som_x1++) {
+        unsigned int n = 0;
+        for (unsigned int som_y1 = 0; som_y1 < SOM_Y; som_y1++) {
+            for (unsigned int som_x1 = 0; som_x1 < SOM_X; som_x1++) {
                 float dist = 0.0f;
-                int nodes_number = 0;
-                int coords1[2];
+                unsigned int nodes_number = 0;
+                unsigned int coords1[2];
                 coords1[0] = som_x1;
                 coords1[1] = som_y1;               
                 
-                for (int som_y2 = 0; som_y2 < SOM_Y; som_y2++) {   
-                    for (int som_x2 = 0; som_x2 < SOM_X; som_x2++) {
-                        int coords2[2];
+                for (unsigned int som_y2 = 0; som_y2 < SOM_Y; som_y2++) {   
+                    for (unsigned int som_x2 = 0; som_x2 < SOM_X; som_x2++) {
+                        unsigned int coords2[2];
                         coords2[0] = som_x2;
                         coords2[1] = som_y2;    
 
                         if (som_x1 == som_x2 && som_y1 == som_y2) continue;
                             
                         float tmp = 0.0;
-                        for (int d = 0; d < D; d++) {
+                        for (unsigned int d = 0; d < D; d++) {
                             tmp += pow(coords1[d] - coords2[d], 2.0f);                            
                         }
                         tmp = sqrt(tmp);
@@ -1222,8 +1208,8 @@ void mr_update_weight(uint64_t itask, char *key, int keybytes, char *value,
     vector<string> vValue = split(string(value), ',');
     assert(vValue.size() == 2);
 
-    uint64_t row = str2uint(vKey[0]);
-    uint64_t col = str2uint(vKey[1]);
+    unsigned int row = str2uint(vKey[0]);
+    unsigned int col = str2uint(vKey[1]);
     unsigned int d = str2uint(vKey[2]);    
 
     float numer = str2float(vValue[0]);
@@ -1253,8 +1239,8 @@ void mr_update_weight(uint64_t itask, char *key, int keybytes, char *value,
     vector<string> vKey = split(string(key), ',');
     assert(vKey.size() == 3);
 
-    uint64_t row = str2uint(vKey[0]);
-    uint64_t col = str2uint(vKey[1]);
+    unsigned int row = str2uint(vKey[0]);
+    unsigned int col = str2uint(vKey[1]);
     unsigned int d = str2uint(vKey[2]);
     
     float numer = 0.0;
@@ -1263,7 +1249,7 @@ void mr_update_weight(uint64_t itask, char *key, int keybytes, char *value,
     //for (int j = 0; j < 1; j++) {
         unsigned char *c1 = (unsigned char *)malloc(SZFLOAT);
         unsigned char *c2 = (unsigned char *)malloc(SZFLOAT);
-        for (int i = 0; i < (int)SZFLOAT; i++) {
+        for (unsigned int i = 0; i < (int)SZFLOAT; i++) {
             c1[i] = value[i];
             c2[i] = value[i+SZFLOAT];
         }
@@ -1328,7 +1314,7 @@ void mr_sum(char *key, int keybytes, char *multivalue, int nvalues, int *valueby
     for (int j = 0; j < nvalues; j++) {
         unsigned char *c1 = (unsigned char *)malloc(SZFLOAT);
         unsigned char *c2 = (unsigned char *)malloc(SZFLOAT);
-        for (int i = 0; i < (int)SZFLOAT; i++) {
+        for (unsigned int i = 0; i < SZFLOAT; i++) {
             c1[i] = multivalue[i];
             c2[i] = multivalue[i+SZFLOAT];
         }
@@ -1352,64 +1338,61 @@ void mr_sum(char *key, int keybytes, char *multivalue, int nvalues, int *valueby
         //bConcated[i] = bNumer[i];
         //bConcated[i+SZFLOAT] = bDenom[i];
     //} /// total 4*2 = 8bytes for two floats
-    
     //kv->add(key, strlen(key)+1, (char*)bConcated, SZFLOAT*2);       
     
-    ///
-    /// hybrid
-    string value = float2str(numer) + "," + float2str(denom);    
+    /// v2. hybrid
+    //string value = float2str(numer) + "," + float2str(denom);    
+    //kv->add(key, strlen(key)+1, (char*)value.c_str(), value.length()+1);           
     ///
     
     /// Using struct
     //NUMER_DENOM nd;
     //nd.numer = numer;
     //nd.denom = denom;
-    ///
-    
-    /// v2
-    //kv->add(key, strlen(key)+1, (char*)value.c_str(), value.length()+1);           
-    
-    /// v3
-    //kv->add(key, sizeof(unsigned int), (char*)value.c_str(), value.length()+1);           
-    kv->add(key, sizeof(uint64_t), (char*)value.c_str(), value.length()+1);           
     //kv->add(key, sizeof(uint64_t), (char*)&nd, sizeof(NUMER_DENOM));           
+    ///
+       
+    /// v3. key = integer
+    string value = float2str(numer) + "," + float2str(denom);    
+    kv->add(key, sizeof(unsigned int), (char*)value.c_str(), value.length()+1);           
+    
 }
  
 
 /** MR-MPI map related function - Normalize vector2
  * @param f
- * @param n - line number in feature vector file
- * @param distance_metric
+ * @param n - row num
+ * @param normalopt - distance_metric
  */
  
-float *normalize(DMatrix &f, int n, int normalopt)
+float *normalize(DMatrix &f, unsigned int n, unsigned int normalopt)
 {
     float *m_data = (float *)malloc(SZFLOAT * NDIMEN);
     switch (normalopt) {
     default:
     case 0: /// NONE
-        for (int x = 0; x < NDIMEN; x++) {
+        for (unsigned int x = 0; x < NDIMEN; x++) {
             m_data[x] = f.rows[n][x];
         }
         break;
     case 1: /// MNMX
-        //for (int x = 0; x < NDIMEN; x++)
+        //for (unsigned int x = 0; x < NDIMEN; x++)
         //m_data[x] = (0.9f - 0.1f) * (vec[x] + m_add[x]) * m_mul[x] + 0.1f;
         //break;
     case 2: /// ZSCR
-        //for (int x = 0; x < NDIMEN; x++)
+        //for (unsigned int x = 0; x < NDIMEN; x++)
         //m_data[x] = (vec[x] + m_add[x]) * m_mul[x];
         //break;
     case 3: /// SIGM
-        //for (int x = 0; x < NDIMEN; x++)
+        //for (unsigned int x = 0; x < NDIMEN; x++)
         //m_data[x] = 1.0f / (1.0f + exp(-((vec[x] + m_add[x]) * m_mul[x])));
         //break;
     case 4: /// ENRG
         float energy = 0.0f;
-        for (int x = 0; x < NDIMEN; x++)
+        for (unsigned int x = 0; x < NDIMEN; x++)
             energy += f.rows[n][x] * f.rows[n][x];
         energy = sqrt(energy);
-        for (int x = 0; x < NDIMEN; x++)
+        for (unsigned int x = 0; x < NDIMEN; x++)
             m_data[x] = f.rows[n][x] / energy;
         break;
     }
@@ -1423,30 +1406,30 @@ float *normalize(DMatrix &f, int n, int normalopt)
  * @param distance_metric: 
  */
  
-float get_distance(float *vec1, const float *vec2, int distance_metric)
+float get_distance(float *vec1, const float *vec2, unsigned int distance_metric)
 {
     float distance = 0.0f;
     float n1 = 0.0f, n2 = 0.0f;
     switch (distance_metric) {
     default:
     case 0: /// EUCLIDIAN
-        for (int w = 0; w < NDIMEN; w++)
+        for (unsigned int w = 0; w < NDIMEN; w++)
             distance += (vec1[w] - vec2[w]) * (vec1[w] - vec2[w]);
         return sqrt(distance);
     //case 1: /// SOSD: //SUM OF SQUARED DISTANCES
         ////if (m_weights_number >= 4) {
         ////distance = mse(vec, m_weights, m_weights_number);
         ////} else {
-        //for (int w = 0; w < NDIMEN; w++)
+        //for (unsigned int w = 0; w < NDIMEN; w++)
             //distance += (vec[w] - wvec[w]) * (vec[w] - wvec[w]);
         ////}
         //return distance;
     //case 2: /// TXCB: //TAXICAB
-        //for (int w = 0; w < NDIMEN; w++)
+        //for (unsigned int w = 0; w < NDIMEN; w++)
             //distance += fabs(vec[w] - wvec[w]);
         //return distance;
     //case 3: /// ANGL: //ANGLE BETWEEN VECTORS
-        //for (int w = 0; w < NDIMEN; w++) {
+        //for (unsigned int w = 0; w < NDIMEN; w++) {
             //distance += vec[w] * wvec[w];
             //n1 += vec[w] * vec[w];
             //n2 += wvec[w] * wvec[w];
@@ -1461,21 +1444,20 @@ float get_distance(float *vec1, const float *vec2, int distance_metric)
 
 /* ------------------------------------------------------------------------ */
 string uint2str(uint64_t number)
-
 {
     stringstream ss;
     ss << number;
     return ss.str();
 }
  
-uint64_t str2uint(string str)
-{
-    std::stringstream ss;
-    ss << str;
-    uint64_t f;
-    ss >> f;
-    return f;
-}
+//uint64_t str2uint(string str)
+//{
+    //std::stringstream ss;
+    //ss << str;
+    //uint64_t f;
+    //ss >> f;
+    //return f;
+//}
  
 string float2str(float number)
 {
@@ -1662,7 +1644,7 @@ void train_online(char* file, DMatrix *codebook, float R, float Alpha)
         vector<uint64_t> vRowIdx;
         for (uint64_t row = 0; row < NVECSPERFILE; row++) { 
             vRowIdx.push_back(row);
-            for (uint64_t d = 0; d < NDIMEN; d++) {
+            for (unsigned int d = 0; d < NDIMEN; d++) {
                 float tmp = 0.0f;
                 fscanf(fp, "%f", &tmp);
                 vvFeature[row][d] = tmp;
@@ -1674,7 +1656,7 @@ void train_online(char* file, DMatrix *codebook, float R, float Alpha)
         /// Set data matrix with shuffled rows
         ///
         for (uint64_t row = 0; row < NVECSPERFILE; row++)
-            for (uint64_t col = 0; col < NDIMEN; col++)
+            for (unsigned int col = 0; col < NDIMEN; col++)
                 data.rows[row][col] = vvFeature[vRowIdx[row]][col];
                 
         vvFeature.clear();
@@ -1682,7 +1664,7 @@ void train_online(char* file, DMatrix *codebook, float R, float Alpha)
     }
     else {
         for (uint64_t row = 0; row < NVECSPERFILE; row++) { 
-            for (uint64_t d = 0; d < NDIMEN; d++) {
+            for (unsigned int d = 0; d < NDIMEN; d++) {
                 float tmp = 0.0f;
                 fscanf(fp, "%f", &tmp);
                 data.rows[row][d] = tmp;
@@ -1712,8 +1694,8 @@ void train_online(char* file, DMatrix *codebook, float R, float Alpha)
             }
         }
         else {   /// ADJUST WEIGHT VECTORS OF THE NEIGHBORS TO BMU NODE
-            for (uint64_t som_y = 0; som_y < SOM_Y; som_y++) { 
-                for (uint64_t som_x = 0; som_x < SOM_X; som_x++) { 
+            for (unsigned int som_y = 0; som_y < SOM_Y; som_y++) { 
+                for (unsigned int som_x = 0; som_x < SOM_X; som_x++) { 
                     float p2[NDIMEN];
                     p2[0] = (float) som_x;
                     p2[1] = (float) som_y;
@@ -1729,7 +1711,7 @@ void train_online(char* file, DMatrix *codebook, float R, float Alpha)
                     /// GAUSSIAN NEIGHBORHOOD FUNCTION
                     float neighbor_fuct = exp(-(1.0f * dist * dist) / (R * R));
                     
-                    for (int d = 0; d < NDIMEN; d++) {
+                    for (unsigned int d = 0; d < NDIMEN; d++) {
                         codebook->rows[som_y][som_x*NDIMEN + d] += 
                             Alpha * neighbor_fuct * (normalized[d] - wVec[d]);
                     }
