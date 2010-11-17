@@ -136,6 +136,9 @@ boost::iostreams::mapped_file_source MMAPFILE;      /// Read-only Boost mmap fil
 
 #define FLOAT_T float
 //#define FLOAT_T double
+#define SZFLOAT sizeof(FLOAT_T)
+#define MAXSTR 255
+//#define KEY_T unsigned int
 
 /// For Boost Multidimensional Array
 #include <boost/multi_array.hpp>
@@ -150,9 +153,6 @@ ARRAY_3D_T CODEBOOK;
 
 using namespace MAPREDUCE_NS;
 using namespace std;
-
-#define SZFLOAT sizeof(FLOAT_T)
-#define MAXSTR 255
 
 enum DISTTYPE       { EUCL, SOSD, TXCB, ANGL, MHLN };
 
@@ -285,9 +285,9 @@ int main(int argc, char **argv)
     mr->mapstyle = 2;       /// master/slave mode
     mr->memsize = SZPAGE;   /// page size
     //mr->minpage = 1;
-    //mr->maxpage = 4;
+    //mr->maxpage = 7;
     mr->keyalign = 8;       /// default: key type = uint_64t = 8 bytes
-    mr->valuealign = 8;     /// sizeof(float)*2 = 8 bytes
+    //mr->valuealign = 8;     /// sizeof(float)*2 = 8 bytes
     //mr->fpath = "/tmp";     /// place to save out-of-core file(s)
     MPI_Barrier(MPI_COMM_WORLD);
     
@@ -300,12 +300,12 @@ int main(int argc, char **argv)
     R0 = SOM_X / 2.0f;              /// init radius for updating neighbors
     R = R0;
     unsigned int x = 0;                      /// 0...N-1
-    FDATA = reinterpret_cast<float*>((char*)MMAPFILE.data());
     MYID = MPI_myId;
     
     ///AT gf.fdata = reinterpret_cast<float*>(MMAPFILE.data()); 
     /// or (float*)(MMAPFILE.data())
     //gf.fdata = reinterpret_cast<float*>((char*)MMAPFILE.data());
+    FDATA = reinterpret_cast<float*>((char*)MMAPFILE.data());
         
     ///
     /// Training
@@ -337,6 +337,7 @@ int main(int argc, char **argv)
         ///AT is gf passed locally (not sent through MPI)?
         uint64_t nRes = mr->map(nmap, &mr_train_batch, NULL);
         //mr->kv->print(1, 2, 8, NDIMEN);   
+        //mr->print(-1, 1, 2, 3);
         //cout << endl;
         mr->kv_stats(2);
         
@@ -344,13 +345,13 @@ int main(int argc, char **argv)
         ////cout << "### collate DONE ###\n";
         //mr->print(-1, 1, 2, 3);          
         //cout << endl;
-        mr->kmv_stats(2);
+        ////mr->kmv_stats(2);
         
         nRes = mr->reduce(&mr_sum, NULL);
         ////cout << "### reduce, mr_sum DONE ###\n";
         //mr->kv->print(1, 2, 8, NDIMEN);  
         //cout << endl;
-        mr->kv_stats(2);        
+        ////mr->kv_stats(2);        
         
         mr->gather(1);
         ////cout << "### gather DONE ###\n";
@@ -468,8 +469,8 @@ void mr_train_batch(int itask, KeyValue *kv, void *ptr)
                 
                 ///AT denom is not a vector
                 for (size_t w = 0; w < NDIMEN; w++) {
-                    NUMER[som_y][som_x][w] += 1.0f * neighbor_fuct *
-                        (*((FDATA + itask*NDIMEN*NVECSPERRANK) + n*NDIMEN + w));
+                    NUMER[som_y][som_x][w] += 
+                        1.0f * neighbor_fuct * (*((FDATA + itask*NDIMEN*NVECSPERRANK) + n*NDIMEN + w));
                 }
                 DENOM[som_y][som_x] += neighbor_fuct;
             }
@@ -488,10 +489,12 @@ void mr_train_batch(int itask, KeyValue *kv, void *ptr)
     for (size_t som_y = 0; som_y < SOM_Y; som_y++) { 
         for (size_t som_x = 0; som_x < SOM_X; som_x++) {
             uint64_t iKey = som_y*SOM_X + som_x;
+
             size_t i = 0;
             for (; i < NDIMEN; i++) 
                 update[i] = NUMER[som_y][som_x][i];
             update[i] = DENOM[som_y][som_x];
+            
             kv->add((char*)&iKey, sizeof(uint64_t), (char*)update, (NDIMEN+1)*SZFLOAT);    
         }
     }

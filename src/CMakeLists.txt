@@ -74,12 +74,12 @@ LINK_DIRECTORIES( ${LINK_DIRECTORIES} ${MRSOM_BINARY_DIR}/mrmpi )
 #target_link_libraries(mrsom6 boost_iostreams)
 #target_link_libraries(mrsom6 boost_filesystem)
 
-# key -> integer
-#add_executable(mrsom7 mrsom7.cpp memory_map.cpp)
-#target_link_libraries(mrsom7 mpi)  
-#target_link_libraries(mrsom7 mrmpi)
-#target_link_libraries(mrsom7 boost_iostreams)
-#target_link_libraries(mrsom7 boost_filesystem)
+ #key -> integer
+add_executable(mrsom7 mrsom7.cpp memory_map.cpp)
+target_link_libraries(mrsom7 mpi)  
+target_link_libraries(mrsom7 mrmpi)
+target_link_libraries(mrsom7 boost_iostreams)
+target_link_libraries(mrsom7 boost_filesystem)
 
 # New by AT
 add_executable(mrsom8 mrsom8.cpp)
