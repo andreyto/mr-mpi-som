@@ -36,7 +36,7 @@ class KeyValue {
   int npage;                      // # of pages in entire KV
 
   KeyValue(class MapReduce *, int, int, 
-	   class Memory *, class Error *, MPI_Comm);
+       class Memory *, class Error *, MPI_Comm);
   ~KeyValue();
 
   void set_page();
@@ -54,6 +54,7 @@ class KeyValue {
   void add(int, char *, int *, char *, int *);
 
   void print(int, int, int);
+  void print(int, int, int, size_t); ///SSJ
 
  private:
   MapReduce *mr;

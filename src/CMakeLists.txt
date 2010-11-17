@@ -68,20 +68,25 @@ LINK_DIRECTORIES( ${LINK_DIRECTORIES} ${MRSOM_BINARY_DIR}/mrmpi )
 #target_link_libraries(mrsom5 mrmpi)
 
 # d=0 && n=0 check, hybrid compaction, BOOST
-add_executable(mrsom6 mrsom6.cpp memory_map.cpp)
-target_link_libraries(mrsom6 mpi)  
-target_link_libraries(mrsom6 mrmpi)
-target_link_libraries(mrsom6 boost_iostreams)
-target_link_libraries(mrsom6 boost_filesystem)
+#add_executable(mrsom6 mrsom6.cpp memory_map.cpp)
+#target_link_libraries(mrsom6 mpi)  
+#target_link_libraries(mrsom6 mrmpi)
+#target_link_libraries(mrsom6 boost_iostreams)
+#target_link_libraries(mrsom6 boost_filesystem)
 
 # key -> integer
-add_executable(mrsom7 mrsom7.cpp memory_map.cpp)
-target_link_libraries(mrsom7 mpi)  
-target_link_libraries(mrsom7 mrmpi)
-target_link_libraries(mrsom7 boost_iostreams)
-target_link_libraries(mrsom7 boost_filesystem)
+#add_executable(mrsom7 mrsom7.cpp memory_map.cpp)
+#target_link_libraries(mrsom7 mpi)  
+#target_link_libraries(mrsom7 mrmpi)
+#target_link_libraries(mrsom7 boost_iostreams)
+#target_link_libraries(mrsom7 boost_filesystem)
 
-
+# New by AT
+add_executable(mrsom8 mrsom8.cpp)
+target_link_libraries(mrsom8 mpi)  
+target_link_libraries(mrsom8 mrmpi)
+target_link_libraries(mrsom8 boost_iostreams)
+target_link_libraries(mrsom8 boost_filesystem)
 
 
 

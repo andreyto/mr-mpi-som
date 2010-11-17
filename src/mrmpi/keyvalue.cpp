@@ -37,8 +37,8 @@ enum{KVFILE,KMVFILE,SORTFILE,PARTFILE,SETFILE};   // same as in mapreduce.cpp
 /* ---------------------------------------------------------------------- */
 
 KeyValue::KeyValue(MapReduce *mr_caller, int memkalign, int memvalign,
-		   Memory *memory_caller, Error *error_caller,
-		   MPI_Comm comm_caller)
+           Memory *memory_caller, Error *error_caller,
+           MPI_Comm comm_caller)
 {
   mr = mr_caller;
   memory = memory_caller;
@@ -252,8 +252,8 @@ int KeyValue::request_info(char **ptr)
 ------------------------------------------------------------------------- */
 
 int KeyValue::request_page(int ipage, uint64_t &keysize_page,
-			   uint64_t &valuesize_page,
-			   uint64_t &alignsize_page)
+               uint64_t &valuesize_page,
+               uint64_t &alignsize_page)
 {
   // load page from file if necessary
 
@@ -329,7 +329,7 @@ void KeyValue::add(char *key, int keybytes, char *value, int valuebytes)
 ------------------------------------------------------------------------- */
 
 void KeyValue::add(int n, char *key, int keybytes,
-		   char *value, int valuebytes)
+           char *value, int valuebytes)
 {
   int koffset = 0;
   int voffset = 0;
@@ -347,7 +347,7 @@ void KeyValue::add(int n, char *key, int keybytes,
 ------------------------------------------------------------------------- */
 
 void KeyValue::add(int n, char *key, int *keybytes,
-		   char *value, int *valuebytes)
+           char *value, int *valuebytes)
 {
   uint64_t koffset = 0;
   uint64_t voffset = 0;
@@ -383,7 +383,7 @@ void KeyValue::add(KeyValue *kv)
 
   for (int ipage = 0; ipage < npage_other; ipage++) {
     nkey_other = kv->request_page(ipage,keysize_other,valuesize_other,
-				  alignsize_other);
+                  alignsize_other);
     if (kalign == kalign_other && valign == valign_other)
       add(nkey_other,page_other,keysize_other,valuesize_other,alignsize_other);
     else
@@ -456,8 +456,8 @@ void KeyValue::add(char *ptr)
 ------------------------------------------------------------------------- */
 
 void KeyValue::add(int n, char *buf,
-		   uint64_t keysize_buf, uint64_t valuesize_buf,
-		   uint64_t alignsize_buf)
+           uint64_t keysize_buf, uint64_t valuesize_buf,
+           uint64_t alignsize_buf)
 {
   int nkeychunk,keybytes,valuebytes,kvbytes;
   uint64_t keychunk,valuechunk,chunksize;
@@ -705,11 +705,11 @@ void KeyValue::print(int nstride, int kflag, int vflag)
       else if (kflag == 4) printf("%g",*(double *) key);
       else if (kflag == 5) printf("%s",key);
       else if (kflag == 6) printf("%d %d",
-				  *(int *) key,
-				  *(int *) (key+sizeof(int)));
+                  *(int *) key,
+                  *(int *) (key+sizeof(int)));
       else if (kflag == 7) printf("%lu %lu",
-				  *(uint64_t *) key,
-				  *(uint64_t *) (key+sizeof(uint64_t)));
+                  *(uint64_t *) key,
+                  *(uint64_t *) (key+sizeof(uint64_t)));
 
       printf(", value ");
       if (vflag == 0) printf("NULL");
@@ -719,12 +719,85 @@ void KeyValue::print(int nstride, int kflag, int vflag)
       else if (vflag == 4) printf("%g",*(double *) value);
       else if (vflag == 5) printf("%s",value);
       else if (vflag == 6) printf("%d %d",
-				  *(int *) value,
-				  *(int *) (value+sizeof(int)));
+                  *(int *) value,
+                  *(int *) (value+sizeof(int)));
       else if (vflag == 7) printf("%lu %lu",
-				  *(uint64_t *) value,
-				  *(uint64_t *) (value+sizeof(uint64_t)));
+                  *(uint64_t *) value,
+                  *(uint64_t *) (value+sizeof(uint64_t)));
+       
+      printf("\n");
+    }
+  }
+}
 
+void KeyValue::print(int nstride, int kflag, int vflag, size_t ndim)
+{
+  int keybytes,valuebytes;
+  uint64_t dummy1,dummy2,dummy3;
+  char *ptr,*key,*value,*ptr_start;
+
+  int istride = 0;
+
+  for (int ipage = 0; ipage < npage; ipage++) {
+    nkey = request_page(ipage,dummy1,dummy2,dummy3);
+    ptr = page;
+    for (int i = 0; i < nkey; i++) {
+      ptr_start = ptr;
+      keybytes = *((int *) ptr);
+      valuebytes = *((int *) (ptr+sizeof(int)));;
+
+      ptr += twolenbytes;
+      ptr = ROUNDUP(ptr,kalignm1);
+      key = ptr;
+      ptr += keybytes;
+      ptr = ROUNDUP(ptr,valignm1);
+      value = ptr;
+      ptr += valuebytes;
+      ptr = ROUNDUP(ptr,talignm1);
+
+      istride++;
+      if (istride != nstride) continue;
+      istride = 0;
+
+      printf("KV pair: proc %d, sizes %d %d",me,keybytes,valuebytes);
+
+      printf(", key ");
+      if (kflag == 0) printf("NULL");
+      else if (kflag == 1) printf("%d",*(int *) key);
+      else if (kflag == 2) printf("%lu",*(uint64_t *) key);
+      else if (kflag == 3) printf("%g",*(float *) key);
+      else if (kflag == 4) printf("%g",*(double *) key);
+      else if (kflag == 5) printf("%s",key);
+      else if (kflag == 6) printf("%d %d",
+                  *(int *) key,
+                  *(int *) (key+sizeof(int)));
+      else if (kflag == 7) printf("%lu %lu",
+                  *(uint64_t *) key,
+                  *(uint64_t *) (key+sizeof(uint64_t)));
+
+      printf(", value ");
+      if (vflag == 0) printf("NULL");
+      else if (vflag == 1) printf("%d",*(int *) value);
+      else if (vflag == 2) printf("%lu",*(uint64_t *) value);
+      else if (vflag == 3) printf("%g",*(float *) value);
+      else if (vflag == 4) printf("%g",*(double *) value);
+      else if (vflag == 5) printf("%s",value);
+      else if (vflag == 6) printf("%d %d",
+                  *(int *) value,
+                  *(int *) (value+sizeof(int)));
+      else if (vflag == 7) printf("%lu %lu",
+                  *(uint64_t *) value,
+                  *(uint64_t *) (value+sizeof(uint64_t)));
+      ///SSJ
+      else if (vflag == 8) {
+        for (size_t i = 0; i < ndim+1; i++)
+            printf("%g ", *(float *) (value+sizeof(float)*i));
+      }
+      else if (vflag == 9) {
+        for (size_t i = 0; i < ndim+1; i++)
+            printf("%g ", *(double *) (value+sizeof(double)*i));
+      }
+                  
       printf("\n");
     }
   }
