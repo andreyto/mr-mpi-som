@@ -5,7 +5,7 @@
 
    Copyright (2009) Sandia Corporation.  Under the terms of Contract
    DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains
-   certain rights in this software.  This software is distributed under 
+   certain rights in this software.  This software is distributed under
    the modified Berkeley Software Distribution (BSD) License.
 
    See the README file in the top-level MapReduce directory.
@@ -32,54 +32,54 @@ using namespace MAPREDUCE_NS;
 #define PAGECHUNK 16
 #define INTMAX 0x7FFFFFFF
 
-enum{KVFILE,KMVFILE,SORTFILE,PARTFILE,SETFILE};   // same as in mapreduce.cpp
+enum {KVFILE, KMVFILE, SORTFILE, PARTFILE, SETFILE}; // same as in mapreduce.cpp
 
 /* ---------------------------------------------------------------------- */
 
 KeyValue::KeyValue(MapReduce *mr_caller, int memkalign, int memvalign,
-           Memory *memory_caller, Error *error_caller,
-           MPI_Comm comm_caller)
+                   Memory *memory_caller, Error *error_caller,
+                   MPI_Comm comm_caller)
 {
-  mr = mr_caller;
-  memory = memory_caller;
-  error = error_caller;
-  comm = comm_caller;
-  MPI_Comm_rank(comm,&me);
+    mr = mr_caller;
+    memory = memory_caller;
+    error = error_caller;
+    comm = comm_caller;
+    MPI_Comm_rank(comm, &me);
 
-  filename = mr->file_create(KVFILE);
-  fileflag = 0;
-  fp = NULL;
+    filename = mr->file_create(KVFILE);
+    fileflag = 0;
+    fp = NULL;
 
-  pages = NULL;
-  npage = maxpage = 0;
+    pages = NULL;
+    npage = maxpage = 0;
 
-  // talign = max of (kalign,valign,int)
+    // talign = max of (kalign,valign,int)
 
-  kalign = memkalign;
-  valign = memvalign;
-  talign = MAX(kalign,valign);
-  talign = MAX(talign,sizeof(int));
+    kalign = memkalign;
+    valign = memvalign;
+    talign = MAX(kalign, valign);
+    talign = MAX(talign, sizeof(int));
 
-  kalignm1 = kalign-1;
-  valignm1 = valign-1;
-  talignm1 = talign-1;
+    kalignm1 = kalign - 1;
+    valignm1 = valign - 1;
+    talignm1 = talign - 1;
 
-  twolenbytes = 2*sizeof(int);
+    twolenbytes = 2 * sizeof(int);
 
-  nkv = ksize = vsize = esize = fsize = 0;
-  init_page();
+    nkv = ksize = vsize = esize = fsize = 0;
+    init_page();
 }
 
 /* ---------------------------------------------------------------------- */
 
 KeyValue::~KeyValue()
 {
-  memory->sfree(pages);
-  if (fileflag) {
-    remove(filename);
-    mr->hiwater(1,fsize);
-  }
-  delete [] filename;
+    memory->sfree(pages);
+    if (fileflag) {
+        remove(filename);
+        mr->hiwater(1, fsize);
+    }
+    delete [] filename;
 }
 
 /* ----------------------------------------------------------------------
@@ -88,7 +88,7 @@ KeyValue::~KeyValue()
 
 void KeyValue::set_page()
 {
-  page = mr->mymalloc(1,pagesize,memtag);
+    page = mr->mymalloc(1, pagesize, memtag);
 }
 
 /* ----------------------------------------------------------------------
@@ -97,9 +97,9 @@ void KeyValue::set_page()
 
 void KeyValue::set_page(uint64_t memsize, char *memblock, int tag)
 {
-  pagesize = memsize;
-  page = memblock;
-  memtag = tag;
+    pagesize = memsize;
+    page = memblock;
+    memtag = tag;
 }
 
 /* ----------------------------------------------------------------------
@@ -109,13 +109,13 @@ void KeyValue::set_page(uint64_t memsize, char *memblock, int tag)
 
 void KeyValue::truncate(int pagecut, int ncut, uint64_t sizecut)
 {
-  if (ncut == 0) npage = pagecut;
-  else {
-    npage = pagecut+1;
-    pages[pagecut].alignsize = sizecut;
-    pages[pagecut].filesize = roundup(sizecut,ALIGNFILE);
-    pages[pagecut].nkey = ncut;
-  }
+    if (ncut == 0) npage = pagecut;
+    else {
+        npage = pagecut + 1;
+        pages[pagecut].alignsize = sizecut;
+        pages[pagecut].filesize = roundup(sizecut, ALIGNFILE);
+        pages[pagecut].nkey = ncut;
+    }
 }
 
 /* ----------------------------------------------------------------------
@@ -127,29 +127,29 @@ void KeyValue::truncate(int pagecut, int ncut, uint64_t sizecut)
 
 void KeyValue::copy(KeyValue *kv)
 {
-  if (kv == this) error->all("Cannot perform KeyValue copy on self");
+    if (kv == this) error->all("Cannot perform KeyValue copy on self");
 
-  // pages will be loaded into memory assigned to other KV
-  // write_page() will write them from that page to my file
+    // pages will be loaded into memory assigned to other KV
+    // write_page() will write them from that page to my file
 
-  char *page_hold = page;
-  int npage_other = kv->request_info(&page);
+    char *page_hold = page;
+    int npage_other = kv->request_info(&page);
 
-  for (int ipage = 0; ipage < npage_other-1; ipage++) {
-    nkey = kv->request_page(ipage,keysize,valuesize,alignsize);
-    create_page();
-    write_page();
-    npage++;
-  }
+    for (int ipage = 0; ipage < npage_other - 1; ipage++) {
+        nkey = kv->request_page(ipage, keysize, valuesize, alignsize);
+        create_page();
+        write_page();
+        npage++;
+    }
 
-  // last page needs to be copied to my memory before calling complete()
-  // reset my page to my memory
+    // last page needs to be copied to my memory before calling complete()
+    // reset my page to my memory
 
-  nkey = kv->request_page(npage_other-1,keysize,valuesize,alignsize);
-  memcpy(page_hold,page,alignsize);
-  msize = kv->msize;
-  complete();
-  page = page_hold;
+    nkey = kv->request_page(npage_other - 1, keysize, valuesize, alignsize);
+    memcpy(page_hold, page, alignsize);
+    msize = kv->msize;
+    complete();
+    page = page_hold;
 }
 
 /* ----------------------------------------------------------------------
@@ -159,28 +159,28 @@ void KeyValue::copy(KeyValue *kv)
 
 void KeyValue::append()
 {
-  if (npage == 0) return;
+    if (npage == 0) return;
 
-  int ipage = npage-1;
+    int ipage = npage - 1;
 
-  // read last page from file if necessary
-  // decrement MR filesize as if file were being deleted
+    // read last page from file if necessary
+    // decrement MR filesize as if file were being deleted
 
-  if (fileflag) {
-    read_page(ipage,1);
-    mr->hiwater(1,fsize);
-  }
+    if (fileflag) {
+        read_page(ipage, 1);
+        mr->hiwater(1, fsize);
+    }
 
-  // set in-memory settings from virtual page settings
+    // set in-memory settings from virtual page settings
 
-  nkey = pages[ipage].nkey;
-  keysize = pages[ipage].keysize;
-  valuesize = pages[ipage].valuesize;
-  alignsize = pages[ipage].alignsize;
+    nkey = pages[ipage].nkey;
+    keysize = pages[ipage].keysize;
+    valuesize = pages[ipage].valuesize;
+    alignsize = pages[ipage].alignsize;
 
-  // delete last page from pages data structures since will append to it
+    // delete last page from pages data structures since will append to it
 
-  npage--;
+    npage--;
 }
 
 /* ----------------------------------------------------------------------
@@ -190,38 +190,38 @@ void KeyValue::append()
 
 void KeyValue::complete()
 {
-  create_page();
+    create_page();
 
-  // if disk file exists, write last page, close file
+    // if disk file exists, write last page, close file
 
-  if (fileflag) {
-    write_page();
-    fclose(fp);
-    fp = NULL;
-  }
+    if (fileflag) {
+        write_page();
+        fclose(fp);
+        fp = NULL;
+    }
 
-  npage++;
-  init_page();
+    npage++;
+    init_page();
 
-  // set sizes for entire KV
+    // set sizes for entire KV
 
-  nkv = ksize = vsize = esize = fsize = 0;
-  for (int ipage = 0; ipage < npage; ipage++) {
-    nkv += pages[ipage].nkey;
-    ksize += pages[ipage].keysize;
-    vsize += pages[ipage].valuesize;
-    esize += pages[ipage].exactsize;
-  }
+    nkv = ksize = vsize = esize = fsize = 0;
+    for (int ipage = 0; ipage < npage; ipage++) {
+        nkv += pages[ipage].nkey;
+        ksize += pages[ipage].keysize;
+        vsize += pages[ipage].valuesize;
+        esize += pages[ipage].exactsize;
+    }
 
-  if (fileflag) {
-    fsize = pages[npage-1].fileoffset + pages[npage-1].filesize;
-    mr->hiwater(0,fsize);
-  }
+    if (fileflag) {
+        fsize = pages[npage-1].fileoffset + pages[npage-1].filesize;
+        mr->hiwater(0, fsize);
+    }
 
-  // msize is max across all procs, for entire KV
+    // msize is max across all procs, for entire KV
 
-  int tmp = msize;
-  MPI_Allreduce(&tmp,&msize,1,MPI_INT,MPI_MAX,comm);
+    int tmp = msize;
+    MPI_Allreduce(&tmp, &msize, 1, MPI_INT, MPI_MAX, comm);
 }
 
 /* ----------------------------------------------------------------------
@@ -232,8 +232,8 @@ void KeyValue::complete()
 
 void KeyValue::complete_dummy()
 {
-  int tmp = msize;
-  MPI_Allreduce(&tmp,&msize,1,MPI_INT,MPI_MAX,comm);
+    int tmp = msize;
+    MPI_Allreduce(&tmp, &msize, 1, MPI_INT, MPI_MAX, comm);
 }
 
 /* ----------------------------------------------------------------------
@@ -242,8 +242,8 @@ void KeyValue::complete_dummy()
 
 int KeyValue::request_info(char **ptr)
 {
-  *ptr = page;
-  return npage;
+    *ptr = page;
+    return npage;
 }
 
 /* ----------------------------------------------------------------------
@@ -252,25 +252,25 @@ int KeyValue::request_info(char **ptr)
 ------------------------------------------------------------------------- */
 
 int KeyValue::request_page(int ipage, uint64_t &keysize_page,
-               uint64_t &valuesize_page,
-               uint64_t &alignsize_page)
+                           uint64_t &valuesize_page,
+                           uint64_t &alignsize_page)
 {
-  // load page from file if necessary
+    // load page from file if necessary
 
-  if (fileflag) read_page(ipage,0);
+    if (fileflag) read_page(ipage, 0);
 
-  // close file if last page
+    // close file if last page
 
-  if (ipage == npage-1 && fileflag) {
-    fclose(fp);
-    fp = NULL;
-  }
+    if (ipage == npage - 1 && fileflag) {
+        fclose(fp);
+        fp = NULL;
+    }
 
-  keysize_page = pages[ipage].keysize;
-  valuesize_page = pages[ipage].valuesize;
-  alignsize_page = pages[ipage].alignsize;
+    keysize_page = pages[ipage].keysize;
+    valuesize_page = pages[ipage].valuesize;
+    alignsize_page = pages[ipage].alignsize;
 
-  return pages[ipage].nkey;
+    return pages[ipage].nkey;
 }
 
 /* ----------------------------------------------------------------------
@@ -280,47 +280,47 @@ int KeyValue::request_page(int ipage, uint64_t &keysize_page,
 
 void KeyValue::add(char *key, int keybytes, char *value, int valuebytes)
 {
-  char *iptr = &page[alignsize];
-  char *kptr = iptr + twolenbytes;
-  kptr = ROUNDUP(kptr,kalignm1);
-  char *vptr = kptr + keybytes;
-  vptr = ROUNDUP(vptr,valignm1);
-  char *nptr = vptr + valuebytes;
-  nptr = ROUNDUP(nptr,talignm1);
-  int kvbytes = nptr - iptr;
+    char *iptr = &page[alignsize];
+    char *kptr = iptr + twolenbytes;
+    kptr = ROUNDUP(kptr, kalignm1);
+    char *vptr = kptr + keybytes;
+    vptr = ROUNDUP(vptr, valignm1);
+    char *nptr = vptr + valuebytes;
+    nptr = ROUNDUP(nptr, talignm1);
+    int kvbytes = nptr - iptr;
 
-  // size of KV pair cannot exceed int size
+    // size of KV pair cannot exceed int size
 
-  if (nptr-iptr > INTMAX)
-    error->one("Single key/value pair exceeds int size");
+    if (nptr - iptr > INTMAX)
+        error->one("Single key/value pair exceeds int size");
 
-  // page is full, write to disk
-  // full page = pagesize exceeded or INTMAX KV pairs
+    // page is full, write to disk
+    // full page = pagesize exceeded or INTMAX KV pairs
 
-  if (alignsize + kvbytes > pagesize || nkey == INTMAX) {
-    if (alignsize == 0) {
-      printf("KeyValue pair size/limit: %d %u\n",kvbytes,pagesize);
-      error->one("Single key/value pair exceeds page size");
+    if (alignsize + kvbytes > pagesize || nkey == INTMAX) {
+        if (alignsize == 0) {
+            printf("KeyValue pair size/limit: %d %u\n", kvbytes, pagesize);
+            error->one("Single key/value pair exceeds page size");
+        }
+
+        create_page();
+        write_page();
+        npage++;
+        init_page();
+        add(key, keybytes, value, valuebytes);
+        return;
     }
 
-    create_page();
-    write_page();
-    npage++;
-    init_page();
-    add(key,keybytes,value,valuebytes);
-    return;
-  }
+    *((int *) iptr) = keybytes;
+    *((int *)(iptr + sizeof(int))) = valuebytes;
+    memcpy(kptr, key, keybytes);
+    memcpy(vptr, value, valuebytes);
 
-  *((int *) iptr) = keybytes;
-  *((int *) (iptr+sizeof(int))) = valuebytes;
-  memcpy(kptr,key,keybytes);
-  memcpy(vptr,value,valuebytes);
-
-  nkey++;
-  keysize += keybytes;
-  valuesize += valuebytes;
-  alignsize += kvbytes;
-  msize = MAX(msize,kvbytes);
+    nkey++;
+    keysize += keybytes;
+    valuesize += valuebytes;
+    alignsize += kvbytes;
+    msize = MAX(msize, kvbytes);
 }
 
 /* ----------------------------------------------------------------------
@@ -329,16 +329,16 @@ void KeyValue::add(char *key, int keybytes, char *value, int valuebytes)
 ------------------------------------------------------------------------- */
 
 void KeyValue::add(int n, char *key, int keybytes,
-           char *value, int valuebytes)
+                   char *value, int valuebytes)
 {
-  int koffset = 0;
-  int voffset = 0;
+    int koffset = 0;
+    int voffset = 0;
 
-  for (int i = 0; i < n; i++) {
-    add(&key[koffset],keybytes,&value[voffset],valuebytes);
-    koffset += keybytes;
-    voffset += valuebytes;
-  }
+    for (int i = 0; i < n; i++) {
+        add(&key[koffset], keybytes, &value[voffset], valuebytes);
+        koffset += keybytes;
+        voffset += valuebytes;
+    }
 }
 
 /* ----------------------------------------------------------------------
@@ -347,16 +347,16 @@ void KeyValue::add(int n, char *key, int keybytes,
 ------------------------------------------------------------------------- */
 
 void KeyValue::add(int n, char *key, int *keybytes,
-           char *value, int *valuebytes)
+                   char *value, int *valuebytes)
 {
-  uint64_t koffset = 0;
-  uint64_t voffset = 0;
+    uint64_t koffset = 0;
+    uint64_t voffset = 0;
 
-  for (int i = 0; i < n; i++) {
-    add(&key[koffset],keybytes[i],&value[voffset],valuebytes[i]);
-    koffset += keybytes[i];
-    voffset += valuebytes[i];
-  }
+    for (int i = 0; i < n; i++) {
+        add(&key[koffset], keybytes[i], &value[voffset], valuebytes[i]);
+        koffset += keybytes[i];
+        voffset += valuebytes[i];
+    }
 }
 
 /* ----------------------------------------------------------------------
@@ -368,29 +368,29 @@ void KeyValue::add(int n, char *key, int *keybytes,
 
 void KeyValue::add(KeyValue *kv)
 {
-  if (kv == this) error->all("Cannot perform KeyValue add on self");
+    if (kv == this) error->all("Cannot perform KeyValue add on self");
 
-  int kalign_other = kv->kalign;
-  int valign_other = kv->valign;
+    int kalign_other = kv->kalign;
+    int valign_other = kv->valign;
 
-  // which add() to call depends on same or different alignment
+    // which add() to call depends on same or different alignment
 
-  int nkey_other;
-  uint64_t keysize_other,valuesize_other,alignsize_other;
+    int nkey_other;
+    uint64_t keysize_other, valuesize_other, alignsize_other;
 
-  char *page_other;
-  int npage_other = kv->request_info(&page_other);
+    char *page_other;
+    int npage_other = kv->request_info(&page_other);
 
-  for (int ipage = 0; ipage < npage_other; ipage++) {
-    nkey_other = kv->request_page(ipage,keysize_other,valuesize_other,
-                  alignsize_other);
-    if (kalign == kalign_other && valign == valign_other)
-      add(nkey_other,page_other,keysize_other,valuesize_other,alignsize_other);
-    else
-      add(nkey_other,page_other,kalign_other,valign_other);
-  }
+    for (int ipage = 0; ipage < npage_other; ipage++) {
+        nkey_other = kv->request_page(ipage, keysize_other, valuesize_other,
+                                      alignsize_other);
+        if (kalign == kalign_other && valign == valign_other)
+            add(nkey_other, page_other, keysize_other, valuesize_other, alignsize_other);
+        else
+            add(nkey_other, page_other, kalign_other, valign_other);
+    }
 
-  msize = MAX(msize,kv->msize);
+    msize = MAX(msize, kv->msize);
 }
 
 /* ----------------------------------------------------------------------
@@ -403,29 +403,29 @@ void KeyValue::add(KeyValue *kv)
 
 void KeyValue::add(int n, char *buf)
 {
-  int keybytes,valuebytes;
+    int keybytes, valuebytes;
 
-  uint64_t keysize_buf = 0;
-  uint64_t valuesize_buf = 0;
-  char *ptr = buf;
+    uint64_t keysize_buf = 0;
+    uint64_t valuesize_buf = 0;
+    char *ptr = buf;
 
-  for (int i = 0; i < n; i++) {
-    keybytes = *((int *) ptr);
-    valuebytes = *((int *) (ptr+sizeof(int)));;
+    for (int i = 0; i < n; i++) {
+        keybytes = *((int *) ptr);
+        valuebytes = *((int *)(ptr + sizeof(int)));;
 
-    keysize_buf += keybytes;
-    valuesize_buf += valuebytes;
+        keysize_buf += keybytes;
+        valuesize_buf += valuebytes;
 
-    ptr += twolenbytes;
-    ptr = ROUNDUP(ptr,kalignm1);
-    ptr += keybytes;
-    ptr = ROUNDUP(ptr,valignm1);
-    ptr += valuebytes;
-    ptr = ROUNDUP(ptr,talignm1);
-  }
+        ptr += twolenbytes;
+        ptr = ROUNDUP(ptr, kalignm1);
+        ptr += keybytes;
+        ptr = ROUNDUP(ptr, valignm1);
+        ptr += valuebytes;
+        ptr = ROUNDUP(ptr, talignm1);
+    }
 
-  uint64_t alignsize_buf = ptr - buf;
-  add(n,buf,keysize_buf,valuesize_buf,alignsize_buf);
+    uint64_t alignsize_buf = ptr - buf;
+    add(n, buf, keysize_buf, valuesize_buf, alignsize_buf);
 }
 
 /* ----------------------------------------------------------------------
@@ -438,14 +438,14 @@ void KeyValue::add(int n, char *buf)
 
 void KeyValue::add(char *ptr)
 {
-  int keybytes = *((int *) ptr);
-  int valuebytes = *((int *) (ptr+sizeof(int)));;
-  ptr += twolenbytes;
-  ptr = ROUNDUP(ptr,kalignm1);
-  char *key = ptr;
-  ptr += keybytes;
-  char *value = ROUNDUP(ptr,valignm1);
-  add(key,keybytes,value,valuebytes);
+    int keybytes = *((int *) ptr);
+    int valuebytes = *((int *)(ptr + sizeof(int)));;
+    ptr += twolenbytes;
+    ptr = ROUNDUP(ptr, kalignm1);
+    char *key = ptr;
+    ptr += keybytes;
+    char *value = ROUNDUP(ptr, valignm1);
+    add(key, keybytes, value, valuebytes);
 }
 
 /* ----------------------------------------------------------------------
@@ -456,81 +456,81 @@ void KeyValue::add(char *ptr)
 ------------------------------------------------------------------------- */
 
 void KeyValue::add(int n, char *buf,
-           uint64_t keysize_buf, uint64_t valuesize_buf,
-           uint64_t alignsize_buf)
+                   uint64_t keysize_buf, uint64_t valuesize_buf,
+                   uint64_t alignsize_buf)
 {
-  int nkeychunk,keybytes,valuebytes,kvbytes;
-  uint64_t keychunk,valuechunk,chunksize;
-  char *ptr,*ptr_begin,*ptr_end,*ptr_start;
+    int nkeychunk, keybytes, valuebytes, kvbytes;
+    uint64_t keychunk, valuechunk, chunksize;
+    char *ptr, *ptr_begin, *ptr_end, *ptr_start;
 
-  // break data into chunks that fit into current and successive pages
-  // full page = pagesize exceeded or INTMAX KV pairs
-  // search for breakpoint by scanning KV pairs
+    // break data into chunks that fit into current and successive pages
+    // full page = pagesize exceeded or INTMAX KV pairs
+    // search for breakpoint by scanning KV pairs
 
-  ptr = buf;
-  int nlimit = INTMAX - nkey;
+    ptr = buf;
+    int nlimit = INTMAX - nkey;
 
-  while (alignsize + alignsize_buf > pagesize || n > nlimit) {
-    ptr_begin = ptr;
-    ptr_end = ptr_begin + (pagesize-alignsize);
-    nkeychunk = 0;
-    keychunk = valuechunk = 0;
+    while (alignsize + alignsize_buf > pagesize || n > nlimit) {
+        ptr_begin = ptr;
+        ptr_end = ptr_begin + (pagesize - alignsize);
+        nkeychunk = 0;
+        keychunk = valuechunk = 0;
 
-    while (1) {
-      ptr_start = ptr;
-      keybytes = *((int *) ptr);
-      valuebytes = *((int *) (ptr+sizeof(int)));;
+        while (1) {
+            ptr_start = ptr;
+            keybytes = *((int *) ptr);
+            valuebytes = *((int *)(ptr + sizeof(int)));;
 
-      ptr += twolenbytes;
-      ptr = ROUNDUP(ptr,kalignm1);
-      ptr += keybytes;
-      ptr = ROUNDUP(ptr,valignm1);
-      ptr += valuebytes;
-      ptr = ROUNDUP(ptr,talignm1);
-      kvbytes = ptr - ptr_start;
+            ptr += twolenbytes;
+            ptr = ROUNDUP(ptr, kalignm1);
+            ptr += keybytes;
+            ptr = ROUNDUP(ptr, valignm1);
+            ptr += valuebytes;
+            ptr = ROUNDUP(ptr, talignm1);
+            kvbytes = ptr - ptr_start;
 
-      if (ptr > ptr_end) break;
-      if (nkeychunk == nlimit) break;
+            if (ptr > ptr_end) break;
+            if (nkeychunk == nlimit) break;
 
-      nkeychunk++;
-      keychunk += keybytes;
-      valuechunk += valuebytes;
+            nkeychunk++;
+            keychunk += keybytes;
+            valuechunk += valuebytes;
+        }
+
+        if (kvbytes > pagesize) {
+            printf("KeyValue pair size/limit: %d %u\n", kvbytes, pagesize);
+            error->one("Single key/value pair exceeds page size");
+        }
+
+        ptr = ptr_start;
+        chunksize = ptr - ptr_begin;
+        memcpy(&page[alignsize], ptr_begin, chunksize);
+
+        nkey += nkeychunk;
+        keysize += keychunk;
+        valuesize += valuechunk;
+        alignsize += chunksize;
+
+        create_page();
+        write_page();
+        npage++;
+        init_page();
+
+        n -= nkeychunk;
+        keysize_buf -= keychunk;
+        valuesize_buf -= valuechunk;
+        alignsize_buf -= chunksize;
+        nlimit = INTMAX;
     }
 
-    if (kvbytes > pagesize) {
-      printf("KeyValue pair size/limit: %d %u\n",kvbytes,pagesize);
-      error->one("Single key/value pair exceeds page size");
-    }
+    // add remainder to in-memory page
 
-    ptr = ptr_start;
-    chunksize = ptr - ptr_begin;
-    memcpy(&page[alignsize],ptr_begin,chunksize);
+    memcpy(&page[alignsize], ptr, alignsize_buf);
 
-    nkey += nkeychunk;
-    keysize += keychunk;
-    valuesize += valuechunk;
-    alignsize += chunksize;
-
-    create_page();
-    write_page();
-    npage++;
-    init_page();
-    
-    n -= nkeychunk;
-    keysize_buf -= keychunk;
-    valuesize_buf -= valuechunk;
-    alignsize_buf -= chunksize;
-    nlimit = INTMAX;
-  }
-
-  // add remainder to in-memory page
-
-  memcpy(&page[alignsize],ptr,alignsize_buf);
-
-  nkey += n;
-  keysize += keysize_buf;
-  valuesize += valuesize_buf;
-  alignsize += alignsize_buf;
+    nkey += n;
+    keysize += keysize_buf;
+    valuesize += valuesize_buf;
+    alignsize += alignsize_buf;
 }
 
 /* ----------------------------------------------------------------------
@@ -542,33 +542,33 @@ void KeyValue::add(int n, char *buf,
 
 void KeyValue::add(int n, char *buf, int kalign_buf, int valign_buf)
 {
-  int keybytes,valuebytes;
-  char *key,*value;
+    int keybytes, valuebytes;
+    char *key, *value;
 
-  int talign_buf = MAX(kalign_buf,valign_buf);
-  talign_buf = MAX(talign_buf,sizeof(int));
+    int talign_buf = MAX(kalign_buf, valign_buf);
+    talign_buf = MAX(talign_buf, sizeof(int));
 
-  int kalignm1_buf = kalign_buf-1;
-  int valignm1_buf = valign_buf-1;
-  int talignm1_buf = talign_buf-1;
+    int kalignm1_buf = kalign_buf - 1;
+    int valignm1_buf = valign_buf - 1;
+    int talignm1_buf = talign_buf - 1;
 
-  char *ptr = buf;
+    char *ptr = buf;
 
-  for (int i = 0; i < n; i++) {
-    keybytes = *((int *) ptr);
-    valuebytes = *((int *) (ptr+sizeof(int)));;
+    for (int i = 0; i < n; i++) {
+        keybytes = *((int *) ptr);
+        valuebytes = *((int *)(ptr + sizeof(int)));;
 
-    ptr += twolenbytes;
-    ptr = ROUNDUP(ptr,kalignm1_buf);
-    key = ptr;
-    ptr += keybytes;
-    ptr = ROUNDUP(ptr,valignm1_buf);
-    value = ptr;
-    ptr += valuebytes;
-    ptr = ROUNDUP(ptr,talignm1_buf);
+        ptr += twolenbytes;
+        ptr = ROUNDUP(ptr, kalignm1_buf);
+        key = ptr;
+        ptr += keybytes;
+        ptr = ROUNDUP(ptr, valignm1_buf);
+        value = ptr;
+        ptr += valuebytes;
+        ptr = ROUNDUP(ptr, talignm1_buf);
 
-    add(key,keybytes,value,valuebytes);
-  }
+        add(key, keybytes, value, valuebytes);
+    }
 }
 
 /* ----------------------------------------------------------------------
@@ -577,10 +577,10 @@ void KeyValue::add(int n, char *buf, int kalign_buf, int valign_buf)
 
 void KeyValue::init_page()
 {
-  nkey = 0;
-  keysize = valuesize = 0;
-  alignsize = 0;
-  msize = 0;
+    nkey = 0;
+    keysize = valuesize = 0;
+    alignsize = 0;
+    msize = 0;
 }
 
 /* ----------------------------------------------------------------------
@@ -589,24 +589,24 @@ void KeyValue::init_page()
 
 void KeyValue::create_page()
 {
-  if (npage == maxpage) {
-    maxpage += PAGECHUNK;
-    pages = (Page *) memory->srealloc(pages,maxpage*sizeof(Page),"KV:pages");
-  }
+    if (npage == maxpage) {
+        maxpage += PAGECHUNK;
+        pages = (Page *) memory->srealloc(pages, maxpage * sizeof(Page), "KV:pages");
+    }
 
-  pages[npage].nkey = nkey;
-  pages[npage].keysize = keysize;
-  pages[npage].valuesize = valuesize;
-  pages[npage].exactsize = ((uint64_t) nkey)*twolenbytes + 
-    keysize + valuesize;
-  pages[npage].alignsize = alignsize;
-  pages[npage].filesize = roundup(alignsize,ALIGNFILE);
+    pages[npage].nkey = nkey;
+    pages[npage].keysize = keysize;
+    pages[npage].valuesize = valuesize;
+    pages[npage].exactsize = ((uint64_t) nkey) * twolenbytes +
+                             keysize + valuesize;
+    pages[npage].alignsize = alignsize;
+    pages[npage].filesize = roundup(alignsize, ALIGNFILE);
 
-  if (npage)
-    pages[npage].fileoffset = 
-      pages[npage-1].fileoffset + pages[npage-1].filesize;
-  else
-    pages[npage].fileoffset = 0;
+    if (npage)
+        pages[npage].fileoffset =
+            pages[npage-1].fileoffset + pages[npage-1].filesize;
+    else
+        pages[npage].fileoffset = 0;
 }
 
 /* ----------------------------------------------------------------------
@@ -616,20 +616,20 @@ void KeyValue::create_page()
 
 void KeyValue::write_page()
 {
-  if (fp == NULL) {
-    fp = fopen(filename,"wb");
     if (fp == NULL) {
-      char msg[1023];
-      sprintf(msg, "Could not open KeyValue file %s for writing.", filename);
-      error->one(msg);
+        fp = fopen(filename, "wb");
+        if (fp == NULL) {
+            char msg[1023];
+            sprintf(msg, "Could not open KeyValue file %s for writing.", filename);
+            error->one(msg);
+        }
+        fileflag = 1;
     }
-    fileflag = 1;
-  }
 
-  uint64_t fileoffset = pages[npage].fileoffset;
-  fseek(fp,fileoffset,SEEK_SET);
-  fwrite(page,pages[npage].filesize,1,fp);
-  mr->wsize += pages[npage].filesize;
+    uint64_t fileoffset = pages[npage].fileoffset;
+    fseek(fp, fileoffset, SEEK_SET);
+    fwrite(page, pages[npage].filesize, 1, fp);
+    mr->wsize += pages[npage].filesize;
 }
 
 /* ----------------------------------------------------------------------
@@ -639,16 +639,16 @@ void KeyValue::write_page()
 
 void KeyValue::read_page(int ipage, int writeflag)
 {
-  if (fp == NULL) {
-    if (writeflag) fp = fopen(filename,"r+b");
-    else fp = fopen(filename,"rb");
-    if (fp == NULL) error->one("Could not open KeyValue file for reading");
-  }
+    if (fp == NULL) {
+        if (writeflag) fp = fopen(filename, "r+b");
+        else fp = fopen(filename, "rb");
+        if (fp == NULL) error->one("Could not open KeyValue file for reading");
+    }
 
-  uint64_t fileoffset = pages[ipage].fileoffset;
-  fseek(fp,fileoffset,SEEK_SET);
-  fread(page,pages[ipage].filesize,1,fp);
-  mr->rsize += pages[ipage].filesize;
+    uint64_t fileoffset = pages[ipage].fileoffset;
+    fseek(fp, fileoffset, SEEK_SET);
+    fread(page, pages[ipage].filesize, 1, fp);
+    mr->rsize += pages[ipage].filesize;
 }
 
 /* ----------------------------------------------------------------------
@@ -657,9 +657,9 @@ void KeyValue::read_page(int ipage, int writeflag)
 
 uint64_t KeyValue::roundup(uint64_t n, int nalign)
 {
-  if (n % nalign == 0) return n;
-  n = (n/nalign + 1) * nalign;
-  return n;
+    if (n % nalign == 0) return n;
+    n = (n / nalign + 1) * nalign;
+    return n;
 }
 
 /* ----------------------------------------------------------------------
@@ -668,137 +668,137 @@ uint64_t KeyValue::roundup(uint64_t n, int nalign)
 
 void KeyValue::print(int nstride, int kflag, int vflag)
 {
-  int keybytes,valuebytes;
-  uint64_t dummy1,dummy2,dummy3;
-  char *ptr,*key,*value,*ptr_start;
+    int keybytes, valuebytes;
+    uint64_t dummy1, dummy2, dummy3;
+    char *ptr, *key, *value, *ptr_start;
 
-  int istride = 0;
+    int istride = 0;
 
-  for (int ipage = 0; ipage < npage; ipage++) {
-    nkey = request_page(ipage,dummy1,dummy2,dummy3);
-    ptr = page;
-    for (int i = 0; i < nkey; i++) {
-      ptr_start = ptr;
-      keybytes = *((int *) ptr);
-      valuebytes = *((int *) (ptr+sizeof(int)));;
+    for (int ipage = 0; ipage < npage; ipage++) {
+        nkey = request_page(ipage, dummy1, dummy2, dummy3);
+        ptr = page;
+        for (int i = 0; i < nkey; i++) {
+            ptr_start = ptr;
+            keybytes = *((int *) ptr);
+            valuebytes = *((int *)(ptr + sizeof(int)));;
 
-      ptr += twolenbytes;
-      ptr = ROUNDUP(ptr,kalignm1);
-      key = ptr;
-      ptr += keybytes;
-      ptr = ROUNDUP(ptr,valignm1);
-      value = ptr;
-      ptr += valuebytes;
-      ptr = ROUNDUP(ptr,talignm1);
+            ptr += twolenbytes;
+            ptr = ROUNDUP(ptr, kalignm1);
+            key = ptr;
+            ptr += keybytes;
+            ptr = ROUNDUP(ptr, valignm1);
+            value = ptr;
+            ptr += valuebytes;
+            ptr = ROUNDUP(ptr, talignm1);
 
-      istride++;
-      if (istride != nstride) continue;
-      istride = 0;
+            istride++;
+            if (istride != nstride) continue;
+            istride = 0;
 
-      printf("KV pair: proc %d, sizes %d %d",me,keybytes,valuebytes);
+            printf("KV pair: proc %d, sizes %d %d", me, keybytes, valuebytes);
 
-      printf(", key ");
-      if (kflag == 0) printf("NULL");
-      else if (kflag == 1) printf("%d",*(int *) key);
-      else if (kflag == 2) printf("%lu",*(uint64_t *) key);
-      else if (kflag == 3) printf("%g",*(float *) key);
-      else if (kflag == 4) printf("%g",*(double *) key);
-      else if (kflag == 5) printf("%s",key);
-      else if (kflag == 6) printf("%d %d",
-                  *(int *) key,
-                  *(int *) (key+sizeof(int)));
-      else if (kflag == 7) printf("%lu %lu",
-                  *(uint64_t *) key,
-                  *(uint64_t *) (key+sizeof(uint64_t)));
+            printf(", key ");
+            if (kflag == 0) printf("NULL");
+            else if (kflag == 1) printf("%d", *(int *) key);
+            else if (kflag == 2) printf("%lu", *(uint64_t *) key);
+            else if (kflag == 3) printf("%g", *(float *) key);
+            else if (kflag == 4) printf("%g", *(double *) key);
+            else if (kflag == 5) printf("%s", key);
+            else if (kflag == 6) printf("%d %d",
+                                            *(int *) key,
+                                            *(int *)(key + sizeof(int)));
+            else if (kflag == 7) printf("%lu %lu",
+                                            *(uint64_t *) key,
+                                            *(uint64_t *)(key + sizeof(uint64_t)));
 
-      printf(", value ");
-      if (vflag == 0) printf("NULL");
-      else if (vflag == 1) printf("%d",*(int *) value);
-      else if (vflag == 2) printf("%lu",*(uint64_t *) value);
-      else if (vflag == 3) printf("%g",*(float *) value);
-      else if (vflag == 4) printf("%g",*(double *) value);
-      else if (vflag == 5) printf("%s",value);
-      else if (vflag == 6) printf("%d %d",
-                  *(int *) value,
-                  *(int *) (value+sizeof(int)));
-      else if (vflag == 7) printf("%lu %lu",
-                  *(uint64_t *) value,
-                  *(uint64_t *) (value+sizeof(uint64_t)));
-       
-      printf("\n");
+            printf(", value ");
+            if (vflag == 0) printf("NULL");
+            else if (vflag == 1) printf("%d", *(int *) value);
+            else if (vflag == 2) printf("%lu", *(uint64_t *) value);
+            else if (vflag == 3) printf("%g", *(float *) value);
+            else if (vflag == 4) printf("%g", *(double *) value);
+            else if (vflag == 5) printf("%s", value);
+            else if (vflag == 6) printf("%d %d",
+                                            *(int *) value,
+                                            *(int *)(value + sizeof(int)));
+            else if (vflag == 7) printf("%lu %lu",
+                                            *(uint64_t *) value,
+                                            *(uint64_t *)(value + sizeof(uint64_t)));
+
+            printf("\n");
+        }
     }
-  }
 }
 
 void KeyValue::print(int nstride, int kflag, int vflag, size_t ndim)
 {
-  int keybytes,valuebytes;
-  uint64_t dummy1,dummy2,dummy3;
-  char *ptr,*key,*value,*ptr_start;
+    int keybytes, valuebytes;
+    uint64_t dummy1, dummy2, dummy3;
+    char *ptr, *key, *value, *ptr_start;
 
-  int istride = 0;
+    int istride = 0;
 
-  for (int ipage = 0; ipage < npage; ipage++) {
-    nkey = request_page(ipage,dummy1,dummy2,dummy3);
-    ptr = page;
-    for (int i = 0; i < nkey; i++) {
-      ptr_start = ptr;
-      keybytes = *((int *) ptr);
-      valuebytes = *((int *) (ptr+sizeof(int)));;
+    for (int ipage = 0; ipage < npage; ipage++) {
+        nkey = request_page(ipage, dummy1, dummy2, dummy3);
+        ptr = page;
+        for (int i = 0; i < nkey; i++) {
+            ptr_start = ptr;
+            keybytes = *((int *) ptr);
+            valuebytes = *((int *)(ptr + sizeof(int)));;
 
-      ptr += twolenbytes;
-      ptr = ROUNDUP(ptr,kalignm1);
-      key = ptr;
-      ptr += keybytes;
-      ptr = ROUNDUP(ptr,valignm1);
-      value = ptr;
-      ptr += valuebytes;
-      ptr = ROUNDUP(ptr,talignm1);
+            ptr += twolenbytes;
+            ptr = ROUNDUP(ptr, kalignm1);
+            key = ptr;
+            ptr += keybytes;
+            ptr = ROUNDUP(ptr, valignm1);
+            value = ptr;
+            ptr += valuebytes;
+            ptr = ROUNDUP(ptr, talignm1);
 
-      istride++;
-      if (istride != nstride) continue;
-      istride = 0;
+            istride++;
+            if (istride != nstride) continue;
+            istride = 0;
 
-      printf("KV pair: proc %d, sizes %d %d",me,keybytes,valuebytes);
+            printf("KV pair: proc %d, sizes %d %d", me, keybytes, valuebytes);
 
-      printf(", key ");
-      if (kflag == 0) printf("NULL");
-      else if (kflag == 1) printf("%d",*(int *) key);
-      else if (kflag == 2) printf("%lu",*(uint64_t *) key);
-      else if (kflag == 3) printf("%g",*(float *) key);
-      else if (kflag == 4) printf("%g",*(double *) key);
-      else if (kflag == 5) printf("%s",key);
-      else if (kflag == 6) printf("%d %d",
-                  *(int *) key,
-                  *(int *) (key+sizeof(int)));
-      else if (kflag == 7) printf("%lu %lu",
-                  *(uint64_t *) key,
-                  *(uint64_t *) (key+sizeof(uint64_t)));
+            printf(", key ");
+            if (kflag == 0) printf("NULL");
+            else if (kflag == 1) printf("%d", *(int *) key);
+            else if (kflag == 2) printf("%lu", *(uint64_t *) key);
+            else if (kflag == 3) printf("%g", *(float *) key);
+            else if (kflag == 4) printf("%g", *(double *) key);
+            else if (kflag == 5) printf("%s", key);
+            else if (kflag == 6) printf("%d %d",
+                                            *(int *) key,
+                                            *(int *)(key + sizeof(int)));
+            else if (kflag == 7) printf("%lu %lu",
+                                            *(uint64_t *) key,
+                                            *(uint64_t *)(key + sizeof(uint64_t)));
 
-      printf(", value ");
-      if (vflag == 0) printf("NULL");
-      else if (vflag == 1) printf("%d",*(int *) value);
-      else if (vflag == 2) printf("%lu",*(uint64_t *) value);
-      else if (vflag == 3) printf("%g",*(float *) value);
-      else if (vflag == 4) printf("%g",*(double *) value);
-      else if (vflag == 5) printf("%s",value);
-      else if (vflag == 6) printf("%d %d",
-                  *(int *) value,
-                  *(int *) (value+sizeof(int)));
-      else if (vflag == 7) printf("%lu %lu",
-                  *(uint64_t *) value,
-                  *(uint64_t *) (value+sizeof(uint64_t)));
-      ///SSJ
-      else if (vflag == 8) {
-        for (size_t i = 0; i < ndim+1; i++)
-            printf("%g ", *(float *) (value+sizeof(float)*i));
-      }
-      else if (vflag == 9) {
-        for (size_t i = 0; i < ndim+1; i++)
-            printf("%g ", *(double *) (value+sizeof(double)*i));
-      }
-                  
-      printf("\n");
+            printf(", value ");
+            if (vflag == 0) printf("NULL");
+            else if (vflag == 1) printf("%d", *(int *) value);
+            else if (vflag == 2) printf("%lu", *(uint64_t *) value);
+            else if (vflag == 3) printf("%g", *(float *) value);
+            else if (vflag == 4) printf("%g", *(double *) value);
+            else if (vflag == 5) printf("%s", value);
+            else if (vflag == 6) printf("%d %d",
+                                            *(int *) value,
+                                            *(int *)(value + sizeof(int)));
+            else if (vflag == 7) printf("%lu %lu",
+                                            *(uint64_t *) value,
+                                            *(uint64_t *)(value + sizeof(uint64_t)));
+            ///SSJ
+            else if (vflag == 8) {
+                for (size_t i = 0; i < ndim + 1; i++)
+                    printf("%g ", *(float *)(value + sizeof(float)*i));
+            }
+            else if (vflag == 9) {
+                for (size_t i = 0; i < ndim + 1; i++)
+                    printf("%g ", *(double *)(value + sizeof(double)*i));
+            }
+
+            printf("\n");
+        }
     }
-  }
 }

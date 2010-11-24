@@ -70,6 +70,10 @@
 //  v8
 //      11.15.2010      Update following AT's comments
 //      11.16.2010      v8 done.
+//      11.18.2010      Check if the KMV pair does not fit in one page of memory,
+//                      = check if the char *multivalue argument != NULL
+//                      and the nvalues argument != 0. 
+//                      If there is KMV overflow, use multivalue_blocks().
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -126,6 +130,7 @@
 
 /// For timing
 #include <sys/time.h>
+#include <sys/resource.h>
 
 /// For Boost memory mapped file
 #include <iterator>
@@ -144,12 +149,14 @@ boost::iostreams::mapped_file_source MMAPFILE;      /// Read-only Boost mmap fil
 #include <boost/multi_array.hpp>
 typedef boost::multi_array<FLOAT_T, 3> ARRAY_3D_T;    /// 3D arrat
 typedef boost::multi_array<FLOAT_T, 2> ARRAY_2D_T;    /// 2D arrat
-
+    
 /// For shared_ptr
 //#include <boost/smart_ptr.hpp>
 
 /// For CODEBOOK
 ARRAY_3D_T CODEBOOK;
+ARRAY_3D_T NUMER;
+ARRAY_2D_T DENOM;
 
 using namespace MAPREDUCE_NS;
 using namespace std;
@@ -189,6 +196,11 @@ float *get_wvec(size_t somy, size_t somx);
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv)
 {    
+    time_t  t0, t1, t2, t3, accMapWTime=0; 
+    t0 = time(NULL);
+    clock_t c0, c1, c2, c3, accMapCTime=0;     
+    c0 = clock();
+        
     if (argc == 7) {         
         /// syntax: mrsom FILE NEPOCHS NVECS NDIMEN NVECSPERRANK SZPAGE
         NEPOCHS = atoi(argv[2]);
@@ -223,7 +235,9 @@ int main(int argc, char **argv)
     /// Codebook
     ///
     CODEBOOK.resize(boost::extents[SOM_Y][SOM_X][NDIMEN]);
-
+    NUMER.resize(boost::extents[SOM_Y][SOM_X][NDIMEN]);
+    DENOM.resize(boost::extents[SOM_Y][SOM_X]);
+    
     ///
     /// Fill initial random weights
     ///
@@ -245,9 +259,9 @@ int main(int argc, char **argv)
     ///AT use boost class directly
     unsigned long int real_file_size_ = boost::filesystem::file_size(path);
     MMAPFILE.open(path, real_file_size_, 0);
-    
     if (!MMAPFILE.is_open()) {
         cerr << "### ERROR: failed to create mmap file\n";
+        MPI_Finalize();
         exit(1);
     }
     
@@ -304,7 +318,6 @@ int main(int argc, char **argv)
     
     ///AT gf.fdata = reinterpret_cast<float*>(MMAPFILE.data()); 
     /// or (float*)(MMAPFILE.data())
-    //gf.fdata = reinterpret_cast<float*>((char*)MMAPFILE.data());
     FDATA = reinterpret_cast<float*>((char*)MMAPFILE.data());
         
     ///
@@ -322,8 +335,19 @@ int main(int argc, char **argv)
         /// MPI_FLOAT / MPI_DOUBLE
         ///
         MPI_Bcast(&R, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
-        MPI_Bcast((void *)CODEBOOK.data(), SOM_Y*SOM_X*NDIMEN, MPI_FLOAT, 0, MPI_COMM_WORLD);          
         
+        //time_t  t0, t1, t2, t3, accMapWTime=0; 
+        //t0 = time(NULL);
+        //clock_t c0, c1, c2, c3, accMapCTime=0;     
+        //c0 = clock();
+        MPI_Bcast((void *)CODEBOOK.data(), SOM_Y*SOM_X*NDIMEN, MPI_FLOAT, 0, MPI_COMM_WORLD);          
+        //t1 = time(NULL);
+        //c1 = clock();
+        //printf ("### TIME: rank,totalRuntime,totalClock,%d,%ld,%.2f\n", 
+            //MPI_myId, 
+            //(long) (t1 - t0),
+            //(double) (c1 - c0) / CLOCKS_PER_SEC);
+    
         /// 
         /// 1. map: Each worker loads its feature vector and add 
         /// <(somy, somx, d), (numer, denom)> into KV
@@ -336,6 +360,7 @@ int main(int argc, char **argv)
         uint64_t nmap = NVECS / NVECSPERRANK;
         ///AT is gf passed locally (not sent through MPI)?
         uint64_t nRes = mr->map(nmap, &mr_train_batch, NULL);
+        //cout << "nRes = " << nRes << endl;
         //mr->kv->print(1, 2, 8, NDIMEN);   
         //mr->print(-1, 1, 2, 3);
         //cout << endl;
@@ -345,13 +370,13 @@ int main(int argc, char **argv)
         ////cout << "### collate DONE ###\n";
         //mr->print(-1, 1, 2, 3);          
         //cout << endl;
-        ////mr->kmv_stats(2);
+        mr->kmv_stats(2);
         
         nRes = mr->reduce(&mr_sum, NULL);
         ////cout << "### reduce, mr_sum DONE ###\n";
         //mr->kv->print(1, 2, 8, NDIMEN);  
         //cout << endl;
-        ////mr->kv_stats(2);        
+        mr->kv_stats(2);        
         
         mr->gather(1);
         ////cout << "### gather DONE ###\n";
@@ -373,54 +398,68 @@ int main(int argc, char **argv)
     ///
     /// Save SOM map and u-mat
     ///
-    if (MPI_myId == 0) {
-        printf("### Saving SOM map and U-Matrix...\n");
-        string outFileName = "result-umat-" + get_timedate() + ".txt";
-        cout << "    U-mat file = " << outFileName << endl; 
-        int ret = save_umat((char*)outFileName.c_str());
-        if (ret < 0) printf("    Failed (1) !\n");
-        else {
-            printf("    Converting SOM map to U-map...\n");
-            printf("    Done (1) !\n");
-        }
+    //if (MPI_myId == 0) {
+        //printf("### Saving SOM map and U-Matrix...\n");
+        //string outFileName = "result-umat-" + get_timedate() + ".txt";
+        //cout << "    U-mat file = " << outFileName << endl; 
+        //int ret = save_umat((char*)outFileName.c_str());
+        //if (ret < 0) printf("    Failed (1) !\n");
+        //else {
+            //printf("    Converting SOM map to U-map...\n");
+            //printf("    Done (1) !\n");
+        //}
         
-        ///
-        /// Save SOM map for umat tool
-        /// Usage: /tools/umat -cin result.map > result.eps
-        ///
-        string outFileName2 = "result-map-" + get_timedate() + ".txt";  
-        cout << "    MAP file = " << outFileName2 << endl;       
-        ofstream mapFile(outFileName2.c_str());
-        printf("    Saving SOM map...\n");
-        char temp[80];
-        if (mapFile.is_open()) {
-            mapFile << NDIMEN << " rect " << SOM_X << " " << SOM_Y << endl;
-            for (size_t som_y = 0; som_y < SOM_Y; som_y++) { 
-                for (size_t som_x = 0; som_x < SOM_X; som_x++) { 
-                    for (size_t d = 0; d < NDIMEN; d++) {
-                        sprintf(temp, "%0.10f", CODEBOOK[som_y][som_x][d]);
-                        mapFile << temp << " ";
-                    }
-                    mapFile << endl;
-                }
-            }
-            mapFile.close();
-            printf("    Done (2) !\n");
-        }
-        else printf("    Failed (2) !\n");
+        /////
+        ///// Save SOM map for umat tool
+        ///// Usage: /tools/umat -cin result.map > result.eps
+        /////
+        //string outFileName2 = "result-map-" + get_timedate() + ".txt";  
+        //cout << "    MAP file = " << outFileName2 << endl;       
+        //ofstream mapFile(outFileName2.c_str());
+        //printf("    Saving SOM map...\n");
+        //char temp[80];
+        //if (mapFile.is_open()) {
+            //mapFile << NDIMEN << " rect " << SOM_X << " " << SOM_Y << endl;
+            //for (size_t som_y = 0; som_y < SOM_Y; som_y++) { 
+                //for (size_t som_x = 0; som_x < SOM_X; som_x++) { 
+                    //for (size_t d = 0; d < NDIMEN; d++) {
+                        //sprintf(temp, "%0.10f", CODEBOOK[som_y][som_x][d]);
+                        //mapFile << temp << " ";
+                    //}
+                    //mapFile << endl;
+                //}
+            //}
+            //mapFile.close();
+            //printf("    Done (2) !\n");
+        //}
+        //else printf("    Failed (2) !\n");
         
-        string cmd = "python ./show2.py " + outFileName;
-        system((char*)cmd.c_str());
-        cmd = "./umat -cin " + outFileName2 + " > test.eps";
-        system((char*)cmd.c_str());
-    }
-    MPI_Barrier(MPI_COMM_WORLD);
+        //string cmd = "python ./show2.py " + outFileName;
+        //system((char*)cmd.c_str());
+        //cmd = "./umat -cin " + outFileName2 + " > test.eps";
+        //system((char*)cmd.c_str());
+    //}
+    //MPI_Barrier(MPI_COMM_WORLD);
     
     MMAPFILE.close();
     delete mr;
     MPI_Finalize();
 
+    t1 = time(NULL);
+    c1 = clock();
+    printf ("### TIME: rank,totalRuntime,totalClock,%d,%ld,%.2f\n", 
+        MPI_myId, 
+        (long) (t1 - t0),
+        (double) (c1 - c0) / CLOCKS_PER_SEC);
     
+    //// CPU time comsumed
+    struct rusage a;
+    if (getrusage(RUSAGE_SELF, &a) == -1) {
+        cerr << "Fatal error: getrusage failed.\n";
+        exit(2);
+    }
+    cout << "    Total CPU time: " << a.ru_utime.tv_sec + a.ru_stime.tv_sec << " sec and ";
+    cout << a.ru_utime.tv_usec + a.ru_stime.tv_usec << " usec.\n";
     
     return 0;
 }
@@ -432,9 +471,9 @@ int main(int argc, char **argv)
  */
  
 void mr_train_batch(int itask, KeyValue *kv, void *ptr)
-{    
+{       
     /// Debug
-    //cout << "MyId, R = " << MYID << "," << R << endl;
+    //cout << "MyId, R, itask = " << MYID << "," << R << "," << itask << endl;
     //for (size_t r = 0; r < NVECSPERRANK; r++) {
         //for (size_t d = 0; d < NDIMEN; d++) {
             //cout << *((FDATA + itask*NDIMEN*NVECSPERRANK) + r*NDIMEN + d) << " ";
@@ -446,8 +485,19 @@ void mr_train_batch(int itask, KeyValue *kv, void *ptr)
     
     int *p1 = new int[SOM_D];
     int *p2 = new int[SOM_D];
-    ARRAY_3D_T NUMER(boost::extents[SOM_Y][SOM_X][NDIMEN]);
-    ARRAY_2D_T DENOM(boost::extents[SOM_Y][SOM_X]);  
+    
+    /// v1
+    //ARRAY_3D_T NUMER(boost::extents[SOM_Y][SOM_X][NDIMEN]);
+    //ARRAY_2D_T DENOM(boost::extents[SOM_Y][SOM_X]);  
+    
+    /// v2
+    for (size_t som_y = 0; som_y < SOM_Y; som_y++) {
+        for (size_t som_x = 0; som_x < SOM_X; som_x++) {
+            DENOM[som_y][som_x] = 0.0;
+            for (size_t d = 0; d < NDIMEN; d++) 
+                NUMER[som_y][som_x][d] = 0.0;
+        }
+    }
     
     for (uint64_t n = 0; n < NVECSPERRANK; n++) {
         
@@ -489,7 +539,6 @@ void mr_train_batch(int itask, KeyValue *kv, void *ptr)
     for (size_t som_y = 0; som_y < SOM_Y; som_y++) { 
         for (size_t som_x = 0; som_x < SOM_X; som_x++) {
             uint64_t iKey = som_y*SOM_X + som_x;
-
             size_t i = 0;
             for (; i < NDIMEN; i++) 
                 update[i] = NUMER[som_y][som_x][i];
@@ -639,10 +688,14 @@ float get_distance(const float *vec1, const float *vec2, unsigned int distance_m
 void mr_sum(char *key, int keybytes, char *multivalue, int nvalues, int *valuebytes, 
             KeyValue *kv, void *ptr)
 {   
+    /// Check if there is KMV overflow
+    assert(multivalue != NULL && nvalues != 0);
+    
     FLOAT_T* newUpdate = new FLOAT_T[NDIMEN+1];
+    FLOAT_T numer = 0.0;
     size_t i = 0;
     for (; i < NDIMEN; i++) {
-        FLOAT_T numer = 0.0;
+        numer = 0.0;
         for (size_t n = 0; n < nvalues; n++) { 
             //cout << *((FLOAT_T*)multivalue + i + n*(NDIMEN+1)) << endl;                   
             numer += *((FLOAT_T*)multivalue + i + n*(NDIMEN+1));            
@@ -668,7 +721,7 @@ void mr_sum(char *key, int keybytes, char *multivalue, int nvalues, int *valueby
  
 
 /** Update CODEBOOK numer and denom
- * (Qid,DBid) key into Qid for further aggregating.
+ * key into Qid for further aggregating.
  * @param itask
  * @param key
  * @param keybytes

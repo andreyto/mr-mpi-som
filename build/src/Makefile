@@ -99,20 +99,6 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
-src/CMakeFiles/mrsom7.dir/rule:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/mrsom7.dir/rule
-.PHONY : src/CMakeFiles/mrsom7.dir/rule
-
-# Convenience name for target.
-mrsom7: src/CMakeFiles/mrsom7.dir/rule
-.PHONY : mrsom7
-
-# fast build rule for target.
-mrsom7/fast:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom7.dir/build.make src/CMakeFiles/mrsom7.dir/build
-.PHONY : mrsom7/fast
-
-# Convenience name for target.
 src/CMakeFiles/mrsom8.dir/rule:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/mrsom8.dir/rule
 .PHONY : src/CMakeFiles/mrsom8.dir/rule
@@ -125,54 +111,6 @@ mrsom8: src/CMakeFiles/mrsom8.dir/rule
 mrsom8/fast:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom8.dir/build.make src/CMakeFiles/mrsom8.dir/build
 .PHONY : mrsom8/fast
-
-memory_map.o: memory_map.cpp.o
-.PHONY : memory_map.o
-
-# target to build an object file
-memory_map.cpp.o:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom7.dir/build.make src/CMakeFiles/mrsom7.dir/memory_map.cpp.o
-.PHONY : memory_map.cpp.o
-
-memory_map.i: memory_map.cpp.i
-.PHONY : memory_map.i
-
-# target to preprocess a source file
-memory_map.cpp.i:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom7.dir/build.make src/CMakeFiles/mrsom7.dir/memory_map.cpp.i
-.PHONY : memory_map.cpp.i
-
-memory_map.s: memory_map.cpp.s
-.PHONY : memory_map.s
-
-# target to generate assembly for a file
-memory_map.cpp.s:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom7.dir/build.make src/CMakeFiles/mrsom7.dir/memory_map.cpp.s
-.PHONY : memory_map.cpp.s
-
-mrsom7.o: mrsom7.cpp.o
-.PHONY : mrsom7.o
-
-# target to build an object file
-mrsom7.cpp.o:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom7.dir/build.make src/CMakeFiles/mrsom7.dir/mrsom7.cpp.o
-.PHONY : mrsom7.cpp.o
-
-mrsom7.i: mrsom7.cpp.i
-.PHONY : mrsom7.i
-
-# target to preprocess a source file
-mrsom7.cpp.i:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom7.dir/build.make src/CMakeFiles/mrsom7.dir/mrsom7.cpp.i
-.PHONY : mrsom7.cpp.i
-
-mrsom7.s: mrsom7.cpp.s
-.PHONY : mrsom7.s
-
-# target to generate assembly for a file
-mrsom7.cpp.s:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom7.dir/build.make src/CMakeFiles/mrsom7.dir/mrsom7.cpp.s
-.PHONY : mrsom7.cpp.s
 
 mrsom8.o: mrsom8.cpp.o
 .PHONY : mrsom8.o
@@ -205,15 +143,8 @@ help:
 	@echo "... clean"
 	@echo "... depend"
 	@echo "... edit_cache"
-	@echo "... mrsom7"
 	@echo "... mrsom8"
 	@echo "... rebuild_cache"
-	@echo "... memory_map.o"
-	@echo "... memory_map.i"
-	@echo "... memory_map.s"
-	@echo "... mrsom7.o"
-	@echo "... mrsom7.i"
-	@echo "... mrsom7.s"
 	@echo "... mrsom8.o"
 	@echo "... mrsom8.i"
 	@echo "... mrsom8.s"
