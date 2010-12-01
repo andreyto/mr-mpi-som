@@ -28,7 +28,7 @@ using namespace MAPREDUCE_NS;
 /* ---------------------------------------------------------------------- */
 
 Irregular::Irregular(int all2all_caller, Memory *memory_caller,
-		     Error *error_caller, MPI_Comm comm_caller)
+             Error *error_caller, MPI_Comm comm_caller)
 {
   all2all = all2all_caller;
 
@@ -88,7 +88,7 @@ Irregular::~Irregular()
 ------------------------------------------------------------------------- */
 
 int Irregular::setup(int n, int *proclist, int *sizes, int *reorder,
-		     uint64_t recvlimit, double &fraction)
+             uint64_t recvlimit, double &fraction)
 {
   recvlimit = MIN(recvlimit,INTMAX);
 
@@ -209,10 +209,12 @@ int Irregular::setup(int n, int *proclist, int *sizes, int *reorder,
 ------------------------------------------------------------------------- */
 
 void Irregular::exchange(int n, int *proclist, char **ptrs, int *sizes, 
-			 int *reorder, char *copy, char *recv)
+             int *reorder, char *copy, char *recv)
 {
-  if (all2all) exchange_all2all(n,proclist,ptrs,sizes,copy,recv);
-  else exchange_custom(n,reorder,ptrs,sizes,copy,recv);
+  if (all2all) 
+    exchange_all2all(n,proclist,ptrs,sizes,copy,recv);
+  else 
+    exchange_custom(n,reorder,ptrs,sizes,copy,recv);
 }
 
 /* ----------------------------------------------------------------------
@@ -221,7 +223,7 @@ void Irregular::exchange(int n, int *proclist, char **ptrs, int *sizes,
 ------------------------------------------------------------------------- */
 
 void Irregular::exchange_all2all(int n, int *proclist, char **ptrs,
-				 int *sizes, char *copy, char *recv)
+                 int *sizes, char *copy, char *recv)
 {
   int i,iproc;
 
@@ -238,7 +240,7 @@ void Irregular::exchange_all2all(int n, int *proclist, char **ptrs,
   delete [] cptrs;
 
   MPI_Alltoallv(copy,sendbytes,sdispls,MPI_BYTE,
-		recv,recvbytes,rdispls,MPI_BYTE,comm);
+        recv,recvbytes,rdispls,MPI_BYTE,comm);
 }
 
 /* ----------------------------------------------------------------------
@@ -250,7 +252,7 @@ void Irregular::exchange_all2all(int n, int *proclist, char **ptrs,
 ------------------------------------------------------------------------- */
 
 void Irregular::exchange_custom(int n, int *indices, char **ptrs, int *sizes,
-				char *copy, char *recv)
+                char *copy, char *recv)
 {
   int i,j,iproc;
   char *ptr;
@@ -260,7 +262,7 @@ void Irregular::exchange_custom(int n, int *indices, char **ptrs, int *sizes,
   for (int irecv = 0; irecv < nrecv; irecv++) {
     iproc = recvprocs[irecv];
     MPI_Irecv(&recv[rdispls[iproc]],recvbytes[iproc],MPI_BYTE,
-    	      iproc,0,comm,&request[irecv]);
+              iproc,0,comm,&request[irecv]);
   }
 
   // barrier to insure receives are posted

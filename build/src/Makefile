@@ -112,6 +112,20 @@ mrsom8/fast:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom8.dir/build.make src/CMakeFiles/mrsom8.dir/build
 .PHONY : mrsom8/fast
 
+# Convenience name for target.
+src/CMakeFiles/som.dir/rule:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/som.dir/rule
+.PHONY : src/CMakeFiles/som.dir/rule
+
+# Convenience name for target.
+som: src/CMakeFiles/som.dir/rule
+.PHONY : som
+
+# fast build rule for target.
+som/fast:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/som.dir/build.make src/CMakeFiles/som.dir/build
+.PHONY : som/fast
+
 mrsom8.o: mrsom8.cpp.o
 .PHONY : mrsom8.o
 
@@ -136,6 +150,30 @@ mrsom8.cpp.s:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom8.dir/build.make src/CMakeFiles/mrsom8.dir/mrsom8.cpp.s
 .PHONY : mrsom8.cpp.s
 
+som.o: som.cpp.o
+.PHONY : som.o
+
+# target to build an object file
+som.cpp.o:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/som.dir/build.make src/CMakeFiles/som.dir/som.cpp.o
+.PHONY : som.cpp.o
+
+som.i: som.cpp.i
+.PHONY : som.i
+
+# target to preprocess a source file
+som.cpp.i:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/som.dir/build.make src/CMakeFiles/som.dir/som.cpp.i
+.PHONY : som.cpp.i
+
+som.s: som.cpp.s
+.PHONY : som.s
+
+# target to generate assembly for a file
+som.cpp.s:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/som.dir/build.make src/CMakeFiles/som.dir/som.cpp.s
+.PHONY : som.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -145,9 +183,13 @@ help:
 	@echo "... edit_cache"
 	@echo "... mrsom8"
 	@echo "... rebuild_cache"
+	@echo "... som"
 	@echo "... mrsom8.o"
 	@echo "... mrsom8.i"
 	@echo "... mrsom8.s"
+	@echo "... som.o"
+	@echo "... som.i"
+	@echo "... som.s"
 .PHONY : help
 
 

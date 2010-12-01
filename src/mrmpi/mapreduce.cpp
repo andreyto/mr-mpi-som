@@ -419,8 +419,10 @@ uint64_t MapReduce::aggregate(int (*hash)(char *, int))
             ptr = ROUNDUP(ptr, talignm1);
 
             kvsizes[i] = ptr - kvptrs[i];
-            if (hash) proclist[i] = hash(key, keybytes) % nprocs;
-            else proclist[i] = hashlittle(key, keybytes, nprocs) % nprocs;
+            if (hash)   /// user defined hash function
+                proclist[i] = hash(key, keybytes) % nprocs;
+            else        /// default hash function
+                proclist[i] = hashlittle(key, keybytes, nprocs) % nprocs;
         }
 
         // perform irregular comm of each proc's page of KV pairs
@@ -652,9 +654,11 @@ uint64_t MapReduce::collate(int (*hash)(char *, int))
     int verbosity_hold = verbosity;
     int timer_hold = timer;
     verbosity = timer = 0;
-
+    
+    ////////////////
     aggregate(hash);
     convert();
+    ////////////////
 
     verbosity = verbosity_hold;
     timer = timer_hold;

@@ -57,10 +57,12 @@ CMAKE_BINARY_DIR = /home/ssul/work/mrsom/MRSOM/build
 
 # Convenience name for "all" pass in the directory.
 src/all: src/CMakeFiles/mrsom8.dir/all
+src/all: src/CMakeFiles/som.dir/all
 .PHONY : src/all
 
 # Convenience name for "clean" pass in the directory.
 src/clean: src/CMakeFiles/mrsom8.dir/clean
+src/clean: src/CMakeFiles/som.dir/clean
 .PHONY : src/clean
 
 # Convenience name for "preinstall" pass in the directory.
@@ -100,6 +102,41 @@ src/CMakeFiles/mrsom8.dir/clean:
 
 # clean rule for target.
 clean: src/CMakeFiles/mrsom8.dir/clean
+.PHONY : clean
+
+#=============================================================================
+# Target rules for target src/CMakeFiles/som.dir
+
+# All Build rule for target.
+src/CMakeFiles/som.dir/all:
+	$(MAKE) -f src/CMakeFiles/som.dir/build.make src/CMakeFiles/som.dir/depend
+	$(MAKE) -f src/CMakeFiles/som.dir/build.make src/CMakeFiles/som.dir/build
+	$(CMAKE_COMMAND) -E cmake_progress_report /home/ssul/work/mrsom/MRSOM/build/CMakeFiles  11
+	@echo "Built target som"
+.PHONY : src/CMakeFiles/som.dir/all
+
+# Include target in all.
+all: src/CMakeFiles/som.dir/all
+.PHONY : all
+
+# Build rule for subdir invocation for target.
+src/CMakeFiles/som.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ssul/work/mrsom/MRSOM/build/CMakeFiles 1
+	$(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/som.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/ssul/work/mrsom/MRSOM/build/CMakeFiles 0
+.PHONY : src/CMakeFiles/som.dir/rule
+
+# Convenience name for target.
+som: src/CMakeFiles/som.dir/rule
+.PHONY : som
+
+# clean rule for target.
+src/CMakeFiles/som.dir/clean:
+	$(MAKE) -f src/CMakeFiles/som.dir/build.make src/CMakeFiles/som.dir/clean
+.PHONY : src/CMakeFiles/som.dir/clean
+
+# clean rule for target.
+clean: src/CMakeFiles/som.dir/clean
 .PHONY : clean
 
 #=============================================================================
