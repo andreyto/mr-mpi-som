@@ -113,18 +113,32 @@ mrsom8/fast:
 .PHONY : mrsom8/fast
 
 # Convenience name for target.
-src/CMakeFiles/som.dir/rule:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/som.dir/rule
-.PHONY : src/CMakeFiles/som.dir/rule
+src/CMakeFiles/mrsom9.dir/rule:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/mrsom9.dir/rule
+.PHONY : src/CMakeFiles/mrsom9.dir/rule
 
 # Convenience name for target.
-som: src/CMakeFiles/som.dir/rule
-.PHONY : som
+mrsom9: src/CMakeFiles/mrsom9.dir/rule
+.PHONY : mrsom9
 
 # fast build rule for target.
-som/fast:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/som.dir/build.make src/CMakeFiles/som.dir/build
-.PHONY : som/fast
+mrsom9/fast:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom9.dir/build.make src/CMakeFiles/mrsom9.dir/build
+.PHONY : mrsom9/fast
+
+# Convenience name for target.
+src/CMakeFiles/som2.dir/rule:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/som2.dir/rule
+.PHONY : src/CMakeFiles/som2.dir/rule
+
+# Convenience name for target.
+som2: src/CMakeFiles/som2.dir/rule
+.PHONY : som2
+
+# fast build rule for target.
+som2/fast:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/som2.dir/build.make src/CMakeFiles/som2.dir/build
+.PHONY : som2/fast
 
 mrsom8.o: mrsom8.cpp.o
 .PHONY : mrsom8.o
@@ -150,29 +164,53 @@ mrsom8.cpp.s:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom8.dir/build.make src/CMakeFiles/mrsom8.dir/mrsom8.cpp.s
 .PHONY : mrsom8.cpp.s
 
-som.o: som.cpp.o
-.PHONY : som.o
+mrsom9.o: mrsom9.cpp.o
+.PHONY : mrsom9.o
 
 # target to build an object file
-som.cpp.o:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/som.dir/build.make src/CMakeFiles/som.dir/som.cpp.o
-.PHONY : som.cpp.o
+mrsom9.cpp.o:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom9.dir/build.make src/CMakeFiles/mrsom9.dir/mrsom9.cpp.o
+.PHONY : mrsom9.cpp.o
 
-som.i: som.cpp.i
-.PHONY : som.i
+mrsom9.i: mrsom9.cpp.i
+.PHONY : mrsom9.i
 
 # target to preprocess a source file
-som.cpp.i:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/som.dir/build.make src/CMakeFiles/som.dir/som.cpp.i
-.PHONY : som.cpp.i
+mrsom9.cpp.i:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom9.dir/build.make src/CMakeFiles/mrsom9.dir/mrsom9.cpp.i
+.PHONY : mrsom9.cpp.i
 
-som.s: som.cpp.s
-.PHONY : som.s
+mrsom9.s: mrsom9.cpp.s
+.PHONY : mrsom9.s
 
 # target to generate assembly for a file
-som.cpp.s:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/som.dir/build.make src/CMakeFiles/som.dir/som.cpp.s
-.PHONY : som.cpp.s
+mrsom9.cpp.s:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom9.dir/build.make src/CMakeFiles/mrsom9.dir/mrsom9.cpp.s
+.PHONY : mrsom9.cpp.s
+
+som2.o: som2.cpp.o
+.PHONY : som2.o
+
+# target to build an object file
+som2.cpp.o:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/som2.dir/build.make src/CMakeFiles/som2.dir/som2.cpp.o
+.PHONY : som2.cpp.o
+
+som2.i: som2.cpp.i
+.PHONY : som2.i
+
+# target to preprocess a source file
+som2.cpp.i:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/som2.dir/build.make src/CMakeFiles/som2.dir/som2.cpp.i
+.PHONY : som2.cpp.i
+
+som2.s: som2.cpp.s
+.PHONY : som2.s
+
+# target to generate assembly for a file
+som2.cpp.s:
+	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/som2.dir/build.make src/CMakeFiles/som2.dir/som2.cpp.s
+.PHONY : som2.cpp.s
 
 # Help Target
 help:
@@ -182,14 +220,18 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... mrsom8"
+	@echo "... mrsom9"
 	@echo "... rebuild_cache"
-	@echo "... som"
+	@echo "... som2"
 	@echo "... mrsom8.o"
 	@echo "... mrsom8.i"
 	@echo "... mrsom8.s"
-	@echo "... som.o"
-	@echo "... som.i"
-	@echo "... som.s"
+	@echo "... mrsom9.o"
+	@echo "... mrsom9.i"
+	@echo "... mrsom9.s"
+	@echo "... som2.o"
+	@echo "... som2.i"
+	@echo "... som2.s"
 .PHONY : help
 
 

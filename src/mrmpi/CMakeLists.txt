@@ -14,3 +14,12 @@
 
 add_library (mrmpi mapreduce.cpp mapreduce.cpp cmapreduce.cpp keyvalue.cpp keymultivalue.cpp spool.cpp irregular.cpp hash.cpp memory.cpp error.cpp) 
 
+#set(CMAKE_BUILD_TYPE Release)
+
+#SET(CMAKE_BUILD_TYPE distribtion)
+#SET(CMAKE_CXX_FLAGS_DISTRIBUTION "-O3")
+#SET(CMAKE_C_FLAGS_DISTRIBUTION "-O3")
+
+SET(CMAKE_BUILD_TYPE Debug)
+SET(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+SET(CMAKE_C_FLAGS_DEBUG -g "-O0")

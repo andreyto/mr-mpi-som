@@ -18,7 +18,14 @@ link_directories(${MRSOM_BINARY_DIR}/mrmpi)
 #SET(ARFLAGS "-rc")
 LINK_DIRECTORIES( ${LINK_DIRECTORIES} ${MRSOM_BINARY_DIR}/mrmpi )
 
-add_executable(som som.cpp)
+#add_executable(som som.cpp)
+
+add_executable(som2 som2.cpp)
+
+#if(CMAKE_COMPILER_IS_GNUCXX)
+    #set(CMAKE_CXX_FLAGS "-O2")        ## Optimize
+    ##set(CMAKE_EXE_LINKER_FLAGS "-s")  ## Strip binary
+#endif()
 
 #add_executable(mrsom mrsom.cpp)
 #target_link_libraries(mrsom mpi)  
@@ -92,5 +99,22 @@ target_link_libraries(mrsom8 boost_filesystem)
 #target_link_libraries(mrsom8 boost_iostreams-gcc44-mt)
 #target_link_libraries(mrsom8 boost_filesystem-gcc44-mt)
 
+# 12.06.2010 MPI_reduce
+add_executable(mrsom9 mrsom9.cpp)
+target_link_libraries(mrsom9 mpi)  
+target_link_libraries(mrsom9 mrmpi)
+target_link_libraries(mrsom9 boost_iostreams)
+target_link_libraries(mrsom9 boost_filesystem)
+# For Ranger
+#target_link_libraries(mrsom9 boost_iostreams-gcc44-mt)
+#target_link_libraries(mrsom9 boost_filesystem-gcc44-mt)
 
+#set(CMAKE_BUILD_TYPE Release)
 
+SET(CMAKE_BUILD_TYPE distribtion)
+SET(CMAKE_CXX_FLAGS_DISTRIBUTION "-O3")
+SET(CMAKE_C_FLAGS_DISTRIBUTION "-O3")
+
+#SET(CMAKE_BUILD_TYPE Debug)
+#SET(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+#SET(CMAKE_C_FLAGS_DEBUG -g "-O0")

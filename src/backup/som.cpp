@@ -28,6 +28,7 @@
 #include <math.h>
 #include <assert.h>
 #include <sys/time.h>
+#include <string.h>
 
 #include <vector>
 #include <iostream>
