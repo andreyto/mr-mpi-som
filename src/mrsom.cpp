@@ -1,6 +1,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 //
-//  Parallelizing SOM on MR-MPI
+//  Parallelizing Batch SOM on MR-MPI
 //
 //  Author: Seung-Jin Sul
 //          (ssul@jcvi.org)
@@ -121,36 +121,26 @@ unsigned int MYID;
 string OUTPREFIX;
 
 /// MR-MPI fuctions and related functions
-//void    mr_train_batch(int itask, KeyValue* kv, void* ptr);
 void    mpireduce_train_batch(int itask, KeyValue* kv, void* ptr);
-void    mr_sum(char* key, int keybytes, char* multivalue, int nvalues, 
-            int* valuebytes, KeyValue* kv, void* ptr);
-void    mr_update_weight(uint64_t itask, char* key, int keybytes, char* value, 
-            int valuebytes, KeyValue* kv, void* ptr);
-
 void    get_bmu_coord(int* p, int itask, uint64_t n);
 float   get_distance(size_t som_y, size_t som_x, int itask, size_t row, 
             unsigned int distance_metric);
- 
-/// Save U-matrix
-int     save_umat(char* fname);
-
-/// To make result file name with date
 float   get_distance(const FLOAT_T* vec1, const FLOAT_T* vec2, 
             unsigned int distance_metric);
 float*  get_wvec(size_t somy, size_t somx);
+ 
+/// Save U-matrix
+int     save_umat(char* fname);
 
 /// Classification
 void    classify(const FLOAT_T* vec, int* p);
 float   get_distance(size_t somy, size_t somx, const FLOAT_T* vec, 
             unsigned int distance_metric);
 
-////////////////////////////////////////////////////////////////////////////////
+/* -------------------------------------------------------------------------- */
 int main(int argc, char** argv)
+/* -------------------------------------------------------------------------- */
 {    
- 
-    double realstarttime = clock();
-    
     ///    
     /// Read conf file, mrblast.ini and set parameters
     ///
@@ -415,13 +405,11 @@ int main(int argc, char** argv)
     mr->timer = 0;
     mr->mapstyle = 0;       /// chunk. NOTE: MPI_reduce() does not work with 
                             /// master/slave mode
-    //mr->mapstyle = 2;       /// master/slave mode
     mr->memsize = SZPAGE;   /// page size
     mr->keyalign = 8;       /// default: key type = uint_64t = 8 bytes
     
     MPI_Barrier(MPI_COMM_WORLD);
     prog_start = MPI_Wtime();
-    double progstarttime = clock();
     
     ///
     /// Parameters for SOM
@@ -545,9 +533,6 @@ int main(int argc, char** argv)
     MMAPFILE.close();
     delete mr;
     
-    
-    
-    //cout << "MPI startup time is " << (double)((progstarttime - realstarttime) / CLOCKS_PER_SEC) << endl;
     profile_time = MPI_Wtime() - profile_time;
     if (MYID == 0) {
         cerr << "Total Execution Time: " << profile_time << endl;
@@ -770,76 +755,8 @@ float get_distance(size_t somy, size_t somx, const float* vec, unsigned int dist
         return sqrt(distance);
     }
 }
-
-/** User-defined Reduce function - Sum numer and denom
- * (Qid,DBid) key into Qid for further aggregating.
- * @param key
- * @param keybytes
- * @param multivalue: collected blast result strings.  
- * @param nvalues
- * @param valuebytes
- * @param kv
- * @param ptr
- */
-
-void mr_sum(char* key, int keybytes, char* multivalue, int nvalues, int* valuebytes, 
-            KeyValue* kv, void* ptr)
-{   
-    /// Check if there is KMV overflow
-    assert(multivalue != NULL && nvalues != 0);
-    
-    FLOAT_T newUpdate[NDIMEN+1];
-    FLOAT_T numer = 0.0;
-    size_t i = 0;
-    for (; i < NDIMEN; i++) {
-        numer = 0.0;
-        for (size_t n = 0; n < nvalues; n++) { 
-            numer += *((FLOAT_T*)multivalue + i + n*(NDIMEN+1));            
-        }
-        newUpdate[i] = numer;
-    }
-    FLOAT_T denom = 0.0;
-    for (size_t n = 0; n < nvalues; n++)
-        denom += *((FLOAT_T*)multivalue + NDIMEN + n*(NDIMEN+1));
-    newUpdate[i] = denom;
-    
-    kv->add(key, sizeof(uint64_t), (char*)newUpdate, (NDIMEN+1)*SZFLOAT);           
-}
  
-
-/** Update CODEBOOK numer and denom
- * key into Qid for further aggregating.
- * @param itask
- * @param key
- * @param keybytes
- * @param value
- * @param valuebytes
- * @param kv
- * @param ptr
- */
- 
-void mr_update_weight(uint64_t itask, char* key, int keybytes, char* value,
-                      int valuebytes, KeyValue* kv, void* ptr)
-{
-    uint64_t iKey = *((uint64_t *)key);
-    unsigned int row = iKey/SOM_X;
-    unsigned int col = iKey%SOM_X;
-        
-    FLOAT_T finalDenom = *((FLOAT_T*)value + NDIMEN);
-    
-    if (finalDenom != 0) {
-        for (size_t i = 0; i < NDIMEN; i++) {
-            FLOAT_T aNumer = *((FLOAT_T*)value + i);
-            FLOAT_T newWeight = aNumer / finalDenom;
-            /// Should check newWeight > 0.0
-            if (newWeight > 0.0) 
-                CODEBOOK[row][col][i] = newWeight;                           
-        }    
-    }
-}
-
- 
- 
+  
 /** MR-MPI Map function - Get weight vector from CODEBOOK using x, y index
  * @param som_y - y coordinate of a node in the map 
  * @param som_x - x coordinate of a node in the map 
