@@ -78,6 +78,9 @@
 //  v9
 //      12.06.2010      1. conf. file (x,y,d); 2. Save SOM map in tab deliminated
 //                      file; 3. Classifier 
+//
+//      12.29.2010      Boost::program_options for processing config file and
+//                      command line argments.
 //                      
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -134,6 +137,11 @@
 /// For timing
 #include <sys/time.h>
 #include <sys/resource.h>
+double prog_start;
+
+/// Processing command line arguments
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
 
 /// For Boost memory mapped file
 #include <iterator>
@@ -144,6 +152,7 @@ boost::iostreams::mapped_file_source MMAPFILE;      /// Read-only Boost mmap fil
 
 #define FLOAT_T float
 //#define FLOAT_T double
+
 #define SZFLOAT sizeof(FLOAT_T)
 #define MAXSTR 255
 
@@ -152,26 +161,25 @@ boost::iostreams::mapped_file_source MMAPFILE;      /// Read-only Boost mmap fil
 typedef boost::multi_array<FLOAT_T, 3> ARRAY_3D_T;    /// 3D array
 typedef boost::multi_array<FLOAT_T, 2> ARRAY_2D_T;    /// 2D array
 typedef boost::multi_array<FLOAT_T, 1> ARRAY_1D_T;    /// 1D array
-    
-/// For shared_ptr
-//#include <boost/smart_ptr.hpp>
+
+/// Configuration file processing
+#include <boost/config.hpp>
+#include <boost/program_options/detail/config_file.hpp>
+#include <boost/program_options/parsers.hpp>
+namespace pod = boost::program_options::detail;
 
 /// For CODEBOOK
 ARRAY_3D_T CODEBOOK;
-ARRAY_3D_T NUMER;
-ARRAY_2D_T DENOM;
 ARRAY_1D_T NUMER1;
 ARRAY_1D_T DENOM1;
 ARRAY_1D_T NUMER2;
 ARRAY_1D_T DENOM2;
 
-ARRAY_1D_T a1, a2, a3;
-
 using namespace MAPREDUCE_NS;
 using namespace std;
 
-enum DISTTYPE       { EUCL, SOSD, TXCB, ANGL, MHLN };
-enum TRAINORTEST    { TRAIN, TEST };
+enum DISTTYPE       { EUCL, SOSD, TXCB, ANGL, MHLN };   /// distance metrics
+enum TRAINORTEST    { TRAIN, TEST };                    /// running mode
 
 /// GLOBALS
 size_t SOM_X;                 /// Width of SOM MAP 
@@ -182,88 +190,181 @@ uint64_t NVECS = 0;           /// Total num of feature vectors
 uint64_t NVECSPERRANK = 0;    /// Num of feature vectors per task
 FLOAT_T* FDATA = NULL;        /// Feature data
 FLOAT_T R = 0.0;                
+int SZPAGE = 64;              /// Page size (MB), default = 64MB
 unsigned int NEPOCHS;         /// Iterations (=epochs)
 unsigned int DISTOPT = EUCL;  /// Distance metric: 0=EUCL, 1=SOSD, 2=TXCB, 3=ANGL, 4=MHLN
-unsigned int SZPAGE = 64;     /// Page size (MB), default = 64MB
-unsigned int TRAINTEST = 0; 
+unsigned int TRAINORTEST = TRAIN;  
 unsigned int MYID;
+string OUTPREFIX;
 
 /// MR-MPI fuctions and related functions
-void    mr_train_batch(int itask, KeyValue* kv, void* ptr);
+//void    mr_train_batch(int itask, KeyValue* kv, void* ptr);
 void    mpireduce_train_batch(int itask, KeyValue* kv, void* ptr);
-void    mr_sum(char* key, int keybytes, char* multivalue, int nvalues, int* valuebytes, KeyValue* kv, void* ptr);
-void    mr_update_weight(uint64_t itask, char* key, int keybytes, char* value, int valuebytes, KeyValue* kv, void* ptr);
+void    mr_sum(char* key, int keybytes, char* multivalue, int nvalues, 
+            int* valuebytes, KeyValue* kv, void* ptr);
+void    mr_update_weight(uint64_t itask, char* key, int keybytes, char* value, 
+            int valuebytes, KeyValue* kv, void* ptr);
 
 void    get_bmu_coord(int* p, int itask, uint64_t n);
-float   get_distance(size_t som_y, size_t som_x, int itask, size_t row, unsigned int distance_metric);
+float   get_distance(size_t som_y, size_t som_x, int itask, size_t row, 
+            unsigned int distance_metric);
  
 /// Save U-matrix
 int     save_umat(char* fname);
 
 /// To make result file name with date
-float   get_distance(const FLOAT_T* vec1, const FLOAT_T* vec2, unsigned int distance_metric);
+float   get_distance(const FLOAT_T* vec1, const FLOAT_T* vec2, 
+            unsigned int distance_metric);
 float*  get_wvec(size_t somy, size_t somx);
 
 /// Classification
 void    classify(const FLOAT_T* vec, int* p);
-float   get_distance(size_t somy, size_t somx, const FLOAT_T* vec, unsigned int distance_metric);
+float   get_distance(size_t somy, size_t somx, const FLOAT_T* vec, 
+            unsigned int distance_metric);
 
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char** argv)
 {    
-    //#ifdef DEBUG
-    //time_t  t0, t1, t2, t3, accMapWTime=0; 
-    //t0 = time(NULL);
-    //clock_t c0, c1, c2, c3, accMapCTime=0;     
-    //c0 = clock();
-    //#endif
+ 
+    double realstarttime = clock();
     
-    /// Read conf.txt and set the SOMX SOMY and SOMD
-    FILE* confFp = fopen("som_map.conf", "r");
-    if (confFp) {
-        size_t tmp = 0;
-        fscanf(confFp, "%d", &tmp);
-        SOM_X = tmp;
-        fscanf(confFp, "%d", &tmp);
-        SOM_Y = tmp;
-        fscanf(confFp, "%d", &tmp);
-        SOM_D = tmp;
+    ///    
+    /// Read conf file, mrblast.ini and set parameters
+    ///
+    ifstream config("mrsom.ini");
+    if (!config) {
+        cerr << "ERROR: configuration file, mrsom.ini, not found" << endl;
+        return 1;
     }
-    else {
-        cerr << "ERROR: conf file does not exist.\n";
-        exit(0);
-    }
-    fclose(confFp);
     
-    if (argc == 5) {
-        TRAINTEST = TEST;
-        NVECS = atoi(argv[3]);
-        NDIMEN = atoi(argv[4]);
+    /// parameters
+    std::set<std::string> options;
+    std::map<std::string, std::string> parameters;
+    options.insert("*");
+    
+    try {      
+        for (pod::config_file_iterator i(config, options), e ; i != e; ++i) {
+            parameters[i->string_key] = i->value[0];
+        }
+
+        try {   
+            SOM_X = boost::lexical_cast<size_t>(parameters["SOMX"]);
+            SOM_Y = boost::lexical_cast<size_t>(parameters["SOMY"]);
+            SOM_D = boost::lexical_cast<size_t>(parameters["SOMD"]);            
+        }
+        catch(const boost::bad_lexical_cast &) {
+            cerr << "Exception: bad_lexical_cast" << endl;
+        }
     }
-    else if (argc == 7) {         
-        /// syntax: mrsom TRAINING_FILE NEPOCHS NVECS NDIMEN NVECSPERRANK SZPAGE
-        NEPOCHS = atoi(argv[2]);
-        NVECS = atoi(argv[3]);
-        NDIMEN = atoi(argv[4]);
-        NVECSPERRANK = atoi(argv[5]);
-        SZPAGE = atoi(argv[6]);
-    }
-    else {
-        printf("### FOR TRAIN ###\n");
-        printf("    mpirun -np N mrsom FILE NEPOCHS NVECS NDIMEN NVECSPERRANK SZPAGE\n");
-        printf("    FILE         = feature file for training.\n");
-        printf("    NEPOCHS      = number of iterations.\n");
-        printf("    NVECS        = number of feature vectors.\n");
-        printf("    NDIMEN       = number of dimensionality of feature vector.\n");
-        printf("    NVECSPERRANK = num vectors per task.\n");
-        printf("    SZPAGE       = page size (MB).\n");
-        printf("\n### FOR TESTING ###\n");
-        printf("    mrsom FILE SOM_MAP_FILE\n");
-        printf("    FILE         = feature file for testing.\n");
-        printf("    SOM_MAP_FILE = output som map file from training.\n");
-        exit(0);
+    catch(exception& e) {
+        cerr<< "Exception: " << e.what() << endl;
     }
         
+    po::options_description desc("Allowed options");
+    desc.add_options() 
+        ("help", "print help message")
+        ("mode,m", po::value<string>(), 
+            "set train/test mode, \"train or test\"")
+        ("infile,i", po::value<string>(), 
+            "set input train/test feature vector file name")
+        ("outfile,o", po::value<string>(&OUTPREFIX)->default_value("result"), 
+            "set a prefix for outout file name")
+        ("nepochs,e", po::value<unsigned int>(), "set the number of iterations")
+        ("nvecs,n", po::value<unsigned int>(), 
+            "set the number of feature vectors")
+        ("ndim,d", po::value<unsigned int>(), 
+            "set the number of dimension of input feature vector")
+        ("block-size,b", po::value<unsigned int>(), 
+            "set the number of feature vectors per worker")
+        ("codebook,c", po::value<string>(), 
+            "[For testing] set codebook file name")
+        ("page-size,p", po::value<int>(&SZPAGE)->default_value(64), 
+            "[OPTIONAL] set page size of MR-MPI (default=64MB)")
+    ;
+    
+    po::variables_map vm;
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm); 
+        
+    string inFileName, somMapFileName;
+    string ex = "Examples\n\n";
+        ex += "  - To convert txt to bin: ../build/src/txt2bin rgbs.txt rgbs.bin 3 28\n";
+        ex += "  - To train: mpirun -np 4 mrsom -m train ";
+        ex += "-i rgbs.bin -o rgbs -e 10 -n 28 -d 3 -b 7\n";
+        ex += "  - To test: mrsom -m test -c rgbs-codebook.txt -i rgbs.txt ";
+        ex += "-o rgbs -d 3 -n 10 \n\n";
+    
+    if (argc < 2 || (!strcmp(argv[1], "-?") || !strcmp(argv[1], "--?") 
+        || !strcmp(argv[1], "/?") || !strcmp(argv[1], "/h") 
+        || !strcmp(argv[1], "-h") || !strcmp(argv[1], "--h") 
+        || !strcmp(argv[1], "--help") || !strcmp(argv[1], "/help") 
+        || !strcmp(argv[1], "-help")  || !strcmp(argv[1], "help") )) {
+       cout << "MR-MPI Batch SOM\n"
+        << "\nAuthor: Seung-Jin Sul (ssul@jcvi.org)\n\n"
+        << desc << "\n" << ex;
+        
+       return 1;
+    }
+    else {
+        if (vm.count("mode")) {
+            string trainOrTest = vm["mode"].as<string>();
+            if (trainOrTest.compare("train")) TRAINORTEST = TEST;
+            else if (trainOrTest.compare("test")) TRAINORTEST = TRAIN;
+            else {
+                cerr << "ERROR: the mode should be 'train' or 'test'\n";
+                return 1;
+            }
+            if (vm.count("infile")) inFileName = vm["infile"].as<string>();
+            else {
+                cout << desc << "\n" << ex;
+                return 1;
+            }    
+            if (vm.count("outfile")) OUTPREFIX = vm["outfile"].as<string>();
+            if (vm.count("nvecs")) NVECS = vm["nvecs"].as<unsigned int>();
+            else {
+                cout << desc << "\n" << ex;
+                return 1;
+            }
+            if (vm.count("ndim")) NDIMEN = vm["ndim"].as<unsigned int>();
+            else {
+                cout << desc << "\n" << ex;
+                return 1;
+            }  
+            if (vm.count("page-size")) SZPAGE = vm["page-size"].as<int>();
+                        
+            if (TRAINORTEST == TRAIN) {
+                
+                if (vm.count("nepochs")) 
+                    NEPOCHS = vm["nepochs"].as<unsigned int>();
+                else {
+                    cout << desc << "\n" << ex;
+                    return 1;
+                }
+                if (vm.count("block-size")) {
+                    NVECSPERRANK = vm["block-size"].as<unsigned int>();
+                    int ncores = 4;
+                    /// NOTE: should be upgraded.
+                    if (NVECS % (NVECSPERRANK * ncores)) {
+                        cerr << "ERROR: should ((nvecs) % (block-size * ncores)) be 0\n";
+                        return 1;
+                    }
+                }
+                else {
+                    cout << desc << "\n" << ex;
+                    return 1;
+                }
+            }
+            else {
+                if (vm.count("codebook")) 
+                    somMapFileName = vm["codebook"].as<string>();
+                else {
+                    cout << desc << "\n" << ex;
+                    return 1;
+                }
+            }
+        }        
+    }
+    
     /// 
     /// Codebook
     ///
@@ -272,13 +373,15 @@ int main(int argc, char** argv)
     DENOM1.resize(boost::extents[SOM_Y*SOM_X]);
     NUMER2.resize(boost::extents[SOM_Y*SOM_X*NDIMEN]);
     DENOM2.resize(boost::extents[SOM_Y*SOM_X]);
-    
- 
+                
     ///
     /// TESTING MODE
     ///
-    if (TRAINTEST) {
-        FILE* somMapFile = fopen(argv[2], "r");
+    if (TRAINORTEST == TEST) {
+        ///
+        /// Load codebook
+        ///
+        FILE* somMapFile = fopen(somMapFileName.c_str(), "r");
         if (somMapFile) {
             for (size_t y = 0; y < SOM_Y; y++) { 
                 for (size_t x = 0; x < SOM_X; x++) { 
@@ -291,17 +394,18 @@ int main(int argc, char** argv)
             }
         }
         else {
-            cerr << "ERROR: som map file does not exist.\n";
+            cerr << "ERROR: codebook file does not exist.\n";
             exit(0);
         }
         fclose(somMapFile);
-        
+                
         ///
         /// Classification: get the coords of the trained SOM MAP for new 
         /// vectors for testing.
         ///
-        FILE* testingFile = fopen(argv[1], "r");            
-        FILE* classOutFile = fopen("result-class.txt", "w");
+        FILE* testingFile = fopen(inFileName.c_str(), "r");      
+        string classFileName = OUTPREFIX + "-class.txt";
+        FILE* classOutFile = fopen(classFileName.c_str(), "w");
         FLOAT_T vec[NDIMEN];
         int p[SOM_D];
         if (classOutFile && testingFile) {
@@ -311,8 +415,10 @@ int main(int argc, char** argv)
                     fscanf(testingFile, "%f", &tmp); 
                     vec[d] = tmp;
                 }
+                /////////////////
                 classify(vec, p);
-                fprintf(classOutFile, "%d\t%d\n", p[0], p[1]); /// NOTE: somx, somy
+                /////////////////
+                fprintf(classOutFile, "%d\t%d\n", p[0], p[1]); /// somx,somy
             }
         }
         else {
@@ -325,7 +431,7 @@ int main(int argc, char** argv)
         
         return 0;
     }
-        
+             
     ///
     /// Fill initial random weights
     ///
@@ -343,11 +449,11 @@ int main(int argc, char** argv)
     ///
     /// Creat memory-mapped file for feature vectors
     ///
-    const std::string path(argv[1]);
-    unsigned long int real_file_size_ = boost::filesystem::file_size(path);
-    MMAPFILE.open(path, real_file_size_, 0);
+    //const std::string path(argv[1]);
+    unsigned long int real_file_size_ = boost::filesystem::file_size(inFileName);
+    MMAPFILE.open(inFileName, real_file_size_, 0);
     if (!MMAPFILE.is_open()) {
-        cerr << "### ERROR: failed to create mmap file\n";
+        cerr << "ERROR: failed to create mmap file\n";
         MPI_Finalize();
         exit(1);
     }
@@ -362,9 +468,9 @@ int main(int argc, char** argv)
     MPI_Comm_rank(MPI_COMM_WORLD, &MPI_myId);
     MPI_Comm_size(MPI_COMM_WORLD, &MPI_nProcs);
     MPI_Get_processor_name(MPI_procName, &MPI_length);
-    fprintf(stdout, "### INFO: [Rank %d] %s \n", MPI_myId, MPI_procName);
     
     MPI_Barrier(MPI_COMM_WORLD); 
+    double profile_time = MPI_Wtime();
     
     /// 
     /// MR-MPI
@@ -391,6 +497,8 @@ int main(int argc, char** argv)
     mr->keyalign = 8;       /// default: key type = uint_64t = 8 bytes
     
     MPI_Barrier(MPI_COMM_WORLD);
+    prog_start = MPI_Wtime();
+    double progstarttime = clock();
     
     ///
     /// Parameters for SOM
@@ -400,9 +508,8 @@ int main(int argc, char** argv)
     float R0;
     R0 = SOM_X / 2.0f;              /// init radius for updating neighbors
     R = R0;
-    unsigned int x = 0;                      /// 0...N-1
+    unsigned int x = 0;             /// 0...N-1
     MYID = MPI_myId;
-    
     FDATA = reinterpret_cast<float*>((char*)MMAPFILE.data());
         
     ///
@@ -412,36 +519,19 @@ int main(int argc, char** argv)
         if (MPI_myId == 0) {
             R = R0 * exp(-10.0f * (x * x) / (N * N));
             x++;
-            printf("### BATCH-  epoch: %d   R: %.2f \n", (NEPOCHS - 1), R);
+            printf("BATCH-  epoch: %d   R: %.2f \n", (NEPOCHS - 1), R);
         }
-
         
         MPI_Bcast(&R, 1, MPI_FLOAT, 0, MPI_COMM_WORLD);
         
-        //time_t  t0, t1, t2, t3, accMapWTime=0; 
-        //t0 = time(NULL);
-        //clock_t c0, c1, c2, c3, accMapCTime=0;     
-        //c0 = clock();
+ 
         if (SZFLOAT == 4) 
-            MPI_Bcast((void*)CODEBOOK.data(), SOM_Y*SOM_X*NDIMEN, MPI_FLOAT, 0, MPI_COMM_WORLD);          
+            MPI_Bcast((void*)CODEBOOK.data(), SOM_Y*SOM_X*NDIMEN, MPI_FLOAT, 
+                0, MPI_COMM_WORLD);          
         else if (SZFLOAT == 8)
-            MPI_Bcast((void*)CODEBOOK.data(), SOM_Y*SOM_X*NDIMEN, MPI_DOUBLE, 0, MPI_COMM_WORLD);          
-        //t1 = time(NULL);
-        //c1 = clock();
-        //printf ("### TIME: rank,totalRuntime,totalClock,%d,%ld,%.2f\n", 
-            //MPI_myId, 
-            //(long) (t1 - t0),
-            //(double) (c1 - c0) / CLOCKS_PER_SEC);
-    
-        /// 
-        /// 1. map: Each worker loads its feature vector and add 
-        /// <(somy, somx, d), (numer, denom)> into KV
-        /// 2. collate: collect same key
-        /// 3. reduce: compute sum of numer and denom
-        /// 4. map: compute new weight and upadte CODEBOOK
-        ///
-            
-        /// v7, 8. using Boost mmaped file
+            MPI_Bcast((void*)CODEBOOK.data(), SOM_Y*SOM_X*NDIMEN, MPI_DOUBLE, 
+                0, MPI_COMM_WORLD);          
+ 
         uint64_t nmap = NVECS / NVECSPERRANK;
         
         /// v9 using MPI_reduce
@@ -468,8 +558,10 @@ int main(int argc, char** argv)
                 for (size_t som_x = 0; som_x < SOM_X; som_x++) {
                     FLOAT_T denom = DENOM2[som_y*SOM_X + som_x];
                     for (size_t d = 0; d < NDIMEN; d++) {
-                        FLOAT_T newWeight = NUMER2[som_y*SOM_X*NDIMEN + som_x*NDIMEN + d] / denom;
-                        if (newWeight > 0.0) CODEBOOK[som_y][som_x][d] = newWeight;
+                        FLOAT_T newWeight = NUMER2[som_y*SOM_X*NDIMEN 
+                                            + som_x*NDIMEN + d] / denom;
+                        if (newWeight > 0.0) 
+                            CODEBOOK[som_y][som_x][d] = newWeight;
                     }
                 }
             }
@@ -485,53 +577,30 @@ int main(int argc, char** argv)
     /// Save SOM map and u-mat
     ///
     if (MPI_myId == 0) {
-        printf("### Saving SOM map and U-Matrix...\n");
-        char* outFileName = "result-umat.txt";
-        cout << "    Saving U-mat file = " << outFileName << endl; 
-        int ret = save_umat(outFileName);
+        ///
+        /// Save U-mat
+        ///
+        printf("INFO: Saving SOM map and U-Matrix...\n");
+        string umatFileName = OUTPREFIX + "-umat.txt";
+        cout << "    Saving U-mat file = " << umatFileName << endl; 
+        int ret = save_umat((char*)umatFileName.c_str());
         if (ret < 0) 
             printf("    Failed to save u-matrix. !\n");
         else {
             printf("    Done (1) !\n");
-        }
-        
+        }        
+        string cmd = "python ./show.py " + umatFileName + " " 
+            + OUTPREFIX + ".png";
+        system((char*)cmd.c_str());
+         
         ///
-        /// Save SOM map for umat tool
-        /// Usage: /tools/umat -cin result.map > result.eps
+        /// Save codebook
         ///
-        char* outFileName2 = "result-map.txt";  
-        cout << "    MAP file = " << outFileName2 << endl;       
-        ofstream mapFile(outFileName2);
-        printf("    Saving SOM map...\n");
         char temp[80];
-        if (mapFile.is_open()) {
-            mapFile << NDIMEN << " rect " << SOM_X << " " << SOM_Y << endl;
-            for (size_t som_y = 0; som_y < SOM_Y; som_y++) { 
-                for (size_t som_x = 0; som_x < SOM_X; som_x++) { 
-                    for (size_t d = 0; d < NDIMEN; d++) {
-                        sprintf(temp, "%0.10f", CODEBOOK[som_y][som_x][d]);
-                        mapFile << temp << "\t";
-                    }
-                    mapFile << endl;
-                }
-            }
-            mapFile.close();
-            printf("    Done (2) !\n");
-        }
-        else printf("    Fail to open file (2). !\n");
-        
-        string cmd = "python ./show2.py " + string(outFileName);
-        system((char*)cmd.c_str());
-        cmd = "./umat -cin " + string(outFileName2) + " > test.eps";
-        system((char*)cmd.c_str());
-        
-        ///
-        /// For TESTING
-        ///
-        char* outFileName3 = "result-map2.txt";  
-        cout << "    MAP file = " << outFileName3 << endl;       
-        ofstream mapFile2(outFileName3);
-        printf("    Saving SOM map...\n");
+        string cbFileName = OUTPREFIX + "-codebook.txt";
+        cout << "    Codebook file = " << cbFileName << endl;       
+        ofstream mapFile2(cbFileName.c_str());
+        printf("    Saving Codebook...\n");
         if (mapFile2.is_open()) {
             for (size_t som_y = 0; som_y < SOM_Y; som_y++) { 
                 for (size_t som_x = 0; som_x < SOM_X; som_x++) { 
@@ -543,100 +612,34 @@ int main(int argc, char** argv)
                 mapFile2 << endl;
             }
             mapFile2.close();
-            printf("    Done (3) !\n");
+            printf("    Done (2) !\n");
         }
-        else printf("    Fail to open file (3). !\n");
+        else printf("    Fail to open file (2). !\n");
     }
     MPI_Barrier(MPI_COMM_WORLD);
     
+    
     MMAPFILE.close();
     delete mr;
+    
+    
+    
+    //cout << "MPI startup time is " << (double)((progstarttime - realstarttime) / CLOCKS_PER_SEC) << endl;
+    profile_time = MPI_Wtime() - profile_time;
+    if (MYID == 0) {
+        cerr << "Total Execution Time: " << profile_time << endl;
+    }
+    
+    
+    
     MPI_Finalize();
 
-    //t1 = time(NULL);
-    //c1 = clock();
-    //printf ("### TIME: rank,totalRuntime,totalClock,%d,%ld,%.2f\n", 
-        //MPI_myId, 
-        //(long) (t1 - t0),
-        //(double) (c1 - c0) / CLOCKS_PER_SEC);
-    
-    /// CPU time 
-    struct rusage a;
-    if (getrusage(RUSAGE_SELF, &a) == -1) {
-        cerr << "Fatal error: getrusage failed.\n";
-        exit(2);
-    }
-    cout << "    Total CPU time: " << a.ru_utime.tv_sec + a.ru_stime.tv_sec << " sec and ";
-    cout << a.ru_utime.tv_usec + a.ru_stime.tv_usec << " usec.\n";
-    
+ 
     
     return 0;
 }
  
-/** MR-MPI user-defined map function - batch training2
- * @param itask - #task
- * @param kv
- * @param ptr
- */
- 
-void mr_train_batch(int itask, KeyValue* kv, void* ptr)
-{       
-    int p1[SOM_D];
-    int p2[SOM_D];
-        
-    /// v2 - init numer and denom
-    for (size_t som_y = 0; som_y < SOM_Y; som_y++) {
-        for (size_t som_x = 0; som_x < SOM_X; som_x++) {
-            DENOM[som_y][som_x] = 0.0;
-            for (size_t d = 0; d < NDIMEN; d++) 
-                NUMER[som_y][som_x][d] = 0.0;
-        }
-    }
-    
-    for (uint64_t n = 0; n < NVECSPERRANK; n++) {
-        
-        /// get the best matching unit
-        get_bmu_coord(p1, itask, n);
-            
-        /// Accumulate denoms and numers
-        for (size_t som_y = 0; som_y < SOM_Y; som_y++) { 
-            for (size_t som_x = 0; som_x < SOM_X; som_x++) {
-                p2[0] = som_x;
-                p2[1] = som_y;
-                float dist = 0.0f;
-                for (size_t p = 0; p < SOM_D; p++)
-                    dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
-                dist = sqrt(dist);
-                
-                float neighbor_fuct = 0.0f;
-                neighbor_fuct = exp(-(1.0f * dist * dist) / (R * R));
-                
-                for (size_t d = 0; d < NDIMEN; d++) {
-                    NUMER[som_y][som_x][d] += 
-                        1.0f * neighbor_fuct * (*((FDATA + itask*NDIMEN*NVECSPERRANK) + n*NDIMEN + d));
-                }
-                DENOM[som_y][som_x] += neighbor_fuct;
-            }
-        }        
-    }     
-    
-    ///
-    /// Make FLOAT_T upate[NDIMEN+1] for NDIMEN numerator values one denominator
-    /// value and add to KV
-    ///
-    FLOAT_T update[NDIMEN+1];
-    for (size_t som_y = 0; som_y < SOM_Y; som_y++) { 
-        for (size_t som_x = 0; som_x < SOM_X; som_x++) {
-            uint64_t iKey = som_y*SOM_X + som_x;
-            size_t i = 0;
-            for (; i < NDIMEN; i++) 
-                update[i] = NUMER[som_y][som_x][i];
-            update[i] = DENOM[som_y][som_x];
-            
-            kv->add((char*)&iKey, sizeof(uint64_t), (char*)update, (NDIMEN+1)*SZFLOAT);    
-        }
-    }
-}
+
      
 /** MR-MPI user-defined map function - batch training with MPI_reduce()
  * @param itask - number of work items
@@ -678,7 +681,8 @@ void mpireduce_train_batch(int itask, KeyValue* kv, void* ptr)
                 
                 for (size_t d = 0; d < NDIMEN; d++) {
                     NUMER1[som_y*SOM_X*NDIMEN + som_x*NDIMEN + d] += 
-                        1.0f * neighbor_fuct * (*((FDATA + itask*NDIMEN*NVECSPERRANK) + n*NDIMEN + d));
+                        1.0f * neighbor_fuct 
+                        * (*((FDATA + itask*NDIMEN*NVECSPERRANK) + n*NDIMEN + d));
                 }
                 DENOM1[som_y*SOM_X + som_x] += neighbor_fuct;
             }
@@ -686,12 +690,16 @@ void mpireduce_train_batch(int itask, KeyValue* kv, void* ptr)
     }     
        
     if (SZFLOAT == 4) { /// 4 bytes float
-        MPI_Reduce((void*)NUMER1.data(), (void*)NUMER2.data(), SOM_Y*SOM_X*NDIMEN, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce((void*)DENOM1.data(), (void*)DENOM2.data(), SOM_Y*SOM_X, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);  
+        MPI_Reduce((void*)NUMER1.data(), (void*)NUMER2.data(), 
+            SOM_Y*SOM_X*NDIMEN, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce((void*)DENOM1.data(), (void*)DENOM2.data(), 
+            SOM_Y*SOM_X, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);  
     }
     else if (SZFLOAT == 8) { /// 8 bytes double
-        MPI_Reduce((void*)NUMER1.data(), (void*)NUMER2.data(), SOM_Y*SOM_X*NDIMEN, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce((void*)DENOM1.data(), (void*)DENOM2.data(), SOM_Y*SOM_X, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);       
+        MPI_Reduce((void*)NUMER1.data(), (void*)NUMER2.data(), 
+            SOM_Y*SOM_X*NDIMEN, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce((void*)DENOM1.data(), (void*)DENOM2.data(), 
+            SOM_Y*SOM_X, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);       
     }
 }
      
@@ -734,7 +742,8 @@ void get_bmu_coord(int* coords, int itask, uint64_t n)
  * @param distance_metric
  */
 
-float get_distance(size_t som_y, size_t som_x, int itask, size_t r, unsigned int distance_metric)
+float get_distance(size_t som_y, size_t som_x, int itask, size_t r, 
+    unsigned int distance_metric)
 {
     float distance = 0.0f;
     //float n1 = 0.0f, n2 = 0.0f;
@@ -742,9 +751,11 @@ float get_distance(size_t som_y, size_t som_x, int itask, size_t r, unsigned int
     default:
     case 0: /// EUCLIDIAN
         for (size_t d = 0; d < NDIMEN; d++)
-            distance += (CODEBOOK[som_y][som_x][d] - *((FDATA + itask*NDIMEN*NVECSPERRANK) + r*NDIMEN + d))
+            distance += (CODEBOOK[som_y][som_x][d] - 
+                        *((FDATA + itask*NDIMEN*NVECSPERRANK) + r*NDIMEN + d))
                         *
-                        (CODEBOOK[som_y][som_x][d] - *((FDATA + itask*NDIMEN*NVECSPERRANK) + r*NDIMEN + d));
+                        (CODEBOOK[som_y][som_x][d] - 
+                        *((FDATA + itask*NDIMEN*NVECSPERRANK) + r*NDIMEN + d));
                     
         return sqrt(distance);
     //case 1: /// SOSD: //SUM OF SQUARED DISTANCES
@@ -831,7 +842,8 @@ float get_distance(size_t somy, size_t somx, const float* vec, unsigned int dist
     default:
     case 0: /// EUCLIDIAN
         for (size_t d = 0; d < NDIMEN; d++)
-            distance += (vec[d] - CODEBOOK[somy][somx][d]) * (vec[d] - CODEBOOK[somy][somx][d]);
+            distance += (vec[d] - CODEBOOK[somy][somx][d]) 
+                      * (vec[d] - CODEBOOK[somy][somx][d]);
         return sqrt(distance);
     }
 }
@@ -934,7 +946,7 @@ int save_umat(char* fname)
             for (size_t som_x1 = 0; som_x1 < SOM_X; som_x1++) {
                 float dist = 0.0f;
                 unsigned int nodes_number = 0;
-                 int coords1[2];
+                int coords1[2];
                 coords1[0] = som_x1;
                 coords1[1] = som_y1;               
                 
@@ -972,7 +984,6 @@ int save_umat(char* fname)
     else
         return -2;
 }
- 
  
  
 

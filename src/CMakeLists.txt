@@ -114,6 +114,9 @@ target_link_libraries(mrsom mpi)
 target_link_libraries(mrsom mrmpi)
 target_link_libraries(mrsom boost_iostreams)
 target_link_libraries(mrsom boost_filesystem)
+target_link_libraries(mrsom boost_program_options)
+
+add_executable(txt2bin txt2bin.cpp)
 
 #set(CMAKE_BUILD_TYPE Release)
 

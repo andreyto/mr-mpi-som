@@ -54,7 +54,7 @@ class KeyValue {
   void add(int, char *, int *, char *, int *);
 
   void print(int, int, int);
-  void print(int, int, int, size_t); ///SSJ
+  
 
  private:
   MapReduce *mr;

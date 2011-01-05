@@ -112,6 +112,19 @@ mrsom/fast:
 .PHONY : mrsom/fast
 
 #=============================================================================
+# Target rules for targets named txt2bin
+
+# Build rule for target.
+txt2bin: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 txt2bin
+.PHONY : txt2bin
+
+# fast build rule for target.
+txt2bin/fast:
+	$(MAKE) -f src/CMakeFiles/txt2bin.dir/build.make src/CMakeFiles/txt2bin.dir/build
+.PHONY : txt2bin/fast
+
+#=============================================================================
 # Target rules for targets named mrmpi
 
 # Build rule for target.
@@ -133,6 +146,7 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... mrsom"
+	@echo "... txt2bin"
 	@echo "... mrmpi"
 .PHONY : help
 

@@ -14,4 +14,7 @@ build
 build/*
 orig
 orig/*
- 
+test
+test/*
+tools
+tools/*
