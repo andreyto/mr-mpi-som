@@ -116,7 +116,7 @@ target_link_libraries(mrsom boost_iostreams)
 target_link_libraries(mrsom boost_filesystem)
 target_link_libraries(mrsom boost_program_options)
 
-add_executable(txt2bin txt2bin.cpp)
+#add_executable(txt2bin txt2bin.cpp) -> moved to CMakeLists.txt in ./txt2bin
 
 #set(CMAKE_BUILD_TYPE Release)
 

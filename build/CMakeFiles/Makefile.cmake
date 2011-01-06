@@ -13,6 +13,7 @@ SET(CMAKE_MAKEFILE_DEPENDS
   "CMakeFiles/CMakeSystem.cmake"
   "../src/CMakeLists.txt"
   "../src/mrmpi/CMakeLists.txt"
+  "../src/txt2bin/CMakeLists.txt"
   "/home/ssul/work/packages/share/cmake-2.8/Modules/CMakeCInformation.cmake"
   "/home/ssul/work/packages/share/cmake-2.8/Modules/CMakeCXXInformation.cmake"
   "/home/ssul/work/packages/share/cmake-2.8/Modules/CMakeCommonLanguageInclude.cmake"
@@ -55,11 +56,12 @@ SET(CMAKE_MAKEFILE_PRODUCTS
   "CMakeFiles/CMakeDirectoryInformation.cmake"
   "src/CMakeFiles/CMakeDirectoryInformation.cmake"
   "src/mrmpi/CMakeFiles/CMakeDirectoryInformation.cmake"
+  "src/txt2bin/CMakeFiles/CMakeDirectoryInformation.cmake"
   )
 
 # Dependency information for all targets:
 SET(CMAKE_DEPEND_INFO_FILES
   "src/CMakeFiles/mrsom.dir/DependInfo.cmake"
-  "src/CMakeFiles/txt2bin.dir/DependInfo.cmake"
   "src/mrmpi/CMakeFiles/mrmpi.dir/DependInfo.cmake"
+  "src/txt2bin/CMakeFiles/txt2bin.dir/DependInfo.cmake"
   )

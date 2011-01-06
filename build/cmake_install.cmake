@@ -36,6 +36,7 @@ IF(NOT CMAKE_INSTALL_LOCAL_ONLY)
   # Include the install script for each subdirectory.
   INCLUDE("/home/ssul/work/mrsom/MRSOM/build/src/cmake_install.cmake")
   INCLUDE("/home/ssul/work/mrsom/MRSOM/build/src/mrmpi/cmake_install.cmake")
+  INCLUDE("/home/ssul/work/mrsom/MRSOM/build/src/txt2bin/cmake_install.cmake")
 
 ENDIF(NOT CMAKE_INSTALL_LOCAL_ONLY)
 

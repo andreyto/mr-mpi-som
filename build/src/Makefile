@@ -112,20 +112,6 @@ mrsom/fast:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom.dir/build.make src/CMakeFiles/mrsom.dir/build
 .PHONY : mrsom/fast
 
-# Convenience name for target.
-src/CMakeFiles/txt2bin.dir/rule:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/txt2bin.dir/rule
-.PHONY : src/CMakeFiles/txt2bin.dir/rule
-
-# Convenience name for target.
-txt2bin: src/CMakeFiles/txt2bin.dir/rule
-.PHONY : txt2bin
-
-# fast build rule for target.
-txt2bin/fast:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/txt2bin.dir/build.make src/CMakeFiles/txt2bin.dir/build
-.PHONY : txt2bin/fast
-
 mrsom.o: mrsom.cpp.o
 .PHONY : mrsom.o
 
@@ -150,30 +136,6 @@ mrsom.cpp.s:
 	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/mrsom.dir/build.make src/CMakeFiles/mrsom.dir/mrsom.cpp.s
 .PHONY : mrsom.cpp.s
 
-txt2bin.o: txt2bin.cpp.o
-.PHONY : txt2bin.o
-
-# target to build an object file
-txt2bin.cpp.o:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/txt2bin.dir/build.make src/CMakeFiles/txt2bin.dir/txt2bin.cpp.o
-.PHONY : txt2bin.cpp.o
-
-txt2bin.i: txt2bin.cpp.i
-.PHONY : txt2bin.i
-
-# target to preprocess a source file
-txt2bin.cpp.i:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/txt2bin.dir/build.make src/CMakeFiles/txt2bin.dir/txt2bin.cpp.i
-.PHONY : txt2bin.cpp.i
-
-txt2bin.s: txt2bin.cpp.s
-.PHONY : txt2bin.s
-
-# target to generate assembly for a file
-txt2bin.cpp.s:
-	cd /home/ssul/work/mrsom/MRSOM/build && $(MAKE) -f src/CMakeFiles/txt2bin.dir/build.make src/CMakeFiles/txt2bin.dir/txt2bin.cpp.s
-.PHONY : txt2bin.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -183,13 +145,9 @@ help:
 	@echo "... edit_cache"
 	@echo "... mrsom"
 	@echo "... rebuild_cache"
-	@echo "... txt2bin"
 	@echo "... mrsom.o"
 	@echo "... mrsom.i"
 	@echo "... mrsom.s"
-	@echo "... txt2bin.o"
-	@echo "... txt2bin.i"
-	@echo "... txt2bin.s"
 .PHONY : help
 
 

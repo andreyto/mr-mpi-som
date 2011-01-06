@@ -112,19 +112,6 @@ mrsom/fast:
 .PHONY : mrsom/fast
 
 #=============================================================================
-# Target rules for targets named txt2bin
-
-# Build rule for target.
-txt2bin: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 txt2bin
-.PHONY : txt2bin
-
-# fast build rule for target.
-txt2bin/fast:
-	$(MAKE) -f src/CMakeFiles/txt2bin.dir/build.make src/CMakeFiles/txt2bin.dir/build
-.PHONY : txt2bin/fast
-
-#=============================================================================
 # Target rules for targets named mrmpi
 
 # Build rule for target.
@@ -137,6 +124,19 @@ mrmpi/fast:
 	$(MAKE) -f src/mrmpi/CMakeFiles/mrmpi.dir/build.make src/mrmpi/CMakeFiles/mrmpi.dir/build
 .PHONY : mrmpi/fast
 
+#=============================================================================
+# Target rules for targets named txt2bin
+
+# Build rule for target.
+txt2bin: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 txt2bin
+.PHONY : txt2bin
+
+# fast build rule for target.
+txt2bin/fast:
+	$(MAKE) -f src/txt2bin/CMakeFiles/txt2bin.dir/build.make src/txt2bin/CMakeFiles/txt2bin.dir/build
+.PHONY : txt2bin/fast
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -146,8 +146,8 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... mrsom"
-	@echo "... txt2bin"
 	@echo "... mrmpi"
+	@echo "... txt2bin"
 .PHONY : help
 
 

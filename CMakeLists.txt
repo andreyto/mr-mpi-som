@@ -54,7 +54,7 @@ endif (Boost_FOUND)
 
 add_subdirectory(src)
 add_subdirectory(src/mrmpi)
-
+add_subdirectory(src/txt2bin)
 
 #SET(CCFLAGS "-g -Wall -O -I../mrmpi")
 #SET(CMAKE_CXX_FLAGS "-g -Wall ")
