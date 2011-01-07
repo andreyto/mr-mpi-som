@@ -70,8 +70,8 @@ namespace po = boost::program_options;
 #include <iterator>
 #include <boost/iostreams/code_converter.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
-#include <boost/filesystem/operations.hpp>          /// for real file size
-boost::iostreams::mapped_file_source MMAPFILE;      /// Read-only Boost mmap file
+#include <boost/filesystem/operations.hpp>         /// for real file size
+boost::iostreams::mapped_file_source MMAPFILE;     /// Read-only Boost mmap file
 
 #define FLOAT_T float
 //#define FLOAT_T double
@@ -115,7 +115,8 @@ FLOAT_T* FDATA = NULL;        /// Feature data
 FLOAT_T R = 0.0;                
 int SZPAGE = 64;              /// Page size (MB), default = 64MB
 unsigned int NEPOCHS;         /// Iterations (=epochs)
-unsigned int DISTOPT = EUCL;  /// Distance metric: 0=EUCL, 1=SOSD, 2=TXCB, 3=ANGL, 4=MHLN
+unsigned int DISTOPT = EUCL;  /// Distance metric: 
+                              /// 0=EUCL, 1=SOSD, 2=TXCB, 3=ANGL, 4=MHLN
 unsigned int TRAINORTEST = TRAIN;  
 unsigned int MYID;
 string OUTPREFIX;
@@ -173,13 +174,17 @@ int main(int argc, char** argv)
         cerr<< "Exception: " << e.what() << endl;
     }
         
-    po::options_description desc("Allowed options");
-    desc.add_options() 
+    po::options_description generalDesc("General options");
+    generalDesc.add_options() 
         ("help", "print help message")
         ("mode,m", po::value<string>(), 
             "set train/test mode, \"train or test\"")
+    ;
+        
+    po::options_description trainnigDesc("Options for training");
+    trainnigDesc.add_options() 
         ("infile,i", po::value<string>(), 
-            "set input train/test feature vector file name")
+            "set input train feature vector file name")
         ("outfile,o", po::value<string>(&OUTPREFIX)->default_value("result"), 
             "set a prefix for outout file name")
         ("nepochs,e", po::value<unsigned int>(), "set the number of iterations")
@@ -189,23 +194,38 @@ int main(int argc, char** argv)
             "set the number of dimension of input feature vector")
         ("block-size,b", po::value<unsigned int>(), 
             "set the number of feature vectors per worker")
-        ("codebook,c", po::value<string>(), 
-            "[For testing] set codebook file name")
         ("page-size,p", po::value<int>(&SZPAGE)->default_value(64), 
             "[OPTIONAL] set page size of MR-MPI (default=64MB)")
     ;
     
+    po::options_description testingDesc("Options for testing");
+    testingDesc.add_options() 
+        ("codebook,c", po::value<string>(), 
+            "set saved codebook file name")
+        ("infile,i", po::value<string>(), 
+            "set input feature vector file name for testing")
+        ("outfile,o", po::value<string>(&OUTPREFIX)->default_value("result"), 
+            "set a prefix for outout file name")
+        ("nvecs,n", po::value<unsigned int>(), 
+            "set the number of feature vectors")
+        ("ndim,d", po::value<unsigned int>(), 
+            "set the number of dimension of input feature vector")
+    ;
+    
+    po::options_description allDesc("Allowed options");
+    allDesc.add(generalDesc).add(trainnigDesc).add(testingDesc);
+
     po::variables_map vm;
-    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::store(po::parse_command_line(argc, argv, allDesc), vm);
     po::notify(vm); 
         
     string inFileName, somMapFileName;
-    string ex = "Examples\n\n";
-        ex += "  - To convert txt to bin: ../build/src/txt2bin rgbs.txt rgbs.bin 3 28\n";
-        ex += "  - To train: mpirun -np 4 mrsom -m train ";
+    string ex = "Examples\n";
+        ex += "  Converting ASCII file to bin: txt2bin rgbs.txt rgbs.bin 3 28\n";
+        ex += "  Training: mpirun -np 4 mrsom -m train ";
         ex += "-i rgbs.bin -o rgbs -e 10 -n 28 -d 3 -b 7\n";
-        ex += "  - To test: mrsom -m test -c rgbs-codebook.txt -i rgbs.txt ";
-        ex += "-o rgbs -d 3 -n 10 \n\n";
+        ex += "  Testing: mrsom -m test -c rgbs-codebook.txt -i rgbs.txt ";
+        ex += "-o rgbs -n 10 -d 3 \n\n";
     
     if (argc < 2 || (!strcmp(argv[1], "-?") || !strcmp(argv[1], "--?") 
         || !strcmp(argv[1], "/?") || !strcmp(argv[1], "/h") 
@@ -214,7 +234,7 @@ int main(int argc, char** argv)
         || !strcmp(argv[1], "-help")  || !strcmp(argv[1], "help") )) {
        cout << "MR-MPI Batch SOM\n"
         << "\nAuthor: Seung-Jin Sul (ssul@jcvi.org)\n\n"
-        << desc << "\n" << ex;
+        << allDesc << "\n" << ex;
         
        return 1;
     }
@@ -229,18 +249,18 @@ int main(int argc, char** argv)
             }
             if (vm.count("infile")) inFileName = vm["infile"].as<string>();
             else {
-                cout << desc << "\n" << ex;
+                cout << allDesc << "\n" << ex;
                 return 1;
             }    
             if (vm.count("outfile")) OUTPREFIX = vm["outfile"].as<string>();
             if (vm.count("nvecs")) NVECS = vm["nvecs"].as<unsigned int>();
             else {
-                cout << desc << "\n" << ex;
+                cout << allDesc << "\n" << ex;
                 return 1;
             }
             if (vm.count("ndim")) NDIMEN = vm["ndim"].as<unsigned int>();
             else {
-                cout << desc << "\n" << ex;
+                cout << allDesc << "\n" << ex;
                 return 1;
             }  
             if (vm.count("page-size")) SZPAGE = vm["page-size"].as<int>();
@@ -250,7 +270,7 @@ int main(int argc, char** argv)
                 if (vm.count("nepochs")) 
                     NEPOCHS = vm["nepochs"].as<unsigned int>();
                 else {
-                    cout << desc << "\n" << ex;
+                    cout << allDesc << "\n" << ex;
                     return 1;
                 }
                 if (vm.count("block-size")) {
@@ -263,7 +283,7 @@ int main(int argc, char** argv)
                     }
                 }
                 else {
-                    cout << desc << "\n" << ex;
+                    cout << allDesc << "\n" << ex;
                     return 1;
                 }
             }
@@ -271,7 +291,7 @@ int main(int argc, char** argv)
                 if (vm.count("codebook")) 
                     somMapFileName = vm["codebook"].as<string>();
                 else {
-                    cout << desc << "\n" << ex;
+                    cout << allDesc << "\n" << ex;
                     return 1;
                 }
             }
