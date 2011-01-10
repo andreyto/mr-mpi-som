@@ -52,32 +52,28 @@
 #include "mrmpi/keyvalue.h"
 
 #include <math.h>
-#include <assert.h>
  
 /// For save
 #include <fstream>
-
-/// For timing
-#include <sys/time.h>
-#include <sys/resource.h>
-double prog_start;
 
 /// Processing command line arguments
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
 /// For Boost memory mapped file
-#include <iterator>
-#include <boost/iostreams/code_converter.hpp>
 #include <boost/iostreams/device/mapped_file.hpp>
 #include <boost/filesystem/operations.hpp>         /// for real file size
 boost::iostreams::mapped_file_source MMAPFILE;     /// Read-only Boost mmap file
 
 #define FLOAT_T float
 //#define FLOAT_T double
-
 #define SZFLOAT sizeof(FLOAT_T)
 #define MAXSTR 255
+
+/// For syncronized timing
+#ifndef MPI_WTIME_IS_GLOBAL
+#define MPI_WTIME_IS_GLOBAL 1
+#endif
 
 /// For Boost Multidimensional Array
 #include <boost/multi_array.hpp>
@@ -86,9 +82,7 @@ typedef boost::multi_array<FLOAT_T, 2> ARRAY_2D_T;    /// 2D array
 typedef boost::multi_array<FLOAT_T, 1> ARRAY_1D_T;    /// 1D array
 
 /// Configuration file processing
-#include <boost/config.hpp>
 #include <boost/program_options/detail/config_file.hpp>
-#include <boost/program_options/parsers.hpp>
 namespace pod = boost::program_options::detail;
 
 /// For CODEBOOK
@@ -152,8 +146,8 @@ int main(int argc, char** argv)
     }
     
     /// parameters
-    std::set<std::string> options;
-    std::map<std::string, std::string> parameters;
+    set<string> options;
+    map<string, string> parameters;
     options.insert("*");
     
     try {      
@@ -382,9 +376,8 @@ int main(int argc, char** argv)
     ///
     /// Creat memory-mapped file for feature vectors
     ///
-    //const std::string path(argv[1]);
-    unsigned long int real_file_size_ = boost::filesystem::file_size(inFileName);
-    MMAPFILE.open(inFileName, real_file_size_, 0);
+    unsigned long int realFileSize = boost::filesystem::file_size(inFileName);
+    MMAPFILE.open(inFileName, realFileSize, 0);
     if (!MMAPFILE.is_open()) {
         cerr << "ERROR: failed to create mmap file\n";
         MPI_Finalize();
@@ -429,7 +422,6 @@ int main(int argc, char** argv)
     mr->keyalign = 8;       /// default: key type = uint_64t = 8 bytes
     
     MPI_Barrier(MPI_COMM_WORLD);
-    prog_start = MPI_Wtime();
     
     ///
     /// Parameters for SOM
@@ -557,12 +549,8 @@ int main(int argc, char** argv)
     if (MYID == 0) {
         cerr << "Total Execution Time: " << profile_time << endl;
     }
-    
-    
-    
+        
     MPI_Finalize();
-
- 
     
     return 0;
 }
@@ -575,7 +563,9 @@ int main(int argc, char** argv)
  * @param ptr
  */
       
-void mpireduce_train_batch(int itask, KeyValue* kv, void* ptr)
+void mpireduce_train_batch(int itask, 
+                           KeyValue* kv, 
+                           void* ptr)
 {           
     int p1[SOM_D];
     int p2[SOM_D];
@@ -610,7 +600,8 @@ void mpireduce_train_batch(int itask, KeyValue* kv, void* ptr)
                 for (size_t d = 0; d < NDIMEN; d++) {
                     NUMER1[som_y*SOM_X*NDIMEN + som_x*NDIMEN + d] += 
                         1.0f * neighbor_fuct 
-                        * (*((FDATA + itask*NDIMEN*NVECSPERRANK) + n*NDIMEN + d));
+                        * (*((FDATA + itask*NDIMEN*NVECSPERRANK) 
+                        + n*NDIMEN + d));
                 }
                 DENOM1[som_y*SOM_X + som_x] += neighbor_fuct;
             }
@@ -638,7 +629,9 @@ void mpireduce_train_batch(int itask, KeyValue* kv, void* ptr)
  * @param n - row num in the input feature file
  */
  
-void get_bmu_coord(int* coords, int itask, uint64_t n)
+void get_bmu_coord(int* coords, 
+                   int itask, 
+                   uint64_t n)
 { 
     float mindist = 9999.99;
     float dist = 0.0f;
@@ -670,8 +663,11 @@ void get_bmu_coord(int* coords, int itask, uint64_t n)
  * @param distance_metric
  */
 
-float get_distance(size_t som_y, size_t som_x, int itask, size_t r, 
-    unsigned int distance_metric)
+float get_distance(size_t som_y, 
+                   size_t som_x, 
+                   int itask, 
+                   size_t r,
+                   unsigned int distance_metric)
 {
     float distance = 0.0f;
     //float n1 = 0.0f, n2 = 0.0f;
@@ -719,7 +715,9 @@ float get_distance(size_t som_y, size_t som_x, int itask, size_t r,
  * @param distance_metric: 
  */
  
-float get_distance(const float* vec1, const float* vec2, unsigned int distance_metric)
+float get_distance(const float* vec1, 
+                   const float* vec2, 
+                   unsigned int distance_metric)
 {
     float distance = 0.0f;
     float n1 = 0.0f, n2 = 0.0f;
@@ -762,7 +760,10 @@ float get_distance(const float* vec1, const float* vec2, unsigned int distance_m
  * @param distance_metric: 
  */
  
-float get_distance(size_t somy, size_t somx, const float* vec, unsigned int distance_metric)
+float get_distance(size_t somy, 
+                   size_t somx, 
+                   const float* vec, 
+                   unsigned int distance_metric)
 {
     float distance = 0.0f;
     float n1 = 0.0f, n2 = 0.0f;
@@ -782,7 +783,8 @@ float get_distance(size_t somy, size_t somx, const float* vec, unsigned int dist
  * @param som_x - x coordinate of a node in the map 
  */
 
-float* get_wvec(size_t som_y, size_t som_x)
+float* get_wvec(size_t som_y, 
+                size_t som_x)
 {
     FLOAT_T* wvec = (FLOAT_T*)malloc(SZFLOAT * NDIMEN);
     for (size_t d = 0; d < NDIMEN; d++)
@@ -853,7 +855,8 @@ int save_umat(char* fname)
  * @param p
  */
  
-void classify(const FLOAT_T* vec, int* p)
+void classify(const FLOAT_T* vec, 
+              int* p)
 {        
     float mindist = 9999.99;
     float dist = 0.0f;
