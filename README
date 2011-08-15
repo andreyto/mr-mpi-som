@@ -2,4 +2,4 @@
 
 Parallelizing Batch SOM algorithm on MR-MPI
 
-To run examples, please execute /data/run-mrsom.sh
+For the usage, please see ./data/run-mrsom.sh.
