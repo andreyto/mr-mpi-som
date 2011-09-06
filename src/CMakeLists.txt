@@ -13,6 +13,13 @@ target_link_libraries(mrsom boost_program_options)
 #target_link_libraries(mrsom9 boost_filesystem-gcc44-mt)
 #target_link_libraries(mrsom boost_program_options-gcc44-mt)
 
+add_executable(mrsom-sparse mrsom-sparse.cpp)
+target_link_libraries(mrsom-sparse mpi)  
+target_link_libraries(mrsom-sparse mrmpi)
+target_link_libraries(mrsom-sparse boost_iostreams)
+target_link_libraries(mrsom-sparse boost_filesystem)
+target_link_libraries(mrsom-sparse boost_program_options)
+
 #set(CMAKE_BUILD_TYPE Release)
 SET(CMAKE_BUILD_TYPE distribtion)
 SET(CMAKE_CXX_FLAGS_DISTRIBUTION "-O3")

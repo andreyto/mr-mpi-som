@@ -35,7 +35,7 @@ endif (MPI_FOUND)
 # Search for Boost ###########################
 
 # To specify user-defined Boost lib location,
-#set(BOOST_ROOT "/home/ssul/work/distros2/boost/boost_1_45_0")
+set(BOOST_ROOT "/home/ssul/work/distros2/boost/boost_1_45_0")
 
 find_package( Boost REQUIRED )
 
