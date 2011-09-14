@@ -1,5 +1,0 @@
-# MRSOM #
-
-Parallelizing Batch SOM algorithm on MR-MPI
-
-For the usage, please see ./data/run-mrsom.sh.

@@ -1,3 +1,10 @@
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the MGTAXA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+
 PROJECT(MRSOM)
 
 SET( ${PROJECT_NAME}_MAJOR_VERSION 4 )
