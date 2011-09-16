@@ -39,10 +39,8 @@ v.3.0.0
 
 v.4.0.0
     11.03.2010      Init running version done!
-
     11.04.2010      Initial result came out. Found out-of-disk operations. 
                     Try float compaction -> mrsom4.1.0.cpp
-
     11.05.2010      Hydrid compaction v4.1.1. => v5
     
 v.5.0.0 => v.6.0.0
@@ -53,7 +51,6 @@ v.5.0.0 => v.6.0.0
                     out-of-core operation working folder to /tmp. 4. float 
                     could be short. User typedef and double. 5. Consider
                     minpage and maxpage settings.
-
     11.09.2010      Boost memory mapped file is added.
 
 v7
@@ -71,15 +68,14 @@ v8
 v9
     12.06.2010      1. conf. file (x,y,d); 2. Save SOM map in tab deliminated
                     file; 3. Classifier 
-
     12.29.2010      Boost::program_options for processing config file and
                     command line argments.
 
 
 v10 -> mrsom2
-
+    09.06.2011      Do git branch for mrsom-sparse test
     09.14.2011      Update to support sparse matrix 
-    
+    09.16.2011      Clean up before merging & merge
     
     
     

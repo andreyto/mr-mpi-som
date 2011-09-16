@@ -45,8 +45,8 @@ int main(int argc, char* argv[])
     
     string inputFileName(argv[1]); 
     string outFileName(argv[2]); 
-    int nDimen = atoi(argv[3]);
-    int nVecs = atoi(argv[4]);
+    uint32_t nDimen = atoi(argv[3]);
+    uint32_t nVecs = atoi(argv[4]);
     
     FILE *fp;
     fp = fopen(argv[1], "r");
@@ -85,6 +85,7 @@ int main(int argc, char* argv[])
     outputIndexFile.close();
     numValuesFile.close();
     fclose(fp); 
+    
     cout << "INFO: Files generated\n";
     cout << "\tbin file: \t" << outFileName+"-sparse.bin" << endl;
     cout << "\tindex file: \t" << outFileName+"-sparse.idx" << endl;
