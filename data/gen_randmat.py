@@ -3,16 +3,14 @@
 from numpy import *
 import sys
 
-
-
 argc = len(sys.argv)
 if argc != 4:
-    print "Usage: outFile numRows numCols"
+    print "Usage: outFile numCols numRows "
     sys.exit(1)
 
 outFileName = sys.argv[1]
-rows = int(sys.argv[2])
-cols = int(sys.argv[3])
+rows = int(sys.argv[3])
+cols = int(sys.argv[2])
 
 mat = random.rand(rows, cols)
 outFile = open(outFileName, "w")

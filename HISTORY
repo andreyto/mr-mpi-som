@@ -1,80 +1,82 @@
-//  Revisions
-//  v.0.0.9
-//      6.1.2010        Start implementing serial SOM.
-//      6.2.2010        MPI connected. CMake done!
-//      6.3.2010        MR-MPU conencted as static library.
-//      6.14.2010       serial online/batch SOM done!
-//      6.15.2010       Batch SOM test done! Start mapreducing.
-//      6.17.2010       Found the bottleneck in batch mode == get_bmu
-//                      improved mr_train_batch is done! ==> train_batch_serial
-//      6.23.2010       bcast and scatter are done! Now all tasks have
-//                      the initial weight vectors and the feature
-//                      vectors are evenly distributed.
-//
-//  v.1.0.0
-//      6.24.2010       Initial version of MRSOM's done!! Promoted to v.1.0.0.
-//
-//  v.1.1.0
-//      6.30.2010       Reimplement without classes.
-//
-//  v.2.0.0
-//      07.01.2010      Incorporated DMatrix struct.
-//                      Change the MR part with gather().
-//  v.2.0.1
-//                      Change command line arg. proceesing
-//                      Add random feature vector generation
-//
-//  v.2.0.2
-//      07.07.2010      Update CMakeLists.txt to have find_program for MPI
-//                      and add .gitignore
-//      07.08.2010      Add other distance metrics than euclidean.
-//                      Add other normalization func
-//
-//  v.3.0.0
-//      07.13.2010      DEBUG: Check R > 1.0 in MR_compute_weight!!!!!!!
-//                      This solves the problem of resulting abnormal map
-//                      when epochs > x.
-//                      DEBUG: check if (temp_demon != 0) in MR_accumul_weight.
-//                      Add input vector shuffling.
-//
-//  v.4.0.0
-//      11.03.2010      Init running version done!
-//
-//      11.04.2010      Initial result came out. Found out-of-disk operations. 
-//                      Try float compaction -> mrsom4.1.0.cpp
-//
-//      11.05.2010      Hydrid compaction v4.1.1. => v5
-//      
-//  v.5.0.0 => v.6.0.0
-//      11.08.2010      To do 1. do not use split files for input vector. Use 
-//                      memory-mapped file using Boost lib. Distribute indexes
-//                      to workers. 2. Increase memsize from 64MB to 512MB. Make
-//                      memsize configurable by command line argument. 3. Set
-//                      out-of-core operation working folder to /tmp. 4. float 
-//                      could be short. User typedef and double. 5. Consider
-//                      minpage and maxpage settings.
-//
-//      11.09.2010      Boost memory mapped file is added.
-//
-//  v7
-//      11.10.2010      key -> integer     
-//      11.11.2010      key -> uint64_t (8bytes) for keyalign   
-//
-//  v8
-//      11.15.2010      Update following AT's comments
-//      11.16.2010      v8 done.
-//      11.18.2010      Check if the KMV pair does not fit in one page of memory,
-//                      = check if the char *multivalue argument != NULL
-//                      and the nvalues argument != 0. 
-//                      If there is KMV overflow, use multivalue_blocks().
-//
-//  v9
-//      12.06.2010      1. conf. file (x,y,d); 2. Save SOM map in tab deliminated
-//                      file; 3. Classifier 
-//
-//      12.29.2010      Boost::program_options for processing config file and
-//                      command line argments.
+Revisions
+v.0.0.9
+    6.1.2010        Start implementing serial SOM.
+    6.2.2010        MPI connected. CMake done!
+    6.3.2010        MR-MPU conencted as static library.
+    6.14.2010       serial online/batch SOM done!
+    6.15.2010       Batch SOM test done! Start mapreducing.
+    6.17.2010       Found the bottleneck in batch mode == get_bmu
+                    improved mr_train_batch is done! ==> train_batch_serial
+    6.23.2010       bcast and scatter are done! Now all tasks have
+                    the initial weight vectors and the feature
+                    vectors are evenly distributed.
+
+v.1.0.0
+    6.24.2010       Initial version of MRSOM's done!! Promoted to v.1.0.0.
+
+v.1.1.0
+    6.30.2010       Reimplement without classes.
+
+v.2.0.0
+    07.01.2010      Incorporated DMatrix struct.
+                    Change the MR part with gather().
+v.2.0.1
+                    Change command line arg. proceesing
+                    Add random feature vector generation
+
+v.2.0.2
+    07.07.2010      Update CMakeLists.txt to have find_program for MPI
+                    and add .gitignore
+    07.08.2010      Add other distance metrics than euclidean.
+                    Add other normalization func
+
+v.3.0.0
+    07.13.2010      DEBUG: Check R > 1.0 in MR_compute_weight!!!!!!!
+                    This solves the problem of resulting abnormal map
+                    when epochs > x.
+                    DEBUG: check if (temp_demon != 0) in MR_accumul_weight.
+                    Add input vector shuffling.
+
+v.4.0.0
+    11.03.2010      Init running version done!
+    11.04.2010      Initial result came out. Found out-of-disk operations. 
+                    Try float compaction -> mrsom4.1.0.cpp
+    11.05.2010      Hydrid compaction v4.1.1. => v5
+    
+v.5.0.0 => v.6.0.0
+    11.08.2010      To do 1. do not use split files for input vector. Use 
+                    memory-mapped file using Boost lib. Distribute indexes
+                    to workers. 2. Increase memsize from 64MB to 512MB. Make
+                    memsize configurable by command line argument. 3. Set
+                    out-of-core operation working folder to /tmp. 4. float 
+                    could be short. User typedef and double. 5. Consider
+                    minpage and maxpage settings.
+    11.09.2010      Boost memory mapped file is added.
+
+v7
+    11.10.2010      key -> integer     
+    11.11.2010      key -> uint64_t (8bytes) for keyalign   
+
+v8
+    11.15.2010      Update following AT's comments
+    11.16.2010      v8 done.
+    11.18.2010      Check if the KMV pair does not fit in one page of memory,
+                    = check if the char *multivalue argument != NULL
+                    and the nvalues argument != 0. 
+                    If there is KMV overflow, use multivalue_blocks().
+
+v9
+    12.06.2010      1. conf. file (x,y,d); 2. Save SOM map in tab deliminated
+                    file; 3. Classifier 
+    12.29.2010      Boost::program_options for processing config file and
+                    command line argments.
 
 
-
+v10 -> mrsom2
+    09.06.2011      Do git branch for mrsom-sparse test
+    09.14.2011      Update to support sparse matrix 
+    09.16.2011      Clean up before merging & merge
+    
+    
+    
 

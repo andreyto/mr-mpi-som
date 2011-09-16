@@ -1,16 +1,25 @@
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the MGTAXA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+
 include_directories(${MRSOM_SOURCE_DIR}/mrmpi)
 link_directories(${MRSOM_BINARY_DIR}/mrmpi)
 LINK_DIRECTORIES(${LINK_DIRECTORIES} ${MRSOM_BINARY_DIR}/mrmpi)
 
-add_executable(mrsom mrsom.cpp)
+add_executable(mrsom mrsom.cpp mrsom.hpp)
 target_link_libraries(mrsom mpi)  
 target_link_libraries(mrsom mrmpi)
+
 target_link_libraries(mrsom boost_iostreams)
 target_link_libraries(mrsom boost_filesystem)
 target_link_libraries(mrsom boost_program_options)
-# For Ranger
-#target_link_libraries(mrsom9 boost_iostreams-gcc44-mt)
-#target_link_libraries(mrsom9 boost_filesystem-gcc44-mt)
+
+# For Ranger at TACC
+#target_link_libraries(mrsom boost_iostreams-gcc44-mt)
+#target_link_libraries(mrsom boost_filesystem-gcc44-mt)
 #target_link_libraries(mrsom boost_program_options-gcc44-mt)
 
 #set(CMAKE_BUILD_TYPE Release)

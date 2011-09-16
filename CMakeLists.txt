@@ -1,3 +1,10 @@
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+#
+#   See COPYING file distributed along with the MGTAXA package for the
+#   copyright and license terms.
+#
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ##
+
 PROJECT(MRSOM)
 
 SET( ${PROJECT_NAME}_MAJOR_VERSION 4 )
@@ -35,7 +42,7 @@ endif (MPI_FOUND)
 # Search for Boost ###########################
 
 # To specify user-defined Boost lib location,
-#set(BOOST_ROOT "/home/ssul/work/distros2/boost/boost_1_45_0")
+set(BOOST_ROOT "/home/ssul/work/distros2/boost/boost_1_45_0")
 
 find_package( Boost REQUIRED )
 
