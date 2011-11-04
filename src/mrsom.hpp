@@ -105,8 +105,9 @@ SPARSE_STRUCT_T* FDATASPARSE = NULL;
 INDEX_STRUCT_T*  INDEXSPARSE = NULL; 
 
 /// MR-MPI fuctions and related functions
-void     mpireduce_train_batch(int itask, KeyValue* kv, void* ptr);
-void     mpireduce_train_batch_sparse(int itask, KeyValue* kv, void* ptr); /// sparse
+void     mr_map_train_batch(int itask, KeyValue* kv, void* ptr);
+void     mr_map_train_batch_sparse(int itask, KeyValue* kv, void* ptr); /// sparse
+void     mr_map_mpi_reduce(int itask, KeyValue* kv, void* ptr);
 void     get_bmu_coord(int* p, int itask, uint32_t n);
 FLOAT_T  get_distance(size_t y, size_t x, int itask, size_t row, unsigned int distance_metric);
 FLOAT_T  get_distance(size_t y, size_t x, const FLOAT_T* vec, unsigned int distance_metric);

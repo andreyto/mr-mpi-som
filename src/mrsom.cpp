@@ -11,7 +11,7 @@
 //
 //  Author: Seung-Jin Sul (ssul@jcvi.org)
 //
-//  Last updated: 09.14.2011
+//  Last updated: 11.04.2011
 //
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -36,7 +36,7 @@ int main(int argc, char** argv)
     options.insert("*");
 
     try {
-        for (pod::config_file_iterator i(config, options), e ; i != e; ++i) {
+        for (pod::config_file_iterator i(config, options), e ; i != e; i++) {
             parameters[i->string_key] = i->value[0];
         }
 
@@ -58,21 +58,18 @@ int main(int argc, char** argv)
     generalDesc.add_options()
     ("help", "print help message")
     ("mode,m", po::value<string>(), "set train/test mode, \"train or test\"")
-    ("page-size,p", po::value<int>(&SZPAGE)->default_value(64),
-     "[OPTIONAL] set page size of MR-MPI (default=64MB)")
+    ("page-size,p", po::value<int>(&SZPAGE)->default_value(64), "[OPTIONAL] set page size of MR-MPI (default=64MB)")
     ;
 
     po::options_description trainnigDesc("Options for training");
     trainnigDesc.add_options()
     ("infile,i", po::value<string>(), "set input file name")
-    ("outfile,o", po::value<string>(&OUTPREFIX)->default_value("result"),
-     "set a prefix for outout file name")
+    ("outfile,o", po::value<string>(&OUTPREFIX)->default_value("result"), "set a prefix for outout file name")
     ("nepochs,e", po::value<unsigned int>(), "set the number of iterations")
     ("nvecs,n", po::value<uint32_t>(), "set the number of feature vectors")
     ("ndim,d", po::value<uint32_t>(), "set the number of dimension of input feature vector")
     ("nblocks,b", po::value<uint32_t>(), "set the number of blocks")
-    ("sparse,s", po::value<int>(&bSPARSE)->default_value(0),
-     "[OPTIONAL] sparse matrix as input or not (default=0)")    
+    ("sparse,s", po::value<int>(&bSPARSE)->default_value(0), "[OPTIONAL] sparse matrix as input or not (default=0)")    
     ;
     
     string binFileName, indexFileName, numFileName;
@@ -81,10 +78,8 @@ int main(int argc, char** argv)
     
     po::options_description trainnigSparseDesc("Options for training (sparse matrix)");
     trainnigSparseDesc.add_options()
-    ("indexfile,x", po::value<string>(), 
-     "set input index file name")
-    ("numfile,t", po::value<string>(), 
-     "set input total num values file name")
+    ("indexfile,x", po::value<string>(), "set input index file name")
+    ("numfile,t", po::value<string>(), "set input total num values file name")
     ;
     
     po::options_description testingDesc("Options for testing");
@@ -121,9 +116,12 @@ int main(int argc, char** argv)
     }
     else {
         /// OPTIONAL
-        if (vm.count("page-size")) SZPAGE = vm["page-size"].as<int>();
-        if (vm.count("outfile")) OUTPREFIX = vm["outfile"].as<string>();
-        if (vm.count("sparse")) bSPARSE = vm["sparse"].as<int>();       
+        if (vm.count("page-size")) 
+            SZPAGE = vm["page-size"].as<int>();
+        if (vm.count("outfile")) 
+            OUTPREFIX = vm["outfile"].as<string>();
+        if (vm.count("sparse")) 
+            bSPARSE = vm["sparse"].as<int>();       
         
         /// MANDATORY
         if (vm.count("infile") && vm.count("nvecs") && vm.count("ndim") && vm.count("mode")) {
@@ -134,7 +132,8 @@ int main(int argc, char** argv)
             
             if (!trainOrTest.compare("train")) {
                 RUNMODE = TRAIN;
-                if (vm.count("nepochs")) NEPOCHS = vm["nepochs"].as<unsigned int>();
+                if (vm.count("nepochs"))    
+                    NEPOCHS = vm["nepochs"].as<unsigned int>();
                 if (vm.count("nblocks")) {
                     NBLOCKS = vm["nblocks"].as<unsigned int>();
                     /// Note: The number of allocated vectors for the last work item 
@@ -153,7 +152,8 @@ int main(int argc, char** argv)
             }
             else if (!trainOrTest.compare("test")) {
                 RUNMODE = TEST;
-                if (vm.count("codebook")) somMapFileName = vm["codebook"].as<string>();
+                if (vm.count("codebook")) 
+                    somMapFileName = vm["codebook"].as<string>();
                 else {
                     cout << "Option error: testing needs codebook" << "\n" << ex << ex2;
                     return 1;
@@ -256,9 +256,9 @@ int main(int argc, char** argv)
     if (bSPARSE) {
         assert(MMAPBINFILE.is_open());
         assert(MMAPIDXFILE.is_open());
-        
         FDATASPARSE = reinterpret_cast<SPARSE_STRUCT_T*>((char*)MMAPBINFILE.data());   
         INDEXSPARSE = reinterpret_cast<INDEX_STRUCT_T*>((char*)MMAPIDXFILE.data());   
+        
         ///
         /// For sparse matrix
         /// 1. read *.num for getting the total number of values in the matrix
@@ -281,7 +281,8 @@ int main(int argc, char** argv)
             while (numConsidered <= numValuesPerBlock) {
                 numConsidered += (INDEXSPARSE+i)->num_values;
                 i++;
-                if (i >= NVECS) break;            
+                if (i >= NVECS) 
+                    break;            
             }    
             rowEnd = i-1;
             SPARSEWORKITEM_STRUCT_T bBlock;
@@ -317,31 +318,48 @@ int main(int argc, char** argv)
         /// v9 using MPI_reduce
         ///
         /// 1. Each task fills NUMER1 and DENOM1
-        /// 2. MPI_reduce sums up each tasks NUMER1 and DENOM1 to the root's
+        /// 2. MPI_reduce sums up each tasks NUMER1 and DENOM1 to the proc_0's
         ///    NUMER2 and DENOM2.
         /// 3. Update CODEBOOK using NUMER2 and DENOM2
         ///
-        if (MPI_myId == 0) {
-            for (size_t y = 0; y < SOM_Y; y++) {
-                for (size_t x = 0; x < SOM_X; x++) {
-                    DENOM2[y * SOM_X + x] = 0.0;
-                    for (size_t d = 0; d < NDIMEN; d++) {
-                        NUMER2[y * SOM_X * NDIMEN + x * NDIMEN + d] = 0.0;
-                    }
+        for (size_t y = 0; y < SOM_Y; y++) {
+            for (size_t x = 0; x < SOM_X; x++) {
+                DENOM2[y * SOM_X + x] = 0.0;
+                DENOM1[y * SOM_X + x] = 0.0;
+                for (size_t d = 0; d < NDIMEN; d++) {
+                    NUMER2[y * SOM_X * NDIMEN + x * NDIMEN + d] = 0.0;
+                    NUMER1[y * SOM_X * NDIMEN + x * NDIMEN + d] = 0.0;
                 }
             }
         }
 
-        if (bSPARSE) mr->map(NBLOCKS, &mpireduce_train_batch_sparse, NULL);
-        else         mr->map(NBLOCKS, &mpireduce_train_batch, NULL);
+        ///
+        /// Training - 
+        /// Each local map() gets blocks of input vectors and update NUMER1 and DENOM1
+        /// and 
+        ///
+        if (bSPARSE) 
+            mr->map(NBLOCKS, &mr_map_train_batch_sparse, NULL);
+        else         
+            mr->map(NBLOCKS, &mr_map_train_batch, NULL);
         
+        ///
+        /// MPI_Reducing from workers to proc_0 using MPI_SUM op.
+        /// Each NUMER and DENOM from workers MPI_Reduced to NUMER and DENOM of proc_0.
+        ///
+        mr->map(MPI_nProcs, &mr_map_mpi_reduce, NULL);
+
+        ///
+        /// Update the proc_0's CODEBOOK using MPI_Reduced NUMER2 and DENOM2
+        ///       
         if (MPI_myId == 0) {
             for (size_t y = 0; y < SOM_Y; y++) {
                 for (size_t x = 0; x < SOM_X; x++) {
                     FLOAT_T denom = DENOM2[y * SOM_X + x];
                     for (size_t d = 0; d < NDIMEN; d++) {
                         FLOAT_T newWeight = NUMER2[y * SOM_X * NDIMEN + x * NDIMEN + d] / denom;
-                        if (newWeight > 0.0) CODEBOOK[y][x][d] = newWeight;
+                        if (newWeight > 0.0) 
+                            CODEBOOK[y][x][d] = newWeight;
                     }
                 }
             }
@@ -359,7 +377,8 @@ int main(int argc, char** argv)
         string umatFileName = OUTPREFIX + "-umat.txt";                
         cout << "\tSaving U-mat file = " << umatFileName << endl;
         int ret = save_umat(umatFileName.c_str());
-        if (ret < 0) printf("    Failed to save u-matrix. !\n");
+        if (ret < 0) 
+            printf("    Failed to save u-matrix. !\n");
         
         string cbFileName = OUTPREFIX + "-codebook.txt";
         cout << "\tCodebook file = " << cbFileName << endl;
@@ -384,34 +403,44 @@ int main(int argc, char** argv)
     return 0;
 }
 
+/** MR-MPI user-defined map function - send local NUMER1 and DENOM1 to proc_0 via MPI_reduce()
+ * @param itask - number of work items
+ * @param kv
+ * @param ptr
+ */
+ 
+void mr_map_mpi_reduce(int itask,
+                       KeyValue* kv,
+                       void* ptr)
+{   
+    if (SZFLOAT == 4) { /// 4 bytes float
+        MPI_Reduce((void*)NUMER1.data(), (void*)NUMER2.data(), SOM_Y * SOM_X * NDIMEN, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce((void*)DENOM1.data(), (void*)DENOM2.data(), SOM_Y * SOM_X, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
+    }
+    else if (SZFLOAT == 8) { /// 8 bytes double
+        MPI_Reduce((void*)NUMER1.data(), (void*)NUMER2.data(), SOM_Y * SOM_X * NDIMEN, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+        MPI_Reduce((void*)DENOM1.data(), (void*)DENOM2.data(), SOM_Y * SOM_X, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+    }
+}
 
-
+ 
 /** MR-MPI user-defined map function - batch training with MPI_reduce()
  * @param itask - number of work items
  * @param kv
  * @param ptr
  */
 
-void mpireduce_train_batch(int itask,
-                           KeyValue* kv,
-                           void* ptr)
+void mr_map_train_batch(int itask,
+                        KeyValue* kv,
+                        void* ptr)
 {
     int p1[SOM_D];
     int p2[SOM_D];
-
-    /// Initialize DENOM1 and NUMER1
-    for (size_t y = 0; y < SOM_Y; y++) {
-        for (size_t x = 0; x < SOM_X; x++) {
-            DENOM1[y * SOM_X + x] = 0.0;
-            for (size_t d = 0; d < NDIMEN; d++) {
-                NUMER1[y * SOM_X * NDIMEN + x * NDIMEN + d] = 0.0;
-            }
-        }
-    }
-    
+     
     uint32_t nvecs = NVECSPERRANK;
     /// Do NVECSPERRANK + NVECSLEFT if NVECSLEFT != 0 for the last work item
-    if (itask == NBLOCKS - 1 && NVECSLEFT != 0) nvecs = NVECSPERRANK + NVECSLEFT;
+    if (itask == NBLOCKS - 1 && NVECSLEFT != 0) 
+        nvecs = NVECSPERRANK + NVECSLEFT;
     
     for (uint32_t n = 0; n < nvecs; n++) {
         /// get the coords of the best matching unit 
@@ -423,9 +452,8 @@ void mpireduce_train_batch(int itask,
                 p2[0] = x;
                 p2[1] = y;
                 FLOAT_T dist = 0.0f;
-                for (size_t p = 0; p < SOM_D; p++) {
+                for (size_t p = 0; p < SOM_D; p++) 
                     dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
-                }
                 dist = sqrt(dist);
 
                 FLOAT_T neighbor_fuct = 0.0f;
@@ -439,19 +467,6 @@ void mpireduce_train_batch(int itask,
             }
         }
     }
-
-    if (SZFLOAT == 4) { /// 4 bytes float
-        MPI_Reduce((void*)NUMER1.data(), (void*)NUMER2.data(),
-                   SOM_Y * SOM_X * NDIMEN, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce((void*)DENOM1.data(), (void*)DENOM2.data(),
-                   SOM_Y * SOM_X, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
-    }
-    else if (SZFLOAT == 8) { /// 8 bytes double
-        MPI_Reduce((void*)NUMER1.data(), (void*)NUMER2.data(),
-                   SOM_Y * SOM_X * NDIMEN, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce((void*)DENOM1.data(), (void*)DENOM2.data(),
-                   SOM_Y * SOM_X, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-    }
 }
 
 
@@ -461,22 +476,12 @@ void mpireduce_train_batch(int itask,
  * @param ptr
  */
 
-void mpireduce_train_batch_sparse(int itask,
-                                  KeyValue* kv,
-                                  void* ptr)
+void mr_map_train_batch_sparse(int itask,
+                               KeyValue* kv,
+                               void* ptr)
 {  
     int p1[SOM_D];
     int p2[SOM_D];
-
-    /// Initialize DENOM1 and NUMER1
-    for (size_t y = 0; y < SOM_Y; y++) {
-        for (size_t x = 0; x < SOM_X; x++) {
-            DENOM1[y * SOM_X + x] = 0.0;
-            for (size_t d = 0; d < NDIMEN; d++) {
-                NUMER1[y * SOM_X * NDIMEN + x * NDIMEN + d] = 0.0;
-            }
-        }
-    }
     
     /// row start~end for the work item assigned
     uint32_t rowStart = g_vecSparseWorkItem[itask].start;
@@ -492,9 +497,8 @@ void mpireduce_train_batch_sparse(int itask,
                 p2[0] = x;
                 p2[1] = y;
                 FLOAT_T dist = 0.0f;
-                for (size_t p = 0; p < SOM_D; p++) {
+                for (size_t p = 0; p < SOM_D; p++) 
                     dist += (p1[p] - p2[p]) * (p1[p] - p2[p]);
-                }
                 dist = sqrt(dist);
 
                 FLOAT_T neighbor_fuct = 0.0f;
@@ -515,15 +519,6 @@ void mpireduce_train_batch_sparse(int itask,
                 DENOM1[y * SOM_X + x] += neighbor_fuct;
             }
         }
-    }
-    
-    if (SZFLOAT == 4) { /// 4 bytes float
-        MPI_Reduce((void*)NUMER1.data(), (void*)NUMER2.data(), SOM_Y * SOM_X * NDIMEN, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce((void*)DENOM1.data(), (void*)DENOM2.data(), SOM_Y * SOM_X, MPI_FLOAT, MPI_SUM, 0, MPI_COMM_WORLD);
-    }
-    else if (SZFLOAT == 8) { /// 8 bytes double
-        MPI_Reduce((void*)NUMER1.data(), (void*)NUMER2.data(), SOM_Y * SOM_X * NDIMEN, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
-        MPI_Reduce((void*)DENOM1.data(), (void*)DENOM2.data(), SOM_Y * SOM_X, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
     }
 }
 
@@ -757,7 +752,8 @@ int save_umat(const char* fname)
                     }
                 }
                 dist /= (FLOAT_T)nodes_number;
-                if (isnan(dist)) dist = 0.0;
+                if (isnan(dist)) 
+                    dist = 0.0;
                 fprintf(fp, " %f", dist);
             }
             fprintf(fp, "\n");

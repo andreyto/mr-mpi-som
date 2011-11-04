@@ -14,7 +14,7 @@ mpirun -np 4 ../build/src/mrsom -m train -s 1 -i rgbs-sparse.bin -x rgbs-sparse.
 ../build/src/mrsom -m test -c rgbs-sparse-codebook.txt -i rgbs.txt -o rgbs -d 3 -n 10 &&
 ./umat2fig.py rgbs-sparse-umat.txt rgbs-sparse-umat.png &&
 
-# Gen random matrix
+# RANDOM MATRIX
 ./gen_randmat.py ./rand/randmat.txt 30 300 &&
 ../build/src/txt2bin/txt2bin-sparse ./rand/randmat.txt ./rand/randmat 30 300 &&
 mpirun -np 4 ../build/src/mrsom -m train -s 1 -i ./rand/randmat-sparse.bin -x ./rand/randmat-sparse.idx -t ./rand/randmat-sparse.num -o ./rand/randmat-sparse -e 20 -d 30 -n 300 -b 8 &&
